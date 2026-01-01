@@ -16,11 +16,7 @@ type ChatInputProps = {
   className?: string;
   value: string;
   onValueChange: (value: string) => void;
-  selectedModel?: string;
-  onModelChange?: (model: string) => void;
   onSendMessage: (content: string) => void;
-  isLoading?: boolean;
-  onStop?: () => void;
 };
 
 export function ChatInput({

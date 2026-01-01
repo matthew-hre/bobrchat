@@ -6,10 +6,10 @@ import { useState } from "react";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
-import { ChatInput } from "~/components/chat/chat-input";
+import { ChatView } from "~/components/chat/chat-view";
 
-export default function ChatThread() {
-  const [input, setInput] = useState("");
+export default function ChatThread(): React.ReactNode {
+  const [input, setInput] = useState<string>("");
 
   const { messages, sendMessage } = useChat<ChatUIMessage>({
     transport: new DefaultChatTransport({
@@ -18,33 +18,6 @@ export default function ChatThread() {
   });
 
   return (
-    <div className="flex h-full max-h-screen flex-col">
-      <div className="flex-1 overflow-y-auto">
-        {messages.map(message => (
-          <div key={message.id}>
-            {message.parts.map((part) => {
-              if (part.type === "text") {
-                return <div key={`${message.id}-text`}>{part.text}</div>;
-              }
-              return null;
-            })}
-            {message.metadata && (
-              <pre>
-                {JSON.stringify(message.metadata, null, 2)}
-              </pre>
-            )}
-          </div>
-        ))}
-      </div>
-      <ChatInput
-        value={input}
-        onValueChange={setInput}
-        onSendMessage={(content) => {
-          sendMessage({
-            parts: [{ type: "text", text: content }],
-          });
-        }}
-      />
-    </div>
+    <ChatView messages={messages} input={input} setInput={setInput} sendMessage={sendMessage} />
   );
 }

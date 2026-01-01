@@ -6,6 +6,7 @@ export type MessageMetadata = {
   inputTokens: number;
   outputTokens: number;
   costUSD: number;
+  model: string;
   tokensPerSecond: number;
   timeToFirstTokenMs: number;
 };

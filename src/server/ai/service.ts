@@ -51,6 +51,7 @@ export async function streamChatResponse(messages: ChatUIMessage[], modelId: str
         const inputTokens = usage.inputTokens ?? 0;
         const outputTokens = usage.outputTokens ?? 0;
         const totalTokens = usage.totalTokens ?? 0;
+        const model = modelId;
         const tokensPerSecond = totalTokens > 0 ? totalTokens / ((Date.now() - startTime) / 1000) : 0;
         const timeToFirstTokenMs = firstTokenTime ? firstTokenTime - startTime : 0;
         const costUSD = calculateChatCost(
@@ -63,6 +64,7 @@ export async function streamChatResponse(messages: ChatUIMessage[], modelId: str
           inputTokens,
           outputTokens,
           costUSD,
+          model,
           tokensPerSecond,
           timeToFirstTokenMs,
         };

@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Rethink_Sans } from "next/font/google";
 
 import "./globals.css";
+import { ChatSidebar } from "~/components/sidebar/chat-sidebar";
+import { FloatingSidebarToggle } from "~/components/sidebar/floating-sidebar-toggle";
+import { SidebarProvider } from "~/components/ui/sidebar";
 
 const rethinkSans = Rethink_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -33,7 +36,13 @@ export default function RootLayout({
           dark min-h-screen w-full antialiased
         `}
       >
-        {children}
+        <SidebarProvider>
+          <ChatSidebar />
+          <FloatingSidebarToggle />
+          <main className="w-full">
+            {children}
+          </main>
+        </SidebarProvider>
       </body>
     </html>
   );
