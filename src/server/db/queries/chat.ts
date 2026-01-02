@@ -149,3 +149,17 @@ export async function getThreadsByUserId(userId: string) {
 export async function deleteThreadById(threadId: string): Promise<void> {
   await db.delete(threads).where(eq(threads.id, threadId));
 }
+
+/**
+ * Rename a thread by ID
+ *
+ * @param threadId ID of the thread to rename
+ * @param newTitle New title for the thread
+ * @return {Promise<void>}
+ */
+export async function renameThreadById(threadId: string, newTitle: string): Promise<void> {
+  await db
+    .update(threads)
+    .set({ title: newTitle, updatedAt: new Date() })
+    .where(eq(threads.id, threadId));
+}
