@@ -1,4 +1,4 @@
-import { decimal, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { users } from "./auth";
 
@@ -11,13 +11,14 @@ export const threads = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     title: text("title").notNull().default("New Chat"),
     model: text("model"),
+    lastMessageAt: timestamp("last_message_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  table => [index("threads_userId_idx").on(table.userId)],
+  table => [index("threads_userId_idx").on(table.userId), index("threads_userId_lastMessageAt_idx").on(table.userId, table.lastMessageAt)],
 );
 
 export const messages = pgTable(
@@ -28,17 +29,8 @@ export const messages = pgTable(
       .notNull()
       .references(() => threads.id, { onDelete: "cascade" }),
     role: text("role", { enum: ["user", "assistant", "system"] }).notNull(),
-    content: text("content").notNull(),
+    content: jsonb("content").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-
-    // Metrics for assistant messages only
-    model: text("model"), // which model generated this message
-    promptTokens: integer("prompt_tokens"),
-    completionTokens: integer("completion_tokens"),
-    totalTokens: integer("total_tokens"),
-    costUsd: decimal("cost_usd", { precision: 10, scale: 6 }),
-    ttft: integer("ttft"), // time to first token in milliseconds
-    tokensPerSecond: decimal("tokens_per_second", { precision: 8, scale: 2 }), // e.g., 125.50
   },
   table => [index("messages_threadId_idx").on(table.threadId)],
 );

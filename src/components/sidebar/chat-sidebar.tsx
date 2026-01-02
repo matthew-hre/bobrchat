@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
+import Link from "next/link";
 import { Suspense } from "react";
 
 import {
@@ -29,13 +30,17 @@ export function ChatSidebar() {
             </div>
           </div>
           <div className="flex items-center gap-1">
+
             <Button
               variant="ghost"
               size="icon-sm"
               className="size-7"
               title="New chat"
+              asChild
             >
-              <PlusIcon className="size-4" />
+              <Link href="/">
+                <PlusIcon className="size-4" />
+              </Link>
             </Button>
             <SidebarTrigger />
           </div>
