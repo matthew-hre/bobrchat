@@ -13,7 +13,7 @@ export function ChatMessages({
   isLoading?: boolean;
 }) {
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 p-4">
+    <div className="mx-auto w-full max-w-3xl space-y-4 p-4 py-8">
       {messages.map((message) => {
         const textContent = message.parts
           .filter(part => part.type === "text")
