@@ -1,12 +1,11 @@
 "use client";
 
-import { CheckIcon, MonitorIcon, MoonIcon, SaveIcon, SunIcon } from "lucide-react";
+import { CheckIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useCallback, useRef, useState } from "react";
 
 import { cn } from "~/lib/utils";
 
-import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
@@ -36,6 +35,7 @@ export function PreferencesTab() {
     () => settings?.defaultThreadName ?? "New Chat",
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Sync state when settings load for the first time
   if (settings && !initializedRef.current) {
@@ -53,25 +53,21 @@ export function PreferencesTab() {
     }
   }
 
-  const hasChanges = settings
-    && (theme !== settings.theme
-      || customInstructions !== (settings.customInstructions || "")
-      || defaultThreadName !== settings.defaultThreadName);
-
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (themeVal: Theme, customInst: string, defaultName: string) => {
     setIsSaving(true);
     try {
       await updateSetting({
-        theme,
-        customInstructions: customInstructions || undefined,
-        defaultThreadName,
+        theme: themeVal,
+        customInstructions: customInst || undefined,
+        defaultThreadName: defaultName,
       });
-      applyTheme(theme);
+      applyTheme(themeVal);
+      setLastSaved(new Date());
     }
     finally {
       setIsSaving(false);
     }
-  }, [theme, customInstructions, defaultThreadName, updateSetting, applyTheme]);
+  }, [updateSetting, applyTheme]);
 
   if (loading) {
     return <PreferencesTabSkeleton />;
@@ -100,7 +96,10 @@ export function PreferencesTab() {
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setTheme(option.value)}
+                    onClick={() => {
+                      setTheme(option.value);
+                      handleSave(option.value, customInstructions, defaultThreadName);
+                    }}
                     className={cn(
                       `
                         flex flex-col items-center gap-2 rounded-lg border p-3
@@ -140,6 +139,7 @@ export function PreferencesTab() {
               type="text"
               value={defaultThreadName}
               onChange={e => setDefaultThreadName(e.target.value)}
+              onBlur={() => handleSave(theme, customInstructions, defaultThreadName)}
               placeholder="New Chat"
             />
             <p className="text-muted-foreground text-xs">
@@ -154,8 +154,9 @@ export function PreferencesTab() {
               id="customInstructions"
               value={customInstructions}
               onChange={e => setCustomInstructions(e.target.value)}
+              onBlur={() => handleSave(theme, customInstructions, defaultThreadName)}
               placeholder="Add any custom instructions for the AI assistant..."
-              className="min-h-30 resize-none"
+              className="h-full max-h-60 resize-none border-0"
             />
             <p className="text-muted-foreground text-xs">
               These instructions will be included in every conversation.
@@ -164,17 +165,12 @@ export function PreferencesTab() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="border-t p-4">
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-          >
-            <SaveIcon className="size-4" />
-            {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
+      <div className="text-muted-foreground flex justify-end p-4 text-xs">
+        {isSaving
+          ? "Saving..."
+          : lastSaved
+            ? `Saved ${lastSaved.toLocaleTimeString()}`
+            : ""}
       </div>
     </div>
   );
