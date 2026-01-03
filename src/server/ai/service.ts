@@ -19,9 +19,10 @@ import { getModelProvider } from "./models";
  * @param browserApiKey Optional API key provided by the client (for browser-only storage).
  * @returns An object containing the text stream and a function to create metadata for each message part.
  */
-export async function streamChatResponse(messages: ChatUIMessage[], modelId: string, userId: string, browserApiKey?: string) {
+export async function streamChatResponse(messages: ChatUIMessage[], modelId: string, userId: string, browserApiKey?: string, searchEnabled?: boolean) {
   const startTime = Date.now();
   let firstTokenTime: number | null = null;
+  const sources: Array<{ id: string; sourceType: string; url?: string; title?: string }> = [];
 
   // Priority: browser key > server key > env var
   let apiKey = browserApiKey;
@@ -43,10 +44,17 @@ export async function streamChatResponse(messages: ChatUIMessage[], modelId: str
   }
 
   const provider = getModelProvider(apiKey);
+
+  // https://openrouter.ai/docs/guides/features/plugins/web-search
+  // web-search pricing is $0.02 per 5 requests
+  const searchPricing = 0.02;
+
   let inputCostPerMillion = 0;
   let outputCostPerMillion = 0;
   try {
-    const pricing = await getCostPricing(modelId);
+    // if the model has ":online" suffix, strip it for pricing lookup
+    const baseModelId = modelId.split(":")[0];
+    const pricing = await getCostPricing(baseModelId);
     inputCostPerMillion = pricing.inputCostPerMillion;
     outputCostPerMillion = pricing.outputCostPerMillion;
   }
@@ -66,9 +74,7 @@ export async function streamChatResponse(messages: ChatUIMessage[], modelId: str
     console.error("Failed to get user's custom instructions:", error);
   }
 
-  const result = streamText({
-    model: provider(modelId),
-    system: `
+  const systemPrompt = `
     # System Instructions
     You are BobrChat, an AI assistant. Use the following instructions to guide your responses.
 
@@ -80,14 +86,30 @@ export async function streamChatResponse(messages: ChatUIMessage[], modelId: str
       ? `# User Instructions:
       
     ${customInstructions}`
-      : ""}`,
-    messages: await convertToModelMessages(messages),
+      : ""}`;
+
+  const convertedMessages = await convertToModelMessages(messages);
+  const result = streamText({
+    model: provider(modelId),
+    system: systemPrompt,
+    messages: convertedMessages,
     providerOptions: {
       openrouter: { usage: { include: true } },
     },
-    onChunk() {
+    onChunk({ chunk }) {
       if (firstTokenTime === null) {
         firstTokenTime = Date.now();
+      }
+      else if (chunk.type === "source") {
+        // Collect sources
+        sources.push({
+          id: chunk.id,
+          sourceType: chunk.sourceType,
+          ...(chunk.sourceType === "url" && {
+            url: chunk.url,
+            title: chunk.title,
+          }),
+        });
       }
     },
   });
@@ -97,16 +119,18 @@ export async function streamChatResponse(messages: ChatUIMessage[], modelId: str
     createMetadata: (part: TextStreamPart<ToolSet>) => {
       if (part.type === "finish") {
         const usage = part.totalUsage;
+        const totalTime = Date.now() - startTime;
 
         const inputTokens = usage.inputTokens ?? 0;
         const outputTokens = usage.outputTokens ?? 0;
         const model = modelId;
-        const tokensPerSecond = outputTokens > 0 ? outputTokens / ((Date.now() - startTime) / 1000) : 0;
+        const tokensPerSecond = outputTokens > 0 ? outputTokens / (totalTime / 1000) : 0;
         const timeToFirstTokenMs = firstTokenTime ? firstTokenTime - startTime : 0;
         const costUSD = calculateChatCost(
           { inputTokens, outputTokens },
           inputCostPerMillion,
           outputCostPerMillion,
+          searchEnabled ? searchPricing : 0,
         );
 
         return {
@@ -116,6 +140,7 @@ export async function streamChatResponse(messages: ChatUIMessage[], modelId: str
           model,
           tokensPerSecond,
           timeToFirstTokenMs,
+          ...(sources.length > 0 && { sources }),
         };
       }
     },

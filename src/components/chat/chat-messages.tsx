@@ -1,18 +1,21 @@
 import { memo, useMemo } from "react";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage, SourceInfo } from "~/app/api/chat/route";
 
 import { LoadingSpinner } from "./loading-spinner";
 import { MemoizedMarkdown } from "./markdown";
 import { MessageMetrics } from "./message-metrics";
+import { SearchingSources } from "./searching-sources";
 import { UserMessage } from "./user-message";
 
 export const ChatMessages = memo(({
   messages,
   isLoading,
+  sources,
 }: {
   messages: ChatUIMessage[];
   isLoading?: boolean;
+  sources?: SourceInfo[];
 }) => {
   const processedMessages = useMemo(() => {
     return messages.map(message => ({
@@ -38,6 +41,9 @@ export const ChatMessages = memo(({
               id={message.id}
               content={textContent}
             />
+            {sources && sources.length > 0 && (
+              <SearchingSources sources={sources} />
+            )}
             {message.metadata && (
               <MessageMetrics
                 metrics={{

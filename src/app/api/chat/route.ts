@@ -6,6 +6,13 @@ import { auth } from "~/lib/auth";
 import { streamChatResponse } from "~/server/ai/service";
 import { saveMessage } from "~/server/db/queries/chat";
 
+export type SourceInfo = {
+  id: string;
+  sourceType: string;
+  url?: string;
+  title?: string;
+};
+
 export type MessageMetadata = {
   inputTokens: number;
   outputTokens: number;
@@ -13,6 +20,7 @@ export type MessageMetadata = {
   model: string;
   tokensPerSecond: number;
   timeToFirstTokenMs: number;
+  sources?: SourceInfo[];
 };
 
 export type ChatUIMessage = UIMessage<MessageMetadata>;
@@ -29,11 +37,12 @@ export async function POST(req: Request) {
     });
   }
 
-  const { messages, threadId, browserApiKey }: { messages: ChatUIMessage[]; threadId?: string; browserApiKey?: string }
+  const { messages, threadId, browserApiKey, searchEnabled }: { messages: ChatUIMessage[]; threadId?: string; browserApiKey?: string; searchEnabled?: boolean }
     = await req.json();
-  const modelId = "mistralai/ministral-8b";
+  const baseModelId = "google/gemini-3-flash-preview";
+  const modelId = searchEnabled ? `${baseModelId}:online` : baseModelId;
 
-  const { stream, createMetadata } = await streamChatResponse(messages, modelId, session.user.id, browserApiKey);
+  const { stream, createMetadata } = await streamChatResponse(messages, modelId, session.user.id, browserApiKey, searchEnabled);
 
   return stream.toUIMessageStreamResponse({
     originalMessages: messages,

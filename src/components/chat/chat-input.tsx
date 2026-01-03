@@ -14,6 +14,8 @@ type ChatInputProps = {
   value: string;
   onValueChange: (value: string) => void;
   onSendMessage: (content: string) => void;
+  searchEnabled?: boolean;
+  onSearchChange?: (enabled: boolean) => void;
 };
 
 export function ChatInput({
@@ -21,6 +23,8 @@ export function ChatInput({
   value,
   onValueChange,
   onSendMessage,
+  searchEnabled = false,
+  onSearchChange,
 }: ChatInputProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
@@ -121,13 +125,20 @@ export function ChatInput({
                 type="button"
                 variant="ghost"
                 size="sm"
-                disabled
-                className={`
-                  text-muted-foreground gap-2
+                onClick={() => onSearchChange?.(!searchEnabled)}
+                className={cn(`
                   hover:text-foreground
-                `}
+                  gap-2 transition-colors
+                `, searchEnabled
+                  ? `
+                    text-primary
+                    hover:text-primary/80 hover:bg-primary/10
+                    dark:hover:text-primary/80 dark:hover:bg-primary/10
+                  `
+                  : `text-muted-foreground`)}
+                title={searchEnabled ? "Search enabled" : "Search disabled"}
               >
-                <SearchIcon size={8} />
+                <SearchIcon size={16} />
                 Search
               </Button>
 

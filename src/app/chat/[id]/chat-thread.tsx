@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
@@ -18,6 +18,7 @@ type ChatThreadProps = {
 function ChatThread({ params, initialMessages }: ChatThreadProps): React.ReactNode {
   const [input, setInput] = useState<string>("");
   const [browserApiKey, setBrowserApiKey] = useState<string | null>(null);
+  const [searchEnabled, setSearchEnabled] = useState(false);
   const { id } = use(params);
 
   useEffect(() => {
@@ -26,18 +27,41 @@ function ChatThread({ params, initialMessages }: ChatThreadProps): React.ReactNo
       // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
       setBrowserApiKey(key);
     }
+
+    // Restore search preference from localStorage
+    const savedSearchEnabled = localStorage.getItem("search_enabled");
+    if (savedSearchEnabled !== null) {
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
+      setSearchEnabled(JSON.parse(savedSearchEnabled));
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("search_enabled", JSON.stringify(searchEnabled));
+  }, [searchEnabled]);
+
+  // Use refs to always have the latest values
+  const searchEnabledRef = useRef(searchEnabled);
+  const browserApiKeyRef = useRef(browserApiKey);
+  useEffect(() => {
+    searchEnabledRef.current = searchEnabled;
+  }, [searchEnabled]);
+  useEffect(() => {
+    browserApiKeyRef.current = browserApiKey;
+  }, [browserApiKey]);
 
   const { messages, sendMessage, status } = useChat<ChatUIMessage>({
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      prepareSendMessagesRequest: ({ messages: allMessages }) => ({
-        body: {
+      prepareSendMessagesRequest: ({ messages: allMessages }) => {
+        const body = {
           messages: allMessages,
           threadId: id,
-          ...(browserApiKey && { browserApiKey }),
-        },
-      }),
+          searchEnabled: searchEnabledRef.current,
+          ...(browserApiKeyRef.current && { browserApiKey: browserApiKeyRef.current }),
+        };
+        return { body };
+      },
     }),
     messages: initialMessages,
   });
@@ -58,6 +82,10 @@ function ChatThread({ params, initialMessages }: ChatThreadProps): React.ReactNo
       setInput={setInput}
       sendMessage={handleSendMessage}
       isLoading={status === "submitted" || status === "streaming"}
+      searchEnabled={searchEnabled}
+      onSearchChange={(enabled) => {
+        setSearchEnabled(enabled);
+      }}
     />
   );
 }

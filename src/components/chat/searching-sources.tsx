@@ -1,0 +1,53 @@
+"use client";
+
+import { ExternalLink, Globe } from "lucide-react";
+
+import type { SourceInfo } from "~/app/api/chat/route";
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion";
+
+export function SearchingSources({ sources }: { sources: SourceInfo[] }) {
+  if (!sources.length)
+    return null;
+
+  return (
+    <div className="mt-2 flex w-full flex-1 text-xs">
+      <Accordion type="single" collapsible className="w-full flex-1">
+        <AccordionItem value="sources">
+          <AccordionTrigger className={`
+            flex flex-row items-center justify-start gap-2 pt-0 pb-1
+          `}
+          >
+            <Globe className="h-4 w-4" />
+            <span className="font-medium">Sources used</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="flex flex-col gap-1 text-sm">
+              {sources.map(source => (
+                source.sourceType === "url" && source.url
+                  ? (
+                      <a
+                        key={source.id}
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`
+                          text-primary flex w-full flex-row items-center gap-2
+                          hover:underline
+                        `}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        <span className="flex-1 truncate">{source.title || source.url}</span>
+                      </a>
+                    )
+                  : (
+                      <span key={source.id} className="text-muted-foreground">{source.title || "Unknown source"}</span>
+                    )
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  );
+}

@@ -20,6 +20,8 @@ export function ChatView({
   sendMessage,
   isLoading,
   threadId,
+  searchEnabled,
+  onSearchChange,
 }: {
   messages: ChatUIMessage[];
   input: string;
@@ -27,8 +29,14 @@ export function ChatView({
   sendMessage: UseChatHelpers<ChatUIMessage>["sendMessage"];
   isLoading?: boolean;
   threadId?: string;
+  searchEnabled?: boolean;
+  onSearchChange?: (enabled: boolean) => void;
 }) {
   const { scrollRef, messagesEndRef, isInitialScrollComplete } = useChatScroll(messages, { threadId });
+
+  // Get sources from the latest assistant message
+  const lastAssistantMessage = [...messages].reverse().find(m => m.role === "assistant");
+  const sources = lastAssistantMessage?.metadata?.sources || [];
 
   const handleSendMessage = useCallback((content: string) => {
     sendMessage({
@@ -46,7 +54,7 @@ export function ChatView({
             : `translate-y-2 scale-99 opacity-0`,
         )}
         >
-          <ChatMessages messages={messages} isLoading={isLoading} />
+          <ChatMessages messages={messages} isLoading={isLoading} sources={sources} />
         </div>
         <div ref={messagesEndRef} />
       </ScrollArea>
@@ -55,6 +63,8 @@ export function ChatView({
           value={input}
           onValueChange={setInput}
           onSendMessage={handleSendMessage}
+          searchEnabled={searchEnabled}
+          onSearchChange={onSearchChange}
         />
       </div>
     </div>

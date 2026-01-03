@@ -27,6 +27,7 @@ export function calculateChatCost(
   usage: { inputTokens: number; outputTokens: number },
   inputCostPerMillion: number,
   outputCostPerMillion: number,
+  searchPricing: number = 0,
 ) {
-  return (usage.inputTokens * inputCostPerMillion + usage.outputTokens * outputCostPerMillion) / 1_000_000;
+  return (usage.inputTokens * inputCostPerMillion + usage.outputTokens * outputCostPerMillion) / 1_000_000 + searchPricing;
 }
