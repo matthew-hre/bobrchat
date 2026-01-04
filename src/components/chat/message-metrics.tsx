@@ -2,6 +2,7 @@
 
 import { CheckIcon, CopyIcon, RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
@@ -39,6 +40,7 @@ export function MessageMetrics({
     }
     catch (error) {
       console.error("Failed to copy:", error);
+      toast.error("Failed to copy message content");
     }
   };
 

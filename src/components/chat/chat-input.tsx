@@ -3,6 +3,7 @@
 import { AlertCircle, PaperclipIcon, SearchIcon, SendIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { cn } from "~/lib/utils";
 
@@ -40,6 +41,7 @@ export function ChatInput({
       }
       catch (error) {
         console.error("Failed to check API key status:", error);
+        toast.error("Failed to check API key status");
         setHasApiKey(false);
       }
     }
@@ -137,6 +139,7 @@ export function ChatInput({
                   `
                   : `text-muted-foreground`)}
                 title={searchEnabled ? "Search enabled" : "Search disabled"}
+                suppressHydrationWarning
               >
                 <SearchIcon size={16} />
                 Search

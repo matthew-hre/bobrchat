@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -39,6 +40,7 @@ export function DeleteThreadDialog({
       }
       catch (error) {
         console.error("Failed to delete thread:", error);
+        toast.error("Failed to delete thread. Please try again.");
       }
     });
   };

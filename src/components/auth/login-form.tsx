@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "~/components/ui/button";
@@ -37,7 +38,6 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -49,23 +49,22 @@ export function LoginForm() {
     const errorMessage = error.message || error.statusText || "Authentication failed";
     const lowerErrorMessage = errorMessage.toLowerCase();
 
+    let userMessage = errorMessage;
     if (lowerErrorMessage.includes("user not found")) {
-      setError("No account found. Please sign up.");
+      userMessage = "No account found. Please sign up.";
     }
     else if (lowerErrorMessage.includes("invalid")) {
-      setError("Invalid email or password.");
+      userMessage = "Invalid email or password.";
     }
     else if (lowerErrorMessage.includes("already exists")) {
-      setError("An account with this email already exists.");
+      userMessage = "An account with this email already exists.";
     }
-    else {
-      setError(errorMessage);
-    }
+    
+    toast.error(userMessage);
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setValidationErrors([]);
     setLoading(true);
 
@@ -130,21 +129,20 @@ export function LoginForm() {
     }
     catch (err) {
       console.error("Auth error:", err);
-      setError("Authentication failed. Please try again.");
+      toast.error("Authentication failed. Please try again.");
       setLoading(false);
     }
   };
 
   const handleGitHubSignIn = async () => {
     try {
-      setError("");
       await authClient.signIn.social({
         provider: "github",
         callbackURL: "/",
       });
     }
     catch (err) {
-      setError(err instanceof Error ? err.message : "GitHub sign-in failed");
+      toast.error(err instanceof Error ? err.message : "GitHub sign-in failed");
     }
   };
 
@@ -164,17 +162,6 @@ export function LoginForm() {
             : "Get started with your own AI chat"}
         </p>
       </div>
-
-      {error && (
-        <div
-          className={`
-            bg-destructive/10 border-destructive/30 text-destructive border px-3
-            py-2 text-xs
-          `}
-        >
-          {error}
-        </div>
-      )}
 
       {/* GitHub Sign In */}
       <Button
@@ -277,16 +264,15 @@ export function LoginForm() {
       <p className="text-muted-foreground text-center text-sm">
         {isLogin ? "Don't have an account? " : "Already have an account? "}
         <Button
-          variant="link"
-          size="sm"
-          onClick={() => {
-            setIsLogin(!isLogin);
-            setError("");
-          }}
-          className="px-0"
-        >
-          {isLogin ? "Sign up" : "Sign in"}
-        </Button>
+           variant="link"
+           size="sm"
+           onClick={() => {
+             setIsLogin(!isLogin);
+           }}
+           className="px-0"
+         >
+           {isLogin ? "Sign up" : "Sign in"}
+         </Button>
       </p>
     </div>
   );

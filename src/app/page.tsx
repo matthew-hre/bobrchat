@@ -3,7 +3,8 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
@@ -18,10 +19,25 @@ export default function HomePage(): React.ReactNode {
   const { settings } = useUserSettings();
   const [input, setInput] = useState<string>("");
   const threadIdRef = useRef<string | null>(null);
+  const [browserApiKey, setBrowserApiKey] = useState<string | null>(null);
+  const browserApiKeyRef = useRef<string | null>(null);
 
   const { features, getLatestValues } = useChatInputFeatures(
     { key: "search", defaultValue: false, persist: true },
   );
+
+  useEffect(() => {
+    const key = localStorage.getItem("openrouter_api_key");
+    if (key) {
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
+      setBrowserApiKey(key);
+      browserApiKeyRef.current = key;
+    }
+  }, []);
+
+  useEffect(() => {
+    browserApiKeyRef.current = browserApiKey;
+  }, [browserApiKey]);
 
   const { messages, sendMessage, status } = useChat<ChatUIMessage>({
     transport: new DefaultChatTransport({
@@ -32,10 +48,14 @@ export default function HomePage(): React.ReactNode {
           messages: allMessages,
           threadId: threadIdRef.current,
           searchEnabled: latestValues.search,
+          ...(browserApiKeyRef.current && { browserApiKey: browserApiKeyRef.current }),
         };
         return { body };
       },
     }),
+    onError: (error) => {
+      toast.error(error.message || "Failed to send message");
+    },
   });
 
   const handleSendMessage = async (messageParts: any) => {
@@ -55,7 +75,8 @@ export default function HomePage(): React.ReactNode {
       router.push(`/chat/${threadId}`);
     }
     catch (error) {
-      console.error("Failed to create thread:", error);
+      const message = error instanceof Error ? error.message : "Failed to send message. Please try again.";
+      toast.error(message);
     }
   };
 

@@ -4,6 +4,7 @@ import { MessageCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -37,10 +38,12 @@ export const ThreadItem = memo(({
   const performDirectDelete = async () => {
     try {
       await deleteThread(id);
+      toast.success("Thread deleted");
       router.push("/");
     }
     catch (error) {
       console.error("Failed to delete thread:", error);
+      toast.error("Failed to delete thread");
     }
   };
 
@@ -74,9 +77,11 @@ export const ThreadItem = memo(({
     startTransition(async () => {
       try {
         await renameThread(id, newTitle.trim());
+        toast.success("Thread renamed");
       }
       catch (error) {
         console.error("Failed to rename thread:", error);
+        toast.error("Failed to rename thread");
         setNewTitle(title);
       }
       finally {

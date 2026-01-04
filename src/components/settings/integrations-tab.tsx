@@ -11,6 +11,7 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { cn } from "~/lib/utils";
 
@@ -78,11 +79,15 @@ export function IntegrationsTab() {
       }
 
       setApiKeyValue("");
+      toast.success(hasExistingKey ? "API key updated" : "API key saved");
+    }
+    catch {
+      toast.error("Failed to save API key");
     }
     finally {
       setIsSaving(false);
     }
-  }, [apiKey, storageType, setApiKey]);
+  }, [apiKey, storageType, setApiKey, hasExistingKey]);
 
   const handleDelete = useCallback(async () => {
     setIsDeleting(true);
@@ -90,6 +95,10 @@ export function IntegrationsTab() {
       await removeApiKey("openrouter");
       // Remove from localStorage as well
       localStorage.removeItem("openrouter_api_key");
+      toast.success("API key removed");
+    }
+    catch {
+      toast.error("Failed to remove API key");
     }
     finally {
       setIsDeleting(false);

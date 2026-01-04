@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import type { UserSettingsData } from "~/lib/db/schema/settings";
 
@@ -49,11 +50,13 @@ export function useUserSettings() {
       }
       catch (error) {
         console.error("Failed to fetch settings:", error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
         setState(prev => ({
           ...prev,
           loading: false,
-          error: error instanceof Error ? error.message : "Unknown error",
+          error: errorMessage,
         }));
+        toast.error("Failed to load settings");
       }
     };
 
@@ -78,6 +81,7 @@ export function useUserSettings() {
       catch (error) {
         // Revert on error
         console.error("Failed to update settings:", error);
+        toast.error("Failed to update settings");
         // Re-fetch to get latest state
         const response = await fetch("/api/settings");
         const settings = (await response.json()) as UserSettingsData;
@@ -115,6 +119,7 @@ export function useUserSettings() {
       }
       catch (error) {
         console.error("Failed to update API key:", error);
+        toast.error("Failed to save API key");
         throw error;
       }
     },
@@ -148,6 +153,7 @@ export function useUserSettings() {
       }
       catch (error) {
         console.error("Failed to delete API key:", error);
+        toast.error("Failed to remove API key");
         throw error;
       }
     },

@@ -8,6 +8,7 @@ import { FloatingSidebarToggle } from "~/components/sidebar/floating-sidebar-tog
 import { ThemeInitializer } from "~/components/theme/theme-initializer";
 import { ThemeProvider } from "~/components/theme/theme-provider";
 import { SidebarProvider } from "~/components/ui/sidebar";
+import { Toaster } from "~/components/ui/sonner";
 
 const rethinkSans = Rethink_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -46,6 +47,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <Toaster position="top-right" />
           <ThemeInitializer />
           <SidebarProvider>
             <ChatSidebar />

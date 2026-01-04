@@ -43,6 +43,7 @@
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "tokenlens": "^2.0.0-alpha.3",
     "zod": "^4.2.1"

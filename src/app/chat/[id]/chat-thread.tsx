@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { use, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
@@ -54,14 +55,25 @@ function ChatThread({ params, initialMessages }: ChatThreadProps): React.ReactNo
       },
     }),
     messages: initialMessages,
+    onError: (error) => {
+      toast.error(error.message || "Failed to send message");
+    },
   });
 
   const handleSendMessage = async (messageParts: any) => {
     const userMessage = createUserMessage(messageParts);
 
-    // Save the user message first
-    await saveUserMessage(id, userMessage);
-    // Then send it
+    try {
+      // Save the user message first
+      await saveUserMessage(id, userMessage);
+    }
+    catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to save message";
+      toast.error(message);
+      return;
+    }
+
+    // Then send it (errors surfaced via onError toast)
     sendMessage(messageParts);
   };
 
