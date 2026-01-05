@@ -75,17 +75,8 @@ export function IntegrationsTab() {
         storeServerSide: storageType === "server",
       });
 
+      // Provider handles both server action and localStorage sync
       await setApiKey("openrouter", validated.apiKey, validated.storeServerSide);
-
-      // Only sync localStorage after successful server action
-      if (validated.storeServerSide === false) {
-        // Client-side storage: store key locally
-        localStorage.setItem("openrouter_api_key", validated.apiKey);
-      }
-      else {
-        // Server-side storage: remove from localStorage (key is in DB encrypted)
-        localStorage.removeItem("openrouter_api_key");
-      }
 
       setApiKeyValue("");
       toast.success(hasExistingKey ? "API key updated" : "API key saved");
@@ -107,9 +98,8 @@ export function IntegrationsTab() {
   const handleDelete = useCallback(async () => {
     setIsDeleting(true);
     try {
+      // Provider handles both server action and localStorage cleanup
       await removeApiKey("openrouter");
-      // Remove from localStorage as well
-      localStorage.removeItem("openrouter_api_key");
       toast.success("API key removed");
     }
     catch {

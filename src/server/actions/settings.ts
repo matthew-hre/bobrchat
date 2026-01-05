@@ -13,6 +13,7 @@ import {
 } from "~/lib/schemas/settings";
 import {
   deleteApiKey as deleteApiKeyQuery,
+  getUserSettings,
   getUserSettingsWithMetadata,
   removeApiKeyPreference,
   removeEncryptedKey,
@@ -129,6 +130,31 @@ export async function updateProfile(updates: ProfileUpdate): Promise<void> {
 
   // TODO: Implement profile update in database
   throw new Error("Profile updates are not yet implemented");
+}
+
+/**
+ * Sync user settings and clean up orphaned data
+ * Cleans up orphaned encrypted API keys (keys without matching storage preferences)
+ * and returns fresh user settings
+ * Requires authentication
+ *
+ * @return {Promise<UserSettingsData>} Fresh user settings after cleanup
+ * @throws {Error} If not authenticated
+ */
+export async function syncUserSettings(): Promise<UserSettingsData> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  // Clean up orphaned encrypted keys
+  await cleanupEncryptedApiKeys();
+
+  // Return fresh settings
+  return getUserSettings(session.user.id);
 }
 
 /**

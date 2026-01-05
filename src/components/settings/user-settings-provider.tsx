@@ -7,9 +7,8 @@ import type { PreferencesUpdate } from "~/lib/schemas/settings";
 
 import { useSession } from "~/lib/auth-client";
 import {
-  cleanupEncryptedApiKeys,
-  cleanupMissingClientApiKey,
   deleteApiKey as deleteApiKeyAction,
+  syncUserSettings,
   updateApiKey as updateApiKeyAction,
   updatePreferences,
 } from "~/server/actions/settings";
@@ -47,7 +46,7 @@ export function UserSettingsProvider({
     error: null,
   });
 
-  // Fetch settings on mount (only if user is authenticated)
+  // Fetch and sync settings on mount (only if user is authenticated)
   useEffect(() => {
     const fetchSettings = async () => {
       // Skip fetching if user is not authenticated
@@ -61,38 +60,8 @@ export function UserSettingsProvider({
       }
 
       try {
-        const response = await fetch("/api/settings");
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch settings: ${response.statusText}`);
-        }
-
-        const settings = (await response.json()) as UserSettingsData;
-
-        // Validate localStorage keys exist for client-side storage
-        if (settings.apiKeyStorage.openrouter === "client") {
-          const hasKey = typeof window !== "undefined" && localStorage.getItem("openrouter_api_key") !== null;
-          if (!hasKey) {
-            // Key is missing, clean up the orphaned preference
-            console.warn("OpenRouter API key missing from localStorage, cleaning up preference");
-            try {
-              await cleanupMissingClientApiKey("openrouter");
-              // Remove from local state
-              settings.apiKeyStorage.openrouter = undefined;
-            }
-            catch (cleanupError) {
-              console.error("Failed to cleanup missing API key preference:", cleanupError);
-            }
-          }
-        }
-
-        // Clean up orphaned encrypted keys (keys without matching preferences)
-        try {
-          await cleanupEncryptedApiKeys();
-        }
-        catch (cleanupError) {
-          console.error("Failed to cleanup orphaned encrypted keys:", cleanupError);
-        }
+        // Sync settings and clean up orphaned data
+        const settings = await syncUserSettings();
 
         setState({
           settings,
@@ -116,6 +85,8 @@ export function UserSettingsProvider({
 
   const updateSetting = useCallback(
     async (updates: PreferencesUpdate): Promise<void> => {
+      const previousSettings = state.settings;
+
       try {
         // Optimistically update state
         setState(prev => ({
@@ -131,18 +102,15 @@ export function UserSettingsProvider({
       catch (error) {
         // Revert on error
         console.error("Failed to update settings:", error);
-        // Re-fetch to get latest state
-        const response = await fetch("/api/settings");
-        const settings = (await response.json()) as UserSettingsData;
+        const errorMessage = error instanceof Error ? error.message : "Failed to update settings";
         setState({
-          settings,
+          settings: previousSettings,
           loading: false,
-          error:
-            error instanceof Error ? error.message : "Unknown error",
+          error: errorMessage,
         });
       }
     },
-    [],
+    [state.settings],
   );
 
   const setApiKey = useCallback(
@@ -154,7 +122,17 @@ export function UserSettingsProvider({
       try {
         await updateApiKeyAction(provider, apiKey, storeServerSide);
 
-        // Update local storage preference
+        // Sync browser localStorage based on storage preference
+        if (storeServerSide) {
+          // Server-side storage: remove from localStorage (key is in DB encrypted)
+          localStorage.removeItem("openrouter_api_key");
+        }
+        else {
+          // Client-side storage: store key locally
+          localStorage.setItem("openrouter_api_key", apiKey);
+        }
+
+        // Update local state preference
         setState(prev => ({
           ...prev,
           settings: prev.settings
@@ -181,7 +159,10 @@ export function UserSettingsProvider({
       try {
         await deleteApiKeyAction(provider);
 
-        // Update local storage preference
+        // Remove from browser localStorage
+        localStorage.removeItem("openrouter_api_key");
+
+        // Update local state preference
         setState((prev) => {
           if (!prev.settings)
             return prev;
