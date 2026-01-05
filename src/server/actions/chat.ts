@@ -6,8 +6,9 @@ import { headers } from "next/headers";
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
 import { auth } from "~/lib/auth";
-import { createThread, deleteThreadById, getThreadById, renameThreadById, saveMessage } from "~/server/db/queries/chat";
+import { createThread, deleteThreadById, renameThreadById, saveMessage } from "~/server/db/queries/chat";
 import { hasApiKey } from "~/server/db/queries/settings";
+import { validateThreadOwnership } from "~/server/db/utils/thread-validation";
 
 /**
  * Creates a new chat thread for the authenticated user.
@@ -48,16 +49,7 @@ export async function saveUserMessage(threadId: string, message: ChatUIMessage):
     headers: await headers(),
   });
 
-  if (!session?.user)
-    throw new Error("Not authenticated");
-
-  const thread = await getThreadById(threadId);
-  if (!thread)
-    throw new Error("Thread not found");
-
-  if (thread.userId !== session.user.id)
-    throw new Error("Unauthorized");
-
+  await validateThreadOwnership(threadId, session);
   await saveMessage(threadId, message);
 }
 
@@ -72,16 +64,8 @@ export async function deleteThread(threadId: string): Promise<void> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  if (!session?.user)
-    throw new Error("Not authenticated");
 
-  const thread = await getThreadById(threadId);
-  if (!thread)
-    throw new Error("Thread not found");
-
-  if (thread.userId !== session.user.id)
-    throw new Error("Unauthorized");
-
+  await validateThreadOwnership(threadId, session);
   await deleteThreadById(threadId);
   revalidatePath("/");
 }
@@ -98,16 +82,8 @@ export async function renameThread(threadId: string, newTitle: string): Promise<
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  if (!session?.user)
-    throw new Error("Not authenticated");
 
-  const thread = await getThreadById(threadId);
-  if (!thread)
-    throw new Error("Thread not found");
-
-  if (thread.userId !== session.user.id)
-    throw new Error("Unauthorized");
-
+  await validateThreadOwnership(threadId, session);
   await renameThreadById(threadId, newTitle);
 
   revalidatePath("/");

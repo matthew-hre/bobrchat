@@ -26,6 +26,7 @@ export function ChatView({
   onSearchChange,
   landingPageContent,
   showLandingPage,
+  hasApiKey,
 }: {
   messages: ChatUIMessage[];
   input: string;
@@ -37,6 +38,7 @@ export function ChatView({
   onSearchChange?: (enabled: boolean) => void;
   landingPageContent?: LandingPageContentType;
   showLandingPage?: boolean;
+  hasApiKey?: boolean;
 }) {
   const { scrollRef, messagesEndRef, isInitialScrollComplete } = useChatScroll(messages, { threadId });
 
@@ -95,6 +97,7 @@ export function ChatView({
           onSendMessage={handleSendMessage}
           searchEnabled={searchEnabled}
           onSearchChange={onSearchChange}
+          hasApiKey={hasApiKey}
         />
       </div>
     </div>

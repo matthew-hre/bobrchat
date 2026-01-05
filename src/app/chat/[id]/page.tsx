@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "~/lib/auth";
 import { getMessagesByThreadId, getThreadById } from "~/server/db/queries/chat";
+import { hasApiKey } from "~/server/db/queries/settings";
 
 import ChatThread from "./chat-thread";
 
@@ -34,6 +35,7 @@ export default async function ChatServer({ params }: ChatServerProps) {
   }
 
   const initialMessages = await getMessagesByThreadId(id);
+  const hasServerApiKey = await hasApiKey(session.user.id, "openrouter");
 
-  return <ChatThread params={Promise.resolve({ id })} initialMessages={initialMessages} />;
+  return <ChatThread params={Promise.resolve({ id })} initialMessages={initialMessages} hasApiKey={hasServerApiKey} />;
 }

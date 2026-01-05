@@ -2,8 +2,6 @@
 
 import { AlertCircle, PaperclipIcon, SearchIcon, SendIcon } from "lucide-react";
 import * as React from "react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 import { cn } from "~/lib/utils";
 
@@ -17,6 +15,7 @@ type ChatInputProps = {
   onSendMessage: (content: string) => void;
   searchEnabled?: boolean;
   onSearchChange?: (enabled: boolean) => void;
+  hasApiKey?: boolean;
 };
 
 export function ChatInput({
@@ -26,28 +25,9 @@ export function ChatInput({
   onSendMessage,
   searchEnabled = false,
   onSearchChange,
+  hasApiKey,
 }: ChatInputProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    async function checkApiKey() {
-      try {
-        const response = await fetch("/api/user/api-key-status");
-        if (response.ok) {
-          const data = await response.json();
-          setHasApiKey(data.hasApiKey);
-        }
-      }
-      catch (error) {
-        console.error("Failed to check API key status:", error);
-        toast.error("Failed to check API key status");
-        setHasApiKey(false);
-      }
-    }
-
-    checkApiKey();
-  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

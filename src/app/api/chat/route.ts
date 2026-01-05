@@ -4,8 +4,9 @@ import { headers } from "next/headers";
 
 import { auth } from "~/lib/auth";
 import { streamChatResponse } from "~/server/ai/service";
-import { getThreadById, saveMessage } from "~/server/db/queries/chat";
+import { saveMessage } from "~/server/db/queries/chat";
 import { getServerApiKey } from "~/server/db/queries/settings";
+import { validateThreadOwnership } from "~/server/db/utils/thread-validation";
 
 export type SourceInfo = {
   id: string;
@@ -42,17 +43,14 @@ export async function POST(req: Request) {
     = await req.json();
 
   if (threadId) {
-    const thread = await getThreadById(threadId);
-    if (!thread) {
-      return new Response(JSON.stringify({ error: "Thread not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+    try {
+      await validateThreadOwnership(threadId, session);
     }
-
-    if (thread.userId !== session.user.id) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 403,
+    catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      const status = message === "Thread not found" ? 404 : 403;
+      return new Response(JSON.stringify({ error: message }), {
+        status,
         headers: { "Content-Type": "application/json" },
       });
     }

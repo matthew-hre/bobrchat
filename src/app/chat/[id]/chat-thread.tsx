@@ -15,9 +15,10 @@ import { saveUserMessage } from "~/server/actions/chat";
 type ChatThreadProps = {
   params: Promise<{ id: string }>;
   initialMessages: ChatUIMessage[];
+  hasApiKey: boolean;
 };
 
-function ChatThread({ params, initialMessages }: ChatThreadProps): React.ReactNode {
+function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): React.ReactNode {
   const [input, setInput] = useState<string>("");
   const [browserApiKey, setBrowserApiKey] = useState<string | null>(null);
   const { id } = use(params);
@@ -88,6 +89,7 @@ function ChatThread({ params, initialMessages }: ChatThreadProps): React.ReactNo
       onSearchChange={(enabled) => {
         features.search.setValue(enabled);
       }}
+      hasApiKey={hasApiKey}
     />
   );
 }
