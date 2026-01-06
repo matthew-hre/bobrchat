@@ -1,6 +1,5 @@
 "use client";
 
-import type { Model } from "@openrouter/sdk/models";
 import type { UseChatHelpers } from "@ai-sdk/react";
 
 import { useCallback } from "react";
@@ -28,9 +27,6 @@ export function ChatView({
   landingPageContent,
   showLandingPage,
   hasApiKey,
-  favoriteModels,
-  selectedModel,
-  onSelectedModelChange,
 }: {
   messages: ChatUIMessage[];
   input: string;
@@ -43,9 +39,6 @@ export function ChatView({
   landingPageContent?: LandingPageContentType;
   showLandingPage?: boolean;
   hasApiKey?: boolean;
-  favoriteModels?: Model[];
-  selectedModel?: string;
-  onSelectedModelChange?: (modelId: string) => void;
 }) {
   const { scrollRef, messagesEndRef, isInitialScrollComplete } = useChatScroll(messages, { threadId });
 
@@ -106,9 +99,6 @@ export function ChatView({
           searchEnabled={searchEnabled}
           onSearchChange={onSearchChange}
           hasApiKey={hasApiKey}
-          favoriteModels={favoriteModels}
-          selectedModel={selectedModel}
-          onSelectedModelChange={onSelectedModelChange}
         />
       </div>
     </div>

@@ -18,6 +18,7 @@ import { createStreamHandlers, processStreamChunk } from "./stream";
  * @param userId The ID of the user making the request (to get their API key).
  * @param apiKey Optional API key provided by the client (for browser-only storage).
  * @param searchEnabled Whether web search is enabled for this request.
+ * @param onFirstToken Optional callback to capture first token timing from the messageMetadata handler.
  * @returns An object containing the text stream and a function to create metadata for each message part.
  */
 export async function streamChatResponse(
@@ -26,6 +27,7 @@ export async function streamChatResponse(
   userId: string,
   apiKey: string,
   searchEnabled?: boolean,
+  onFirstToken?: () => void,
 ) {
   if (!apiKey) {
     throw new Error("No API key configured. Please set up your OpenRouter API key in settings.");
@@ -66,6 +68,12 @@ export async function streamChatResponse(
   return {
     stream: result,
     createMetadata: (part: TextStreamPart<ToolSet>) => {
+      // Capture first token when text-start is received (not via onChunk callback)
+      if (part.type === "text-start" && firstTokenTime === null) {
+        firstTokenTime = Date.now();
+        onFirstToken?.();
+      }
+
       if (part.type === "finish") {
         const usage = part.totalUsage;
         const totalTime = Date.now() - startTime;

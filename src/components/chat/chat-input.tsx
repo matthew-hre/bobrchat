@@ -1,7 +1,5 @@
 "use client";
 
-import type { Model } from "@openrouter/sdk/models";
-
 import { AlertCircle, PaperclipIcon, SearchIcon, SendIcon } from "lucide-react";
 import * as React from "react";
 
@@ -9,6 +7,7 @@ import { cn } from "~/lib/utils";
 
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { useModelContext } from "./model-context";
 import { ModelSelector } from "./model-selector";
 
 type ChatInputProps = {
@@ -19,9 +18,6 @@ type ChatInputProps = {
   searchEnabled?: boolean;
   onSearchChange?: (enabled: boolean) => void;
   hasApiKey?: boolean;
-  favoriteModels?: Model[];
-  selectedModel?: string;
-  onSelectedModelChange?: (modelId: string) => void;
 };
 
 export function ChatInput({
@@ -32,10 +28,8 @@ export function ChatInput({
   searchEnabled = false,
   onSearchChange,
   hasApiKey,
-  favoriteModels,
-  selectedModel,
-  onSelectedModelChange,
 }: ChatInputProps) {
+  const { models, selectedModelId, setSelectedModelId } = useModelContext();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -98,7 +92,8 @@ export function ChatInput({
             placeholder="Type your message here..."
             disabled={hasApiKey === false}
             className={`
-              max-h-50 min-h-13 resize-none border-0 px-3 py-3 text-base
+              max-h-50 min-h-13 resize-none rounded-none border-0 px-3 py-3
+              text-base
               focus-visible:ring-0
               disabled:opacity-50
             `}
@@ -111,11 +106,11 @@ export function ChatInput({
           `}
           >
             {/* Model Selector */}
-            {favoriteModels && (
+            {models && models.length > 0 && (
               <ModelSelector
-                models={favoriteModels}
-                selectedModelId={selectedModel}
-                onSelectModel={onSelectedModelChange || (() => {})}
+                models={models}
+                selectedModelId={selectedModelId || undefined}
+                onSelectModel={setSelectedModelId}
               />
             )}
 

@@ -8,8 +8,8 @@ import { toast } from "sonner";
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
 import { ChatView } from "~/components/chat/chat-view";
+import { useModelContext } from "~/components/chat/model-context";
 import { useChatInputFeatures } from "~/hooks/use-chat-input-features";
-import { useModelSelector } from "~/hooks/use-model-selector";
 import { createUserMessage } from "~/lib/utils/messages";
 import { saveUserMessage } from "~/server/actions/chat";
 
@@ -23,7 +23,7 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
   const [input, setInput] = useState<string>("");
   const [browserApiKey, setBrowserApiKey] = useState<string | null>(null);
   const { id } = use(params);
-  const { models, selectedModelId, setSelectedModelId } = useModelSelector();
+  const { selectedModelId } = useModelContext();
 
   const { features, getLatestValues } = useChatInputFeatures(
     { key: "search", defaultValue: false, persist: true },
@@ -98,9 +98,6 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
         features.search.setValue(enabled);
       }}
       hasApiKey={hasApiKey}
-      favoriteModels={models}
-      selectedModel={selectedModelId || undefined}
-      onSelectedModelChange={setSelectedModelId}
     />
   );
 }
