@@ -4,7 +4,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 
 import { SettingsTabs } from "~/components/settings/settings-tabs";
-import { UserSettingsProvider } from "~/components/settings/user-settings-provider";
 import {
   Dialog,
   DialogContent,
@@ -57,9 +56,7 @@ export default function SettingsModal() {
         `}
       >
         <DialogTitle className="sr-only">Settings</DialogTitle>
-        <UserSettingsProvider>
-          <SettingsTabs />
-        </UserSettingsProvider>
+        <SettingsTabs />
       </DialogContent>
     </Dialog>
   );

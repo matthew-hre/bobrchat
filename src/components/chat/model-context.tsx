@@ -5,6 +5,10 @@ import type { Model } from "@openrouter/sdk/models";
 import { createContext, use, useEffect, useState } from "react";
 
 import { useUserSettingsContext } from "~/components/settings/user-settings-provider";
+import {
+  getCachedModels,
+  setCachedModels,
+} from "~/lib/cache/model-cache";
 import { fetchOpenRouterModels } from "~/server/actions/settings";
 
 type ModelContextType = {
@@ -24,34 +28,55 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
   const [allModels, setAllModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch all models from OpenRouter
+  const fetchAndCacheModels = async () => {
+    try {
+      let apiKey: string | undefined;
+      if (settings?.apiKeyStorage?.openrouter === "client") {
+        apiKey = localStorage.getItem("openrouter_api_key") ?? undefined;
+      }
+      const models = await fetchOpenRouterModels(apiKey);
+      setAllModels(models);
+      setCachedModels(models);
+    }
+    catch (error) {
+      console.error("[ModelContext] Failed to fetch models:", error);
+      setAllModels([]);
+    }
+    finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch all models from OpenRouter with intelligent caching
   useEffect(() => {
-    const fetchModels = async () => {
-      setIsLoading(true);
-      try {
-        let apiKey: string | undefined;
-        if (settings?.apiKeyStorage?.openrouter === "client") {
-          apiKey = localStorage.getItem("openrouter_api_key") ?? undefined;
+    const initializeModels = async () => {
+      // Check cache first (immediate response)
+      const { data: cachedModels, isFresh } = getCachedModels<Model[]>();
+
+      if (cachedModels && cachedModels.length > 0) {
+        setAllModels(cachedModels);
+
+        // If cache is stale, refresh in background
+        if (!isFresh) {
+          fetchAndCacheModels();
         }
-        const models = await fetchOpenRouterModels(apiKey);
-        setAllModels(models);
+
+        return;
       }
-      catch (error) {
-        console.error("Failed to fetch models:", error);
-        setAllModels([]);
-      }
-      finally {
-        setIsLoading(false);
-      }
+
+      // No cache - show loading and fetch immediately
+      setIsLoading(true);
+      await fetchAndCacheModels();
     };
 
-    // Only fetch if we have an API key configured (client or server)
+    // Only initialize if we have an API key configured (client or server)
     const hasApiKeyConfigured = settings?.apiKeyStorage?.openrouter === "client"
       || settings?.apiKeyStorage?.openrouter === "server";
 
-    if (allModels.length === 0 && hasApiKeyConfigured) {
-      fetchModels();
+    if (hasApiKeyConfigured) {
+      initializeModels();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings?.apiKeyStorage?.openrouter]);
 
   // Initialize selectedModelId from localStorage or first favorite
@@ -66,7 +91,25 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
         : settings.favoriteModels[0];
       setSelectedModelIdState(modelToSelect);
     }
+    else {
+      // Reset if no favorites available
+      setSelectedModelIdState(null);
+    }
   }, [settings?.favoriteModels]);
+
+  // Validate selectedModelId is still in favorites when they change
+  useEffect(() => {
+    if (!selectedModelId || !settings?.favoriteModels) {
+      return;
+    }
+
+    // If currently selected model is no longer in favorites, reset to first favorite
+    if (!settings.favoriteModels.includes(selectedModelId) && settings.favoriteModels.length > 0) {
+      const firstFavoriteId = settings.favoriteModels[0];
+      setSelectedModelIdState(firstFavoriteId);
+      localStorage.setItem(SELECTED_MODEL_KEY, firstFavoriteId);
+    }
+  }, [settings?.favoriteModels, selectedModelId]);
 
   const handleSetSelectedModelId = (modelId: string) => {
     setSelectedModelIdState(modelId);

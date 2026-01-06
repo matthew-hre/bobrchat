@@ -29,7 +29,7 @@ export function ChatInput({
   onSearchChange,
   hasApiKey,
 }: ChatInputProps) {
-  const { models, selectedModelId, setSelectedModelId } = useModelContext();
+  const { models, selectedModelId, setSelectedModelId, isLoading } = useModelContext();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -106,13 +106,12 @@ export function ChatInput({
           `}
           >
             {/* Model Selector */}
-            {models && models.length > 0 && (
-              <ModelSelector
-                models={models}
-                selectedModelId={selectedModelId || undefined}
-                onSelectModel={setSelectedModelId}
-              />
-            )}
+            <ModelSelector
+              models={models}
+              selectedModelId={selectedModelId || undefined}
+              onSelectModel={setSelectedModelId}
+              isLoading={isLoading}
+            />
 
             <div className="flex-1" />
             <div className="flex items-center gap-2">

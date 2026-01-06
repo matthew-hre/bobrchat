@@ -19,12 +19,18 @@ import {
 } from "@dnd-kit/sortable";
 import Fuse from "fuse.js";
 import {
+  RefreshCwIcon,
   SearchIcon,
   SparklesIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  clearModelCache,
+  getCachedModels,
+  setCachedModels,
+} from "~/lib/cache/model-cache";
 import { fetchOpenRouterModels } from "~/server/actions/settings";
 
 import {
@@ -33,6 +39,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../../ui/accordion";
+import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Skeleton } from "../../ui/skeleton";
 import { useUserSettingsContext } from "../user-settings-provider";
@@ -48,6 +55,7 @@ export function ModelsTab() {
     () => settings?.favoriteModels ?? [],
   );
   const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Configure sensors for drag and drop
   const sensors = useSensors(
@@ -57,8 +65,7 @@ export function ModelsTab() {
     }),
   );
 
-  const handleFetchModels = useCallback(async () => {
-    setIsLoading(true);
+  const fetchAndCacheModels = useCallback(async () => {
     try {
       // Try to get API key from localStorage (client-side storage)
       let apiKey: string | undefined;
@@ -69,17 +76,49 @@ export function ModelsTab() {
       const result = await fetchOpenRouterModels(apiKey);
 
       setModels(result);
+      setCachedModels(result);
       // Only set selectedModels if we don't already have any (initial load)
       setSelectedModels(prev => prev.length > 0 ? prev : (settings?.favoriteModels ?? []));
     }
     catch (error) {
-      console.error("Error fetching models:", error);
+      console.error("[ModelsTab] Error fetching models:", error);
       toast.error(error instanceof Error ? error.message : "Failed to fetch models");
     }
     finally {
       setIsLoading(false);
     }
   }, [settings?.apiKeyStorage?.openrouter, settings?.favoriteModels]);
+
+  const handleFetchModels = useCallback(async () => {
+    // Check cache first
+    const { data: cachedModels, isFresh } = getCachedModels<Model[]>();
+
+    if (cachedModels && cachedModels.length > 0) {
+      setModels(cachedModels);
+      setSelectedModels(prev => prev.length > 0 ? prev : (settings?.favoriteModels ?? []));
+
+      // If cache is stale, refresh in background
+      if (!isFresh) {
+        fetchAndCacheModels();
+      }
+
+      return;
+    }
+
+    // No cache - show loading and fetch immediately
+    setIsLoading(true);
+    await fetchAndCacheModels();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings?.favoriteModels]);
+
+  const handleRefreshModels = useCallback(async () => {
+    clearModelCache();
+    setIsRefreshing(true);
+    setIsLoading(true);
+    await fetchAndCacheModels();
+    setIsRefreshing(false);
+    toast.success("Models updated successfully");
+  }, [fetchAndCacheModels]);
 
   // Auto-fetch models on mount (only if not already loaded)
   useEffect(() => {
@@ -166,7 +205,22 @@ export function ModelsTab() {
     <div className="flex flex-col overflow-hidden">
       {/* Header */}
       <div className="border-border border-b px-6 py-4">
-        <h2 className="text-lg font-semibold">Models</h2>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Models</h2>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleRefreshModels}
+            disabled={isRefreshing || isLoading}
+            className="absolute top-4 right-4 gap-2 text-sm"
+          >
+            <RefreshCwIcon
+              size={8}
+              className={isRefreshing ? "animate-spin" : ""}
+            />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </Button>
+        </div>
         <p className="text-muted-foreground text-sm">
           Search and manage your favorite OpenRouter models (max 10)
         </p>
@@ -298,20 +352,6 @@ export function ModelsTab() {
                       })}
                   </div>
                 )}
-      </div>
-
-      {/* Footer */}
-      <div className="border-border space-y-3 border-t px-6 py-4">
-        {models.length > 0 && selectedModels.length > 0 && (
-          <p className="text-muted-foreground text-xs">
-            {selectedModels.length}
-            {" "}
-            model
-            {selectedModels.length !== 1 ? "s" : ""}
-            {" "}
-            selected
-          </p>
-        )}
       </div>
     </div>
   );
