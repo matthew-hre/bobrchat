@@ -1,18 +1,23 @@
 "use server";
 
+import type { Model, ModelsListResponse } from "@openrouter/sdk/models";
+
+import { OpenRouter } from "@openrouter/sdk";
 import { headers } from "next/headers";
 
 import type { EncryptedApiKeysData, UserSettingsData } from "~/lib/db/schema/settings";
-import type { PreferencesUpdate, ProfileUpdate } from "~/lib/schemas/settings";
+import type { FavoriteModelsInput, PreferencesUpdate, ProfileUpdate } from "~/lib/schemas/settings";
 
 import { auth } from "~/lib/auth";
 import {
   apiKeyUpdateSchema,
+  favoriteModelsUpdateSchema,
   preferencesUpdateSchema,
   profileUpdateSchema,
 } from "~/lib/schemas/settings";
 import {
   deleteApiKey as deleteApiKeyQuery,
+  getServerApiKey,
   getUserSettings,
   getUserSettingsWithMetadata,
   removeApiKeyPreference,
@@ -214,4 +219,83 @@ export async function cleanupEncryptedApiKeys(): Promise<void> {
       await removeEncryptedKey(userId, provider);
     }
   }
+}
+
+/**
+ * Fetch all available models from OpenRouter catalogue
+ * Requires authentication and a valid OpenRouter API key
+ *
+ * @param apiKey Optional API key (uses server-stored key if not provided)
+ * @return {Promise<Model[]>} Array of available models with metadata
+ * @throws {Error} If not authenticated or no API key available
+ */
+export async function fetchOpenRouterModels(apiKey?: string) {
+  // Get authenticated session
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  // Use provided key or fetch from server storage
+  let keyToUse = apiKey;
+  if (!keyToUse) {
+    keyToUse = await getServerApiKey(session.user.id, "openrouter");
+  }
+
+  if (!keyToUse) {
+    throw new Error("No OpenRouter API key configured");
+  }
+
+  try {
+    const openRouter = new OpenRouter({
+      apiKey: keyToUse,
+    });
+
+    const result: ModelsListResponse = await openRouter.models.list({});
+
+    if (!result || !Array.isArray(result.data)) {
+      throw new Error("Invalid response from OpenRouter API");
+    }
+
+    let models = result.data;
+
+    // Remove models with image generation
+    models = models.filter((model: Model) => {
+      return !(model.architecture?.outputModalities?.includes("image"));
+    });
+
+    return models;
+  }
+  catch (error) {
+    console.error("Failed to fetch models from OpenRouter:", error);
+    throw new Error("Failed to fetch models from OpenRouter API");
+  }
+}
+
+/**
+ * Update user's favorite models list (max 10)
+ * Requires authentication
+ *
+ * @param updates Partial update with favoriteModels array
+ * @return {Promise<UserSettingsData>} Updated user settings
+ * @throws {Error} If not authenticated or validation fails
+ */
+export async function updateFavoriteModels(updates: FavoriteModelsInput): Promise<UserSettingsData> {
+  // Validate input with Zod
+  const validated = favoriteModelsUpdateSchema.parse(updates);
+
+  // Get authenticated session
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  // Update settings in database
+  return updateUserSettingsPartial(session.user.id, validated);
 }

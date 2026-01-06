@@ -53,3 +53,17 @@ export type ProfileUpdate = Partial<ProfileInput>;
  * Partial profile for updates (all fields optional)
  */
 export const profileUpdateSchema = profileSchema.partial();
+
+/**
+ * Models tab - favorite models management
+ */
+export const favoriteModelsSchema = z.object({
+  favoriteModels: z.array(z.string()).max(10, "Maximum 10 models allowed"),
+});
+
+export type FavoriteModelsInput = z.infer<typeof favoriteModelsSchema>;
+
+/**
+ * Partial favorite models for updates
+ */
+export const favoriteModelsUpdateSchema = favoriteModelsSchema.partial();

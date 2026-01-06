@@ -4,6 +4,7 @@ import {
   KeyIcon,
   LogOutIcon,
   SettingsIcon,
+  SparklesIcon,
   UserIcon,
   XIcon,
 } from "lucide-react";
@@ -17,10 +18,11 @@ import { Button } from "../ui/button";
 import { DialogClose } from "../ui/dialog";
 import { Separator } from "../ui/separator";
 import { IntegrationsTab } from "./integrations-tab";
+import { ModelsTab } from "./models-tab";
 import { PreferencesTab } from "./preferences-tab";
 import { ProfileTab } from "./profile-tab";
 
-type TabId = "profile" | "preferences" | "integrations";
+type TabId = "profile" | "preferences" | "integrations" | "models";
 
 type TabConfig = {
   id: TabId;
@@ -32,6 +34,7 @@ const tabs: TabConfig[] = [
   { id: "profile", label: "Profile", icon: UserIcon },
   { id: "preferences", label: "Preferences", icon: SettingsIcon },
   { id: "integrations", label: "Integrations", icon: KeyIcon },
+  { id: "models", label: "Models", icon: SparklesIcon },
 ];
 
 export function SettingsTabs() {
@@ -137,6 +140,8 @@ function TabContent({ activeTab }: { activeTab: TabId }) {
       return <PreferencesTab />;
     case "integrations":
       return <IntegrationsTab />;
+    case "models":
+      return <ModelsTab />;
     default:
       return <ProfileTab />;
   }

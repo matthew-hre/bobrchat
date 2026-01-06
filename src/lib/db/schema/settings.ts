@@ -15,6 +15,8 @@ export type UserSettingsData = {
   apiKeyStorage: {
     openrouter?: "client" | "server";
   };
+  // List of favorite model IDs from OpenRouter (max 10)
+  favoriteModels?: string[];
 };
 
 // Storage for encrypted API keys (only populated if user opts into server storage)
