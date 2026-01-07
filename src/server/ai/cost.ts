@@ -1,6 +1,25 @@
 import { getModelData } from "tokenlens";
 
 /**
+ * Calculates the cost of web search via Parallel.
+ *
+ * Pricing model:
+ * - Base: $0.005 per request
+ * - Per result/excerpt: $0.001 each
+ *
+ * @param resultCount Number of search results or excerpts retrieved
+ * @returns Cost in USD
+ */
+export function calculateSearchCost(resultCount: number): number {
+  if (resultCount === 0)
+    return 0;
+  const BASE_COST = 0.005;
+  const PER_RESULT_COST = 0.001;
+  const cost = BASE_COST + resultCount * PER_RESULT_COST;
+  return cost;
+}
+
+/**
  * Calculates the cost of a chat interaction based on token usage and pricing.
  *
  * @param usage An object containing token usage information.
@@ -23,14 +42,14 @@ export function calculateChatCost(
 /**
  * Gets token costs for a given model from OpenRouter via tokenlens.
  *
- * Strips ":online" suffix if present and handles errors gracefully by returning 0 costs.
+ * Handles errors gracefully by returning 0 costs.
  *
  * @param modelId The ID of the model to get pricing for.
  * @returns An object containing input and output cost per million tokens.
  */
 export async function getTokenCosts(modelId: string) {
   try {
-    // Strip ":online" suffix if present (e.g., "openrouter/meta-llama/llama-2-70b:online")
+    // Parse model suffix if present (e.g., "openrouter/meta-llama/llama-2-70b:free")
     const [baseModelId, modelSuffix] = modelId.split(":");
 
     if (modelSuffix === "free") {

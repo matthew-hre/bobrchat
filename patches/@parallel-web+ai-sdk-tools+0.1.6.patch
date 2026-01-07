@@ -1,0 +1,33 @@
+diff --git a/node_modules/@parallel-web/ai-sdk-tools/dist/index.js b/node_modules/@parallel-web/ai-sdk-tools/dist/index.js
+index 1234567..abcdefg 100644
+--- a/node_modules/@parallel-web/ai-sdk-tools/dist/index.js
++++ b/node_modules/@parallel-web/ai-sdk-tools/dist/index.js
+@@ -5,6 +5,19 @@ import { Parallel } from 'parallel-web';
+ 
+ // src/tools/search.ts
+ var _parallelClient = null;
++function createParallelClient(apiKey) {
++  let client = null;
++  return new Proxy({}, {
++    get(_target, prop) {
++      if (!client) {
++        client = new Parallel({
++          apiKey
++        });
++      }
++      return client[prop];
++    }
++  });
++}
+ var parallelClient = new Proxy({}, {
+   get(_target, prop) {
+     if (!_parallelClient) {
+@@ -138,7 +151,7 @@ var extractTool = tool({
+     };
+   }
+ });
+ 
+-export { extractTool, searchTool };
++export { extractTool, searchTool, createParallelClient };
+ //# sourceMappingURL=index.js.map
+ //# sourceMappingURL=index.js.map

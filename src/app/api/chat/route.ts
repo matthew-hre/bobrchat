@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const { messages, threadId, browserApiKey, searchEnabled, modelId }: { messages: ChatUIMessage[]; threadId?: string; browserApiKey?: string; searchEnabled?: boolean; modelId?: string }
+  const { messages, threadId, browserApiKey, parallelBrowserApiKey, searchEnabled, modelId }: { messages: ChatUIMessage[]; threadId?: string; browserApiKey?: string; parallelBrowserApiKey?: string; searchEnabled?: boolean; modelId?: string }
     = await req.json();
 
   if (threadId) {
@@ -70,14 +70,31 @@ export async function POST(req: Request) {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  // Get Parallel.ai API key if search is enabled
+  let parallelApiKey: string | undefined;
+  if (searchEnabled) {
+    const serverParallelApiKey = await getServerApiKey(session.user.id, "parallel");
+    parallelApiKey = parallelBrowserApiKey ?? serverParallelApiKey;
+  }
+
+  if (searchEnabled && !parallelApiKey) {
+    return new Response(JSON.stringify({ error: "Web search is enabled but no Parallel API key configured. Provide a browser key or store one on the server." }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const baseModelId = modelId || "google/gemini-3-flash-preview";
-  const finalModelId = searchEnabled ? `${baseModelId}:online` : baseModelId;
 
-  const { stream, createMetadata } = await streamChatResponse(messages, finalModelId, session.user.id, resolvedApiKey, searchEnabled);
+  const { stream, createMetadata } = await streamChatResponse(messages, baseModelId, session.user.id, resolvedApiKey, searchEnabled, parallelApiKey, undefined);
 
-  return stream.toUIMessageStreamResponse({
+  const response = stream.toUIMessageStreamResponse({
     originalMessages: messages,
-    messageMetadata: ({ part }) => createMetadata(part),
+    messageMetadata: ({ part }) => {
+      const metadata = createMetadata(part);
+      return metadata;
+    },
     onFinish: async ({ responseMessage }) => {
       if (threadId) {
         await saveMessage(threadId, responseMessage);
@@ -85,4 +102,6 @@ export async function POST(req: Request) {
     },
     sendSources: true,
   });
+
+  return response;
 }

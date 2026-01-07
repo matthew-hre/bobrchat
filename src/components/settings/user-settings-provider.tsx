@@ -21,11 +21,11 @@ type UserSettingsContextType = {
   updateSetting: (updates: PreferencesUpdate) => Promise<void>;
   updateFavoriteModels: (favoriteModels: string[]) => Promise<void>;
   setApiKey: (
-    provider: "openrouter",
+    provider: "openrouter" | "parallel",
     apiKey: string,
     storeServerSide?: boolean,
   ) => Promise<void>;
-  removeApiKey: (provider: "openrouter") => Promise<void>;
+  removeApiKey: (provider: "openrouter" | "parallel") => Promise<void>;
 };
 
 const UserSettingsContext = createContext<UserSettingsContextType | undefined>(
@@ -148,7 +148,7 @@ export function UserSettingsProvider({
 
   const setApiKey = useCallback(
     async (
-      provider: "openrouter",
+      provider: "openrouter" | "parallel",
       apiKey: string,
       storeServerSide: boolean = false,
     ): Promise<void> => {
@@ -156,13 +156,14 @@ export function UserSettingsProvider({
         await updateApiKeyAction(provider, apiKey, storeServerSide);
 
         // Sync browser localStorage based on storage preference
+        const localStorageKey = `${provider}_api_key`;
         if (storeServerSide) {
           // Server-side storage: remove from localStorage (key is in DB encrypted)
-          localStorage.removeItem("openrouter_api_key");
+          localStorage.removeItem(localStorageKey);
         }
         else {
           // Client-side storage: store key locally
-          localStorage.setItem("openrouter_api_key", apiKey);
+          localStorage.setItem(localStorageKey, apiKey);
         }
 
         // Update local state preference
@@ -188,12 +189,13 @@ export function UserSettingsProvider({
   );
 
   const removeApiKey = useCallback(
-    async (provider: "openrouter"): Promise<void> => {
+    async (provider: "openrouter" | "parallel"): Promise<void> => {
       try {
         await deleteApiKeyAction(provider);
 
         // Remove from browser localStorage
-        localStorage.removeItem("openrouter_api_key");
+        const localStorageKey = `${provider}_api_key`;
+        localStorage.removeItem(localStorageKey);
 
         // Update local state preference
         setState((prev) => {

@@ -14,6 +14,7 @@ export type UserSettingsData = {
   // 'client' = stored in browser localStorage, 'server' = stored encrypted on server
   apiKeyStorage: {
     openrouter?: "client" | "server";
+    parallel?: "client" | "server";
   };
   // List of favorite model IDs from OpenRouter (max 10)
   favoriteModels?: string[];
@@ -22,6 +23,7 @@ export type UserSettingsData = {
 // Storage for encrypted API keys (only populated if user opts into server storage)
 export type EncryptedApiKeysData = {
   openrouter?: string; // Encrypted value in "iv:encryptedData:authTag" format
+  parallel?: string; // Encrypted value in "iv:encryptedData:authTag" format
 };
 
 export const userSettings = pgTable("user_settings", {

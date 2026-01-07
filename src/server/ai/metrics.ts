@@ -1,4 +1,4 @@
-import { calculateChatCost } from "./cost";
+import { calculateChatCost, calculateSearchCost } from "./cost";
 
 type MetadataOptions = {
   inputTokens: number;
@@ -33,17 +33,23 @@ export function calculateResponseMetadata(options: MetadataOptions) {
     sources,
   } = options;
 
-  const searchPricing = searchEnabled ? 0.02 : 0; // $0.02 per 5 requests on OpenRouter
+  // TODO: Calculate actual search result count from tool calls.
+  // Currently using the default of 10 results for cost estimation.
+  const searchPricing = searchEnabled
+    ? calculateSearchCost(10)
+    : 0;
+
+  const totalCost = calculateChatCost(
+    { inputTokens, outputTokens },
+    inputCostPerMillion,
+    outputCostPerMillion,
+    searchPricing,
+  );
 
   return {
     inputTokens,
     outputTokens,
-    costUSD: calculateChatCost(
-      { inputTokens, outputTokens },
-      inputCostPerMillion,
-      outputCostPerMillion,
-      searchPricing,
-    ),
+    costUSD: totalCost,
     model: modelId,
     tokensPerSecond: outputTokens > 0 ? outputTokens / (totalTime / 1000) : 0,
     timeToFirstTokenMs: firstTokenTime ? firstTokenTime - startTime : 0,

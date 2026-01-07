@@ -20,6 +20,7 @@ type ChatThreadProps = {
 function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): React.ReactNode {
   const [input, setInput] = useState<string>("");
   const [browserApiKey, setBrowserApiKey] = useState<string | null>(null);
+  const [parallelBrowserApiKey, setParallelBrowserApiKey] = useState<string | null>(null);
   const { id } = use(params);
   const { selectedModelId } = useModelContext();
 
@@ -32,6 +33,10 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
     if (key) {
       setBrowserApiKey(key);
     }
+    const parallelKey = localStorage.getItem("parallel_api_key");
+    if (parallelKey) {
+      setParallelBrowserApiKey(parallelKey);
+    }
   }, []);
 
   // Keep ref for browserApiKey for closure
@@ -39,6 +44,12 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
   useEffect(() => {
     browserApiKeyRef.current = browserApiKey;
   }, [browserApiKey]);
+
+  // Keep ref for parallelBrowserApiKey for closure
+  const parallelBrowserApiKeyRef = useRef(parallelBrowserApiKey);
+  useEffect(() => {
+    parallelBrowserApiKeyRef.current = parallelBrowserApiKey;
+  }, [parallelBrowserApiKey]);
 
   // Keep ref for selectedModelId for closure
   const selectedModelIdRef = useRef(selectedModelId);
@@ -57,6 +68,7 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
           threadId: id,
           searchEnabled: latestValues.search,
           ...(browserApiKeyRef.current && { browserApiKey: browserApiKeyRef.current }),
+          ...(parallelBrowserApiKeyRef.current && { parallelBrowserApiKey: parallelBrowserApiKeyRef.current }),
           ...(selectedModelIdRef.current && { modelId: selectedModelIdRef.current }),
         };
         return { body };

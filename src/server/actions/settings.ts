@@ -55,14 +55,14 @@ export async function updatePreferences(updates: PreferencesUpdate): Promise<voi
  * Update API key for a provider with optional server-side encryption storage
  * Requires authentication and ownership verification
  *
- * @param provider API provider name (e.g., 'openrouter')
+ * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @param apiKey The API key to store
  * @param storeServerSide Whether to encrypt and store on server (default: false)
  * @return {Promise<void>}
  * @throws {Error} If not authenticated or validation fails
  */
 export async function updateApiKey(
-  provider: "openrouter",
+  provider: "openrouter" | "parallel",
   apiKey: string,
   storeServerSide: boolean = false,
 ): Promise<void> {
@@ -94,11 +94,11 @@ export async function updateApiKey(
  * Delete an API key for a provider
  * Requires authentication and ownership verification
  *
- * @param provider API provider name (e.g., 'openrouter')
+ * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @return {Promise<void>}
  * @throws {Error} If not authenticated
  */
-export async function deleteApiKey(provider: "openrouter"): Promise<void> {
+export async function deleteApiKey(provider: "openrouter" | "parallel"): Promise<void> {
   // Get authenticated session
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -213,7 +213,7 @@ export async function cleanupEncryptedApiKeys(): Promise<void> {
   const encryptedApiKeys = (userRecord.encryptedApiKeys || {}) as EncryptedApiKeysData;
 
   // Find and remove encrypted keys that don't have a matching "server" storage preference
-  for (const provider of Object.keys(encryptedApiKeys) as ("openrouter")[]) {
+  for (const provider of Object.keys(encryptedApiKeys) as ("openrouter" | "parallel")[]) {
     if (settings.apiKeyStorage[provider] !== "server") {
       // This encrypted key doesn't have a matching server preference, remove it
       await removeEncryptedKey(userId, provider);

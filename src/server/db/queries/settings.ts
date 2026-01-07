@@ -131,13 +131,13 @@ export async function updateUserSettingsPartial(
  * Get the actual decrypted API key for a provider (server-side keys only)
  *
  * @param userId ID of the user
- * @param provider API provider name (e.g., 'openrouter')
+ * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @return {Promise<string | undefined>} The decrypted API key or undefined if not set
  * @throws {Error} If decryption fails (corrupted data or wrong key)
  */
 export async function getServerApiKey(
   userId: string,
-  provider: "openrouter",
+  provider: "openrouter" | "parallel",
 ): Promise<string | undefined> {
   const result = await db
     .select({ encryptedApiKeys: userSettings.encryptedApiKeys })
@@ -167,14 +167,14 @@ export async function getServerApiKey(
  * Update an API key for a provider, optionally storing it server-side encrypted
  *
  * @param userId ID of the user
- * @param provider API provider name (e.g., 'openrouter')
+ * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @param apiKey The plain API key value
  * @param storeServerSide Whether to store it encrypted on the server (default: false)
  * @return {Promise<void>}
  */
 export async function updateApiKey(
   userId: string,
-  provider: "openrouter",
+  provider: "openrouter" | "parallel",
   apiKey: string,
   storeServerSide: boolean = false,
 ): Promise<void> {
@@ -207,7 +207,7 @@ export async function updateApiKey(
     const cleanedEncrypted: EncryptedApiKeysData = {};
     Object.entries(currentEncrypted).forEach(([key, value]) => {
       if (key !== provider && value !== undefined) {
-        cleanedEncrypted[key as "openrouter"] = value;
+        cleanedEncrypted[key as "openrouter" | "parallel"] = value;
       }
     });
     updatedEncrypted = cleanedEncrypted;
@@ -230,10 +230,10 @@ export async function updateApiKey(
  * Delete an API key for a provider (removes from both client and server storage)
  *
  * @param userId ID of the user
- * @param provider API provider name (e.g., 'openrouter')
+ * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @return {Promise<void>}
  */
-export async function deleteApiKey(userId: string, provider: "openrouter"): Promise<void> {
+export async function deleteApiKey(userId: string, provider: "openrouter" | "parallel"): Promise<void> {
   const currentSettings = await getUserSettings(userId);
 
   const settingsResult = await db
@@ -253,12 +253,12 @@ export async function deleteApiKey(userId: string, provider: "openrouter"): Prom
   });
 
   // Remove from encrypted keys
-  const cleanedEncrypted: EncryptedApiKeysData = {};
-  Object.entries(currentEncrypted).forEach(([key, value]) => {
-    if (key !== provider && value !== undefined) {
-      cleanedEncrypted[key as "openrouter"] = value;
-    }
-  });
+   const cleanedEncrypted: EncryptedApiKeysData = {};
+   Object.entries(currentEncrypted).forEach(([key, value]) => {
+     if (key !== provider && value !== undefined) {
+       cleanedEncrypted[key as "openrouter" | "parallel"] = value;
+     }
+   });
 
   await db
     .update(userSettings)
@@ -277,10 +277,10 @@ export async function deleteApiKey(userId: string, provider: "openrouter"): Prom
  * Check if user has an API key configured for a provider
  *
  * @param userId ID of the user
- * @param provider API provider name (e.g., 'openrouter')
+ * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @return {Promise<boolean>} True if user has an API key configured
  */
-export async function hasApiKey(userId: string, provider: "openrouter"): Promise<boolean> {
+export async function hasApiKey(userId: string, provider: "openrouter" | "parallel"): Promise<boolean> {
   const result = await db
     .select({ settings: userSettings.settings, encryptedApiKeys: userSettings.encryptedApiKeys })
     .from(userSettings)
@@ -311,10 +311,10 @@ export async function hasApiKey(userId: string, provider: "openrouter"): Promise
  * Remove a provider from apiKeyStorage (when client-side key is missing)
  *
  * @param userId ID of the user
- * @param provider API provider name (e.g., 'openrouter')
+ * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @return {Promise<void>}
  */
-export async function removeApiKeyPreference(userId: string, provider: "openrouter"): Promise<void> {
+export async function removeApiKeyPreference(userId: string, provider: "openrouter" | "parallel"): Promise<void> {
   const currentSettings = await getUserSettings(userId);
 
   // Remove provider from storage preferences
@@ -341,10 +341,10 @@ export async function removeApiKeyPreference(userId: string, provider: "openrout
  * Remove an encrypted API key for a provider
  *
  * @param userId ID of the user
- * @param provider API provider name (e.g., 'openrouter')
+ * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @return {Promise<void>}
  */
-export async function removeEncryptedKey(userId: string, provider: "openrouter"): Promise<void> {
+export async function removeEncryptedKey(userId: string, provider: "openrouter" | "parallel"): Promise<void> {
   const result = await db
     .select({ encryptedApiKeys: userSettings.encryptedApiKeys })
     .from(userSettings)
