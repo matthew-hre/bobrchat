@@ -10,8 +10,6 @@ import type { ChatUIMessage } from "~/app/api/chat/route";
 import { ChatView } from "~/components/chat/chat-view";
 import { useModelContext } from "~/components/chat/model-context";
 import { useChatInputFeatures } from "~/hooks/use-chat-input-features";
-import { createUserMessage } from "~/lib/utils/messages";
-import { saveUserMessage } from "~/server/actions/chat";
 
 type ChatThreadProps = {
   params: Promise<{ id: string }>;
@@ -69,29 +67,12 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
     },
   });
 
-  const handleSendMessage = async (messageParts: any) => {
-    const userMessage = createUserMessage(messageParts);
-
-    try {
-      // Save the user message first
-      await saveUserMessage(id, userMessage);
-    }
-    catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to save message";
-      toast.error(message);
-      return;
-    }
-
-    // Then send it (errors surfaced via onError toast)
-    sendMessage(messageParts);
-  };
-
   return (
     <ChatView
       messages={messages}
       input={input}
       setInput={setInput}
-      sendMessage={handleSendMessage}
+      sendMessage={sendMessage}
       isLoading={status === "submitted" || status === "streaming"}
       searchEnabled={features.search.value}
       onSearchChange={(enabled) => {

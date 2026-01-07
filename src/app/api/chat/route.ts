@@ -54,6 +54,11 @@ export async function POST(req: Request) {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === "user") {
+      await saveMessage(threadId, lastMessage);
+    }
   }
 
   const serverApiKey = await getServerApiKey(session.user.id, "openrouter");
@@ -78,5 +83,6 @@ export async function POST(req: Request) {
         await saveMessage(threadId, responseMessage);
       }
     },
+    sendSources: true,
   });
 }
