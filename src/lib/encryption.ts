@@ -18,10 +18,13 @@ function getEncryptionKey(): Buffer {
 
 /**
  * Encrypt a sensitive value (e.g., API key)
- * Returns a string format: "iv:encryptedData:authTag"
+ *
+ * Uses AES-256-GCM with:
+ * - 16-byte random IV (unique per encryption)
+ * - 16-byte auth tag for tamper detection
  *
  * @param plaintext The value to encrypt
- * @return {string} Encrypted value in "iv:encryptedData:authTag" format
+ * @return {string} Encrypted value in "hex(iv):hex(ciphertext):hex(authTag)" format
  */
 export function encryptValue(plaintext: string): string {
   const iv = randomBytes(IV_LENGTH);
@@ -32,16 +35,15 @@ export function encryptValue(plaintext: string): string {
 
   const authTag = cipher.getAuthTag();
 
-  // Format: base64(iv):base64(encrypted):base64(authTag)
   return `${iv.toString("hex")}:${encrypted}:${authTag.toString("hex")}`;
 }
 
 /**
  * Decrypt a sensitive value
  *
- * @param encrypted The encrypted value in "iv:encryptedData:authTag" format
+ * @param encrypted The encrypted value in "hex(iv):hex(ciphertext):hex(authTag)" format
  * @return {string} Decrypted plaintext
- * @throws {Error} If decryption fails (invalid key, corrupted data, tampered data)
+ * @throws {Error} If decryption fails (invalid key, corrupted data, or tampered data)
  */
 export function decryptValue(encrypted: string): string {
   const parts = encrypted.split(":");

@@ -5,7 +5,7 @@ import type { Model, ModelsListResponse } from "@openrouter/sdk/models";
 import { OpenRouter } from "@openrouter/sdk";
 import { headers } from "next/headers";
 
-import type { EncryptedApiKeysData, UserSettingsData } from "~/lib/db/schema/settings";
+import type { ApiKeyProvider, EncryptedApiKeysData, UserSettingsData } from "~/lib/db/schema/settings";
 import type { FavoriteModelsInput, PreferencesUpdate, ProfileUpdate } from "~/lib/schemas/settings";
 
 import { auth } from "~/lib/auth";
@@ -62,7 +62,7 @@ export async function updatePreferences(updates: PreferencesUpdate): Promise<voi
  * @throws {Error} If not authenticated or validation fails
  */
 export async function updateApiKey(
-  provider: "openrouter" | "parallel",
+  provider: ApiKeyProvider,
   apiKey: string,
   storeServerSide: boolean = false,
 ): Promise<void> {
@@ -98,7 +98,7 @@ export async function updateApiKey(
  * @return {Promise<void>}
  * @throws {Error} If not authenticated
  */
-export async function deleteApiKey(provider: "openrouter" | "parallel"): Promise<void> {
+export async function deleteApiKey(provider: ApiKeyProvider): Promise<void> {
   // Get authenticated session
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -171,7 +171,7 @@ export async function syncUserSettings(): Promise<UserSettingsData> {
  * @return {Promise<void>}
  * @throws {Error} If not authenticated
  */
-export async function cleanupMissingClientApiKey(provider: "openrouter"): Promise<void> {
+export async function cleanupMissingClientApiKey(provider: ApiKeyProvider): Promise<void> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -213,7 +213,7 @@ export async function cleanupEncryptedApiKeys(): Promise<void> {
   const encryptedApiKeys = (userRecord.encryptedApiKeys || {}) as EncryptedApiKeysData;
 
   // Find and remove encrypted keys that don't have a matching "server" storage preference
-  for (const provider of Object.keys(encryptedApiKeys) as ("openrouter" | "parallel")[]) {
+  for (const provider of Object.keys(encryptedApiKeys) as ApiKeyProvider[]) {
     if (settings.apiKeyStorage[provider] !== "server") {
       // This encrypted key doesn't have a matching server preference, remove it
       await removeEncryptedKey(userId, provider);

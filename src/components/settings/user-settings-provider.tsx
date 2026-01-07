@@ -2,7 +2,7 @@
 
 import { createContext, use, useCallback, useEffect, useState } from "react";
 
-import type { UserSettingsData } from "~/lib/db/schema/settings";
+import type { ApiKeyProvider, UserSettingsData } from "~/lib/db/schema/settings";
 import type { PreferencesUpdate } from "~/lib/schemas/settings";
 
 import { useSession } from "~/lib/auth-client";
@@ -21,11 +21,11 @@ type UserSettingsContextType = {
   updateSetting: (updates: PreferencesUpdate) => Promise<void>;
   updateFavoriteModels: (favoriteModels: string[]) => Promise<void>;
   setApiKey: (
-    provider: "openrouter" | "parallel",
+    provider: ApiKeyProvider,
     apiKey: string,
     storeServerSide?: boolean,
   ) => Promise<void>;
-  removeApiKey: (provider: "openrouter" | "parallel") => Promise<void>;
+  removeApiKey: (provider: ApiKeyProvider) => Promise<void>;
 };
 
 const UserSettingsContext = createContext<UserSettingsContextType | undefined>(
@@ -148,7 +148,7 @@ export function UserSettingsProvider({
 
   const setApiKey = useCallback(
     async (
-      provider: "openrouter" | "parallel",
+      provider: ApiKeyProvider,
       apiKey: string,
       storeServerSide: boolean = false,
     ): Promise<void> => {
@@ -189,7 +189,7 @@ export function UserSettingsProvider({
   );
 
   const removeApiKey = useCallback(
-    async (provider: "openrouter" | "parallel"): Promise<void> => {
+    async (provider: ApiKeyProvider): Promise<void> => {
       try {
         await deleteApiKeyAction(provider);
 

@@ -20,9 +20,14 @@ export const preferencesUpdateSchema = preferencesSchema.partial();
 
 /**
  * Integrations tab - API key management and storage preference
+ * Key format: alphanumeric with common separators (hyphens, underscores, colons)
  */
 export const integrationsSchema = z.object({
-  apiKey: z.string().min(1, "API key is required").max(1000, "API key is too long"),
+  apiKey: z
+    .string()
+    .min(1, "API key is required")
+    .max(512, "API key is too long")
+    .regex(/^[\w\-:]+$/, "API key contains invalid characters"),
   storeServerSide: z.boolean().default(false),
 });
 
@@ -30,9 +35,14 @@ export type IntegrationsInput = z.infer<typeof integrationsSchema>;
 
 /**
  * API key update - just the key and storage preference
+ * Key format: alphanumeric with common separators (hyphens, underscores, colons)
  */
 export const apiKeyUpdateSchema = z.object({
-  apiKey: z.string().min(1, "API key is required").max(1000, "API key is too long"),
+  apiKey: z
+    .string()
+    .min(1, "API key is required")
+    .max(512, "API key is too long")
+    .regex(/^[\w\-:]+$/, "API key contains invalid characters"),
   storeServerSide: z.boolean().default(false),
 });
 

@@ -61,6 +61,9 @@ export async function POST(req: Request) {
     }
   }
 
+  // Resolve API key: browser-provided key takes precedence over server-stored key.
+  // This allows ephemeral overrides regardless of the user's apiKeyStorage preference.
+  // The apiKeyStorage setting only controls *persistence*, not enforcement.
   const serverApiKey = await getServerApiKey(session.user.id, "openrouter");
   const resolvedApiKey = browserApiKey ?? serverApiKey;
 

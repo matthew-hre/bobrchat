@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 
-import type { EncryptedApiKeysData, UserSettingsData } from "~/lib/db/schema/settings";
+import type { ApiKeyProvider, EncryptedApiKeysData, UserSettingsData } from "~/lib/db/schema/settings";
 
 import { db } from "~/lib/db";
 import { userSettings } from "~/lib/db/schema/settings";
@@ -137,7 +137,7 @@ export async function updateUserSettingsPartial(
  */
 export async function getServerApiKey(
   userId: string,
-  provider: "openrouter" | "parallel",
+  provider: ApiKeyProvider,
 ): Promise<string | undefined> {
   const result = await db
     .select({ encryptedApiKeys: userSettings.encryptedApiKeys })
@@ -174,7 +174,7 @@ export async function getServerApiKey(
  */
 export async function updateApiKey(
   userId: string,
-  provider: "openrouter" | "parallel",
+  provider: ApiKeyProvider,
   apiKey: string,
   storeServerSide: boolean = false,
 ): Promise<void> {
@@ -233,7 +233,7 @@ export async function updateApiKey(
  * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @return {Promise<void>}
  */
-export async function deleteApiKey(userId: string, provider: "openrouter" | "parallel"): Promise<void> {
+export async function deleteApiKey(userId: string, provider: ApiKeyProvider): Promise<void> {
   const currentSettings = await getUserSettings(userId);
 
   const settingsResult = await db
@@ -280,7 +280,7 @@ export async function deleteApiKey(userId: string, provider: "openrouter" | "par
  * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @return {Promise<boolean>} True if user has an API key configured
  */
-export async function hasApiKey(userId: string, provider: "openrouter" | "parallel"): Promise<boolean> {
+export async function hasApiKey(userId: string, provider: ApiKeyProvider): Promise<boolean> {
   const result = await db
     .select({ settings: userSettings.settings, encryptedApiKeys: userSettings.encryptedApiKeys })
     .from(userSettings)
@@ -314,7 +314,7 @@ export async function hasApiKey(userId: string, provider: "openrouter" | "parall
  * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @return {Promise<void>}
  */
-export async function removeApiKeyPreference(userId: string, provider: "openrouter" | "parallel"): Promise<void> {
+export async function removeApiKeyPreference(userId: string, provider: ApiKeyProvider): Promise<void> {
   const currentSettings = await getUserSettings(userId);
 
   // Remove provider from storage preferences
@@ -344,7 +344,7 @@ export async function removeApiKeyPreference(userId: string, provider: "openrout
  * @param provider API provider name (e.g., 'openrouter', 'parallel')
  * @return {Promise<void>}
  */
-export async function removeEncryptedKey(userId: string, provider: "openrouter" | "parallel"): Promise<void> {
+export async function removeEncryptedKey(userId: string, provider: ApiKeyProvider): Promise<void> {
   const result = await db
     .select({ encryptedApiKeys: userSettings.encryptedApiKeys })
     .from(userSettings)
@@ -360,7 +360,7 @@ export async function removeEncryptedKey(userId: string, provider: "openrouter" 
   const cleanedEncrypted: EncryptedApiKeysData = {};
   Object.entries(currentEncrypted).forEach(([key, value]) => {
     if (key !== provider && value !== undefined) {
-      cleanedEncrypted[key as "openrouter"] = value;
+      cleanedEncrypted[key as keyof EncryptedApiKeysData] = value;
     }
   });
 
