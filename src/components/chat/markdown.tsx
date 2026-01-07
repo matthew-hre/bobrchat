@@ -8,6 +8,8 @@ import remarkMath from "remark-math";
 
 import { cn } from "~/lib/utils";
 
+import { CodeBlock } from "./code-block";
+
 function parseMarkdownIntoBlocks(markdown: string): string[] {
   const tokens = marked.lexer(markdown);
   return tokens.map(token => token.raw);
@@ -21,7 +23,8 @@ const MemoizedMarkdownBlock = memo(
         rehypePlugins={[rehypeKatex]}
         components={{
           code: ({ node, className, children, ...props }) => {
-            const isInline = !className;
+            const match = /language-(\w+)/.exec(className || "");
+            const isInline = !match;
             if (isInline) {
               return (
                 <code
@@ -35,23 +38,13 @@ const MemoizedMarkdownBlock = memo(
               );
             }
             return (
-              <code className={cn("font-mono text-xs", className)} {...props}>
-                {children}
-              </code>
+              <CodeBlock
+                language={match ? match[1] : ""}
+                value={String(children).replace(/\n$/, "")}
+              />
             );
           },
-          pre: ({ node, className, children, ...props }) => (
-            <pre
-              suppressHydrationWarning
-              className={cn(
-                "bg-muted mb-3 overflow-x-auto rounded-lg p-4 text-xs",
-                className,
-              )}
-              {...props}
-            >
-              {children}
-            </pre>
-          ),
+          pre: ({ children }) => <>{children}</>,
           a: ({ href, children }) => (
             <a
               href={href}
