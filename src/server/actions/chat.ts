@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
@@ -33,7 +32,6 @@ export async function createNewThread(defaultName?: string): Promise<string> {
 
   const threadName = defaultName || "New Chat";
   const threadId = await createThread(session.user.id, threadName);
-  revalidatePath("/");
   return threadId;
 }
 
@@ -67,7 +65,6 @@ export async function deleteThread(threadId: string): Promise<void> {
 
   await validateThreadOwnership(threadId, session);
   await deleteThreadById(threadId);
-  revalidatePath("/");
 }
 
 /**
@@ -85,6 +82,4 @@ export async function renameThread(threadId: string, newTitle: string): Promise<
 
   await validateThreadOwnership(threadId, session);
   await renameThreadById(threadId, newTitle);
-
-  revalidatePath("/");
 }

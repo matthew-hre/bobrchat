@@ -6,7 +6,10 @@ import { z } from "zod";
 export const preferencesSchema = z.object({
   theme: z.enum(["light", "dark", "system"]),
   customInstructions: z.string().max(5000).optional(),
-  defaultThreadName: z.string().min(1).max(255),
+  defaultThreadName: z
+    .string()
+    .max(255)
+    .transform(v => v.trim() || "New Chat"),
   landingPageContent: z.enum(["suggestions", "greeting", "blank"]),
 });
 

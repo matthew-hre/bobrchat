@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 
 import { SettingsTabs } from "~/components/settings/settings-tabs";
-import { UserSettingsProvider } from "~/components/settings/user-settings-provider";
 import {
   Dialog,
   DialogContent,
@@ -29,9 +28,7 @@ export default function SettingsPage() {
         `}
       >
         <DialogTitle className="sr-only">Settings</DialogTitle>
-        <UserSettingsProvider>
-          <SettingsTabs />
-        </UserSettingsProvider>
+        <SettingsTabs />
       </DialogContent>
     </Dialog>
   );

@@ -17,21 +17,18 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { useQueryClient } from "@tanstack/react-query";
 import Fuse from "fuse.js";
 import {
   RefreshCwIcon,
   SearchIcon,
   SparklesIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  clearModelCache,
-  getCachedModels,
-  setCachedModels,
-} from "~/lib/cache/model-cache";
-import { fetchOpenRouterModels } from "~/server/actions/settings";
+import { MODELS_KEY, useModels } from "~/lib/queries/use-models";
+import { useUpdateFavoriteModels, useUserSettings } from "~/lib/queries/use-user-settings";
 
 import {
   Accordion,
@@ -42,22 +39,20 @@ import {
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Skeleton } from "../../ui/skeleton";
-import { useUserSettingsContext } from "../user-settings-provider";
 import { ModelCard } from "./model-card";
 import { SortableFavoriteModel } from "./sortable-favorite-model";
 
 export function ModelsTab() {
-  const { settings, updateFavoriteModels } = useUserSettingsContext();
-  const [isLoading, setIsLoading] = useState(false);
-  const [models, setModels] = useState<Model[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedModels, setSelectedModels] = useState<string[]>(
-    () => settings?.favoriteModels ?? [],
-  );
-  const [favoritesOpen, setFavoritesOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { data: settings } = useUserSettings({ enabled: true });
+  const { data: models = [], isLoading, isFetching, refetch } = useModels({ enabled: true });
+  const updateFavoriteModels = useUpdateFavoriteModels();
+  const queryClient = useQueryClient();
 
-  // Configure sensors for drag and drop
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const initializedRef = useRef(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -65,69 +60,19 @@ export function ModelsTab() {
     }),
   );
 
-  const fetchAndCacheModels = useCallback(async () => {
-    try {
-      // Try to get API key from localStorage (client-side storage)
-      let apiKey: string | undefined;
-      if (settings?.apiKeyStorage?.openrouter === "client") {
-        apiKey = localStorage.getItem("openrouter_api_key") ?? undefined;
-      }
-
-      const result = await fetchOpenRouterModels(apiKey);
-
-      setModels(result);
-      setCachedModels(result);
-      // Only set selectedModels if we don't already have any (initial load)
-      setSelectedModels(prev => prev.length > 0 ? prev : (settings?.favoriteModels ?? []));
-    }
-    catch (error) {
-      console.error("[ModelsTab] Error fetching models:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to fetch models");
-    }
-    finally {
-      setIsLoading(false);
-    }
-  }, [settings?.apiKeyStorage?.openrouter, settings?.favoriteModels]);
-
-  const handleFetchModels = useCallback(async () => {
-    // Check cache first
-    const { data: cachedModels, isFresh } = getCachedModels<Model[]>();
-
-    if (cachedModels && cachedModels.length > 0) {
-      setModels(cachedModels);
-      setSelectedModels(prev => prev.length > 0 ? prev : (settings?.favoriteModels ?? []));
-
-      // If cache is stale, refresh in background
-      if (!isFresh) {
-        fetchAndCacheModels();
-      }
-
-      return;
-    }
-
-    // No cache - show loading and fetch immediately
-    setIsLoading(true);
-    await fetchAndCacheModels();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings?.favoriteModels]);
-
-  const handleRefreshModels = useCallback(async () => {
-    clearModelCache();
-    setIsRefreshing(true);
-    setIsLoading(true);
-    await fetchAndCacheModels();
-    setIsRefreshing(false);
-    toast.success("Models updated successfully");
-  }, [fetchAndCacheModels]);
-
-  // Auto-fetch models on mount (only if not already loaded)
   useEffect(() => {
-    if (models.length === 0) {
-      handleFetchModels();
+    if (settings && !initializedRef.current) {
+      initializedRef.current = true;
+      setSelectedModels(settings.favoriteModels ?? []);
     }
-  }, [handleFetchModels, models.length]);
+  }, [settings]);
 
-  // Fuzzy search setup
+  const handleRefreshModels = async () => {
+    await queryClient.invalidateQueries({ queryKey: MODELS_KEY });
+    await refetch();
+    toast.success("Models updated successfully");
+  };
+
   const fuse = useMemo(() => {
     if (!models.length)
       return null;
@@ -158,28 +103,27 @@ export function ModelsTab() {
     });
   };
 
-  // Persist selected models to database via context (for optimistic updates)
   useEffect(() => {
-    const persistModels = async () => {
-      if (!selectedModels || selectedModels.length === 0)
-        return;
-      // Skip if selectedModels matches context (no change)
-      if (JSON.stringify(selectedModels) === JSON.stringify(settings?.favoriteModels))
-        return;
+    if (!initializedRef.current)
+      return;
+    if (selectedModels.length === 0)
+      return;
+    if (JSON.stringify(selectedModels) === JSON.stringify(settings?.favoriteModels))
+      return;
+
+    const timeoutId = setTimeout(async () => {
       try {
-        await updateFavoriteModels(selectedModels);
+        await updateFavoriteModels.mutateAsync(selectedModels);
       }
       catch (error) {
         console.error("Failed to save favorite models:", error);
         toast.error("Failed to save favorite models");
       }
-    };
+    }, 500);
 
-    const timeoutId = setTimeout(persistModels, 500);
     return () => clearTimeout(timeoutId);
   }, [selectedModels, settings?.favoriteModels, updateFavoriteModels]);
 
-  // Handle drag end to reorder favorites
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -192,7 +136,6 @@ export function ModelsTab() {
     }
   };
 
-  // Get selected model objects for display
   const selectedModelObjects = useMemo(() => {
     if (!selectedModels.length)
       return [];
@@ -200,6 +143,8 @@ export function ModelsTab() {
       .map(modelId => models.find(m => m.id === modelId))
       .filter((m): m is Model => m !== undefined);
   }, [selectedModels, models]);
+
+  const isRefreshing = isFetching && !isLoading;
 
   return (
     <div className="flex flex-col overflow-hidden">
@@ -211,7 +156,7 @@ export function ModelsTab() {
             size="sm"
             variant="outline"
             onClick={handleRefreshModels}
-            disabled={isRefreshing || isLoading}
+            disabled={isFetching}
             className="absolute top-4 right-4 gap-2 text-sm"
           >
             <RefreshCwIcon

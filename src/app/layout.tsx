@@ -3,14 +3,13 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Rethink_Sans } from "next/font/google";
 
 import "./globals.css";
-import { ModelProvider } from "~/components/chat/model-context";
-import { UserSettingsProvider } from "~/components/settings/user-settings-provider";
 import { ChatSidebar } from "~/components/sidebar/chat-sidebar";
 import { FloatingSidebarToggle } from "~/components/sidebar/floating-sidebar-toggle";
 import { ThemeInitializer } from "~/components/theme/theme-initializer";
 import { ThemeProvider } from "~/components/theme/theme-provider";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { Toaster } from "~/components/ui/sonner";
+import { QueryProvider } from "~/lib/queries/query-provider";
 
 const rethinkSans = Rethink_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -49,20 +48,18 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <UserSettingsProvider>
-            <ModelProvider>
-              <Toaster position="top-right" />
-              <ThemeInitializer />
-              <SidebarProvider>
-                <ChatSidebar />
-                <FloatingSidebarToggle />
-                <main className="w-full">
-                  {children}
-                </main>
-                {modal}
-              </SidebarProvider>
-            </ModelProvider>
-          </UserSettingsProvider>
+          <QueryProvider>
+            <Toaster position="top-right" />
+            <ThemeInitializer />
+            <SidebarProvider>
+              <ChatSidebar />
+              <FloatingSidebarToggle />
+              <main className="w-full">
+                {children}
+              </main>
+              {modal}
+            </SidebarProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

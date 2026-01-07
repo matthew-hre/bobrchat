@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
@@ -13,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { deleteThread } from "~/server/actions/chat";
+import { useDeleteThread } from "~/lib/queries/use-threads";
 
 type DeleteThreadDialogProps = {
   open: boolean;
@@ -29,20 +28,18 @@ export function DeleteThreadDialog({
   onOpenChange,
 }: DeleteThreadDialogProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const deleteThreadMutation = useDeleteThread();
 
-  const handleDelete = () => {
-    startTransition(async () => {
-      try {
-        await deleteThread(threadId);
-        onOpenChange(false);
-        router.push("/");
-      }
-      catch (error) {
-        console.error("Failed to delete thread:", error);
-        toast.error("Failed to delete thread. Please try again.");
-      }
-    });
+  const handleDelete = async () => {
+    try {
+      await deleteThreadMutation.mutateAsync(threadId);
+      onOpenChange(false);
+      router.push("/");
+    }
+    catch (error) {
+      console.error("Failed to delete thread:", error);
+      toast.error("Failed to delete thread. Please try again.");
+    }
   };
 
   return (
@@ -60,16 +57,16 @@ export function DeleteThreadDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isPending}
+            disabled={deleteThreadMutation.isPending}
           >
             Cancel
           </Button>
           <Button
             variant="destructive"
             onClick={handleDelete}
-            disabled={isPending}
+            disabled={deleteThreadMutation.isPending}
           >
-            {isPending ? "Deleting..." : "Delete"}
+            {deleteThreadMutation.isPending ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>

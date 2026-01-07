@@ -60,7 +60,7 @@ export async function streamChatResponse(
   let tools: ToolSet | undefined;
   if (searchEnabled && parallelApiKey) {
     const parallelClient = createParallelClient(parallelApiKey);
-    // Create custom tools with the user's Parallel client
+    // Create custom tools with the user's Pabrallel client
     tools = {
       search: {
         ...searchTool,

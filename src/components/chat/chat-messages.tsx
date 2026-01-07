@@ -30,15 +30,10 @@ export const ChatMessages = memo(({
           return <UserMessage key={message.id} content={textContent} />;
         }
 
-        const sources = message.metadata?.sources || [];
         const isLastMessage = messageIndex === messages.length - 1;
-        const isSearching = isLoading && isLastMessage && searchEnabled && sources.length === 0;
 
         return (
           <div key={message.id} className="group markdown text-base">
-            {(isSearching || sources.length > 0) && (
-              <SearchingSources sources={sources} isSearching={isSearching} />
-            )}
             {message.parts.map((part, index) => {
               if (part.type === "text") {
                 return (
@@ -49,8 +44,63 @@ export const ChatMessages = memo(({
                   />
                 );
               }
+
+              const isSearchTool = part.type === "tool-search"
+                || (part.type === "tool-invocation" && (part as any).toolName === "search");
+
+              if (isSearchTool) {
+                let sources: any[] = [];
+                let isSearching = false;
+
+                const sp = part as any;
+
+                // Handle "tool-search" (likely from DB persistence or custom format)
+                if (sp.type === "tool-search") {
+                  if (sp.output?.results && Array.isArray(sp.output.results)) {
+                    sources = sp.output.results.map((r: any) => ({
+                      id: r.url || Math.random().toString(),
+                      sourceType: "url",
+                      url: r.url,
+                      title: r.title,
+                    }));
+                  }
+                  // If we have a search part but no output/results yet, we are likely searching
+                  isSearching = !sp.output && sp.state !== "done" && sp.state !== "output-available";
+                }
+                // Handle "tool-invocation" (standard AI SDK during stream)
+                else if (sp.type === "tool-invocation") {
+                  if (sp.state === "result") {
+                    const result = sp.result;
+                    const results = result?.results || (Array.isArray(result) ? result : []);
+                    sources = results.map((r: any) => ({
+                      id: r.url || Math.random().toString(),
+                      sourceType: "url",
+                      url: r.url,
+                      title: r.title,
+                    }));
+                  }
+                  else {
+                    isSearching = true;
+                  }
+                }
+
+                return (
+                  <SearchingSources
+                    key={`part-${index}`}
+                    sources={sources}
+                    isSearching={isSearching}
+                  />
+                );
+              }
+
               return null;
             })}
+
+            {/* Fallback for initial searching state before any parts or tool calls exist */}
+            {isLoading && isLastMessage && searchEnabled && message.parts.length === 0 && (
+              <SearchingSources sources={[]} isSearching={true} />
+            )}
+
             {message.metadata && (
               <MessageMetrics
                 metrics={{

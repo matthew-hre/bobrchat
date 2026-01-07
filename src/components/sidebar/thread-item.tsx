@@ -3,7 +3,7 @@
 import { MessageCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { memo, useRef, useState, useTransition } from "react";
+import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
@@ -13,8 +13,8 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "~/components/ui/context-menu";
+import { useDeleteThread, useRenameThread } from "~/lib/queries/use-threads";
 import { cn } from "~/lib/utils";
-import { deleteThread, renameThread } from "~/server/actions/chat";
 
 type ThreadItemProps = {
   id: string;
@@ -30,14 +30,16 @@ export const ThreadItem = memo(({
   onDeleteClick,
 }: ThreadItemProps) => {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const deleteThreadMutation = useDeleteThread();
+  const renameThreadMutation = useRenameThread();
+
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const performDirectDelete = async () => {
     try {
-      await deleteThread(id);
+      await deleteThreadMutation.mutateAsync(id);
       toast.success("Thread deleted");
       router.push("/");
     }
@@ -53,7 +55,7 @@ export const ThreadItem = memo(({
 
     // Control+Click = direct delete without dialog
     if (e.ctrlKey || e.metaKey) {
-      startTransition(performDirectDelete);
+      performDirectDelete();
     }
     else {
       // Regular click = show dialog
@@ -74,20 +76,18 @@ export const ThreadItem = memo(({
       return;
     }
 
-    startTransition(async () => {
-      try {
-        await renameThread(id, newTitle.trim());
-        toast.success("Thread renamed");
-      }
-      catch (error) {
-        console.error("Failed to rename thread:", error);
-        toast.error("Failed to rename thread");
-        setNewTitle(title);
-      }
-      finally {
-        setIsRenaming(false);
-      }
-    });
+    try {
+      await renameThreadMutation.mutateAsync({ threadId: id, newTitle: newTitle.trim() });
+      toast.success("Thread renamed");
+    }
+    catch (error) {
+      console.error("Failed to rename thread:", error);
+      toast.error("Failed to rename thread");
+      setNewTitle(title);
+    }
+    finally {
+      setIsRenaming(false);
+    }
   };
 
   const handleInputBlur = () => {
@@ -115,7 +115,7 @@ export const ThreadItem = memo(({
           onChange={e => setNewTitle(e.target.value)}
           onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
-          disabled={isPending}
+          disabled={renameThreadMutation.isPending}
           className={cn(
             `
               bg-sidebar-accent text-sidebar-accent-foreground flex-1 rounded
@@ -161,7 +161,7 @@ export const ThreadItem = memo(({
               `
             }
             onClick={handleDeleteClick}
-            disabled={isPending}
+            disabled={deleteThreadMutation.isPending}
             title="Delete thread (Ctrl+Click to delete immediately)"
           >
             <Trash2 className="size-4" />

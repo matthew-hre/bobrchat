@@ -2,7 +2,7 @@
 
 import { KeyIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 
 import type { Session } from "~/lib/auth";
 
@@ -10,33 +10,14 @@ import { cn } from "~/lib/utils";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
-export function UserProfileCard({
-  session,
-}: {
+type UserProfileCardProps = {
   session: Session;
-}) {
+  hasApiKey?: boolean;
+};
+
+export function UserProfileCard({ session, hasApiKey }: UserProfileCardProps) {
   const router = useRouter();
   const pathname = usePathname();
-
-  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    async function checkApiKey() {
-      try {
-        const response = await fetch("/api/user/api-key-status");
-        if (response.ok) {
-          const data = await response.json();
-          setHasApiKey(data.hasApiKey);
-        }
-      }
-      catch (error) {
-        console.error("Failed to check API key status:", error);
-        setHasApiKey(false);
-      }
-    }
-
-    checkApiKey();
-  }, []);
 
   const openSettings = useCallback(() => {
     const referrer = encodeURIComponent(pathname);
@@ -74,7 +55,7 @@ export function UserProfileCard({
             <KeyIcon className="size-3" />
           </span>
           <span className="text-muted-foreground text-[10px]">
-            {hasApiKey === undefined ? "Loading..." : hasApiKey ? "API key configured" : "No API key"}
+            {hasApiKey ? "API key configured" : "No API key"}
           </span>
         </div>
       </div>

@@ -143,16 +143,15 @@ export async function updateProfile(updates: ProfileUpdate): Promise<void> {
  * and returns fresh user settings
  * Requires authentication
  *
- * @return {Promise<UserSettingsData>} Fresh user settings after cleanup
- * @throws {Error} If not authenticated
+ * @return {Promise<UserSettingsData | null>} Fresh user settings after cleanup, or null if not authenticated
  */
-export async function syncUserSettings(): Promise<UserSettingsData> {
+export async function syncUserSettings(): Promise<UserSettingsData | null> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session?.user) {
-    throw new Error("Not authenticated");
+    return null;
   }
 
   // Clean up orphaned encrypted keys

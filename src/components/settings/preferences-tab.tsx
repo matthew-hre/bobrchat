@@ -2,11 +2,12 @@
 
 import { CheckIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type { LandingPageContentType } from "~/lib/db/schema/settings";
 
+import { useUpdatePreferences, useUserSettings } from "~/lib/queries/use-user-settings";
 import { preferencesSchema } from "~/lib/schemas/settings";
 import { cn } from "~/lib/utils";
 
@@ -14,7 +15,6 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
 import { Textarea } from "../ui/textarea";
-import { useUserSettingsContext } from "./user-settings-provider";
 
 type Theme = "light" | "dark" | "system";
 
@@ -31,12 +31,12 @@ const landingPageOptions: { value: LandingPageContentType; label: string; descri
 ];
 
 export function PreferencesTab() {
-  const { settings, loading, updateSetting } = useUserSettingsContext();
+  const { data: settings, isLoading } = useUserSettings({ enabled: true });
+  const updatePreferences = useUpdatePreferences();
   const initializedRef = useRef(false);
 
   const { setTheme: applyTheme } = useTheme();
 
-  // Initialize state with settings data or defaults
   const [theme, setTheme] = useState<Theme>(() => settings?.theme ?? "system");
   const [customInstructions, setCustomInstructions] = useState(
     () => settings?.customInstructions ?? "",
@@ -47,40 +47,33 @@ export function PreferencesTab() {
   const [landingPageContent, setLandingPageContent] = useState<LandingPageContentType>(
     () => settings?.landingPageContent ?? "suggestions",
   );
-  const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // Sync state when settings load for the first time
-  if (settings && !initializedRef.current) {
-    initializedRef.current = true;
-    if (theme !== settings.theme) {
+  useEffect(() => {
+    if (settings && !initializedRef.current) {
+      initializedRef.current = true;
       setTheme(settings.theme);
-    }
-
-    if (customInstructions !== (settings.customInstructions ?? "")) {
       setCustomInstructions(settings.customInstructions ?? "");
-    }
-
-    if (defaultThreadName !== settings.defaultThreadName) {
       setDefaultThreadName(settings.defaultThreadName);
-    }
-
-    if (landingPageContent !== settings.landingPageContent) {
       setLandingPageContent(settings.landingPageContent);
     }
-  }
+  }, [settings]);
 
-  const handleSave = useCallback(async (themeVal: Theme, customInst: string, defaultName: string, landingPageVal: LandingPageContentType) => {
-    setIsSaving(true);
+  const handleSave = async (
+    themeVal: Theme,
+    customInst: string,
+    defaultName: string,
+    landingPageVal: LandingPageContentType,
+  ) => {
     try {
       const updates = preferencesSchema.parse({
         theme: themeVal,
-        customInstructions: customInst || undefined,
+        customInstructions: customInst,
         defaultThreadName: defaultName,
         landingPageContent: landingPageVal,
       });
 
-      await updateSetting(updates);
+      await updatePreferences.mutateAsync(updates);
       applyTheme(themeVal);
       setLastSaved(new Date());
     }
@@ -89,12 +82,9 @@ export function PreferencesTab() {
       const message = error instanceof Error ? error.message : "Failed to save preferences";
       toast.error(message);
     }
-    finally {
-      setIsSaving(false);
-    }
-  }, [updateSetting, applyTheme]);
+  };
 
-  if (loading) {
+  if (isLoading) {
     return <PreferencesTabSkeleton />;
   }
 
@@ -228,7 +218,7 @@ export function PreferencesTab() {
       </div>
 
       <div className="text-muted-foreground flex justify-end p-4 text-xs">
-        {isSaving
+        {updatePreferences.isPending
           ? "Saving..."
           : lastSaved
             ? `Saved ${lastSaved.toLocaleTimeString()}`

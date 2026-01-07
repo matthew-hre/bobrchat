@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   KeyIcon,
   LogOutIcon,
@@ -40,6 +41,7 @@ const tabs: TabConfig[] = [
 export function SettingsTabs() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   const activeTab = (searchParams.get("tab") as TabId) || "profile";
 
@@ -55,8 +57,9 @@ export function SettingsTabs() {
 
   const handleSignOut = useCallback(async () => {
     await signOut();
+    queryClient.removeQueries();
     router.push("/");
-  }, [router]);
+  }, [router, queryClient]);
 
   return (
     <div className="flex h-full w-full">

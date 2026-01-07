@@ -10,11 +10,15 @@ import {
   SmartphoneIcon,
   TrashIcon,
 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import type { ApiKeyProvider } from "~/lib/db/schema/settings";
+
+import { useRemoveApiKey, useSetApiKey, useUserSettings } from "~/lib/queries/use-user-settings";
 import { apiKeyUpdateSchema } from "~/lib/schemas/settings";
+import { useChatUIStore } from "~/lib/stores/chat-ui-store";
 import { cn } from "~/lib/utils";
 
 import { Badge } from "../ui/badge";
@@ -23,7 +27,6 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
 import { Skeleton } from "../ui/skeleton";
-import { useUserSettingsContext } from "./user-settings-provider";
 
 type StorageType = "client" | "server";
 
@@ -42,63 +45,76 @@ const storageOptions: { value: StorageType; label: string; description: string; 
   },
 ];
 
+function syncApiKeyToLocalStorage(
+  provider: ApiKeyProvider,
+  apiKey: string,
+  storeServerSide: boolean,
+) {
+  const localStorageKey = `${provider}_api_key`;
+  if (storeServerSide) {
+    localStorage.removeItem(localStorageKey);
+  }
+  else {
+    localStorage.setItem(localStorageKey, apiKey);
+  }
+}
+
+function removeApiKeyFromLocalStorage(provider: ApiKeyProvider) {
+  localStorage.removeItem(`${provider}_api_key`);
+}
+
 export function IntegrationsTab() {
-  const { settings, loading, setApiKey, removeApiKey } = useUserSettingsContext();
+  const { data: settings, isLoading } = useUserSettings({ enabled: true });
+  const setApiKeyMutation = useSetApiKey();
+  const removeApiKeyMutation = useRemoveApiKey();
+  const loadApiKeysFromStorage = useChatUIStore(state => state.loadApiKeysFromStorage);
+
   const initializedRef = useRef(false);
   const parallelInitializedRef = useRef(false);
 
-  // OpenRouter state
   const [apiKey, setApiKeyValue] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  const [storageType, setStorageType] = useState<StorageType | null>(
-    () => settings?.apiKeyStorage?.openrouter ?? null,
-  );
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [storageType, setStorageType] = useState<StorageType | null>(null);
 
-  // Parallel.ai state
   const [parallelApiKey, setParallelApiKeyValue] = useState("");
   const [showParallelApiKey, setShowParallelApiKey] = useState(false);
-  const [parallelStorageType, setParallelStorageType] = useState<StorageType | null>(
-    () => settings?.apiKeyStorage?.parallel ?? null,
-  );
-  const [isParallelSaving, setIsParallelSaving] = useState(false);
-  const [isParallelDeleting, setIsParallelDeleting] = useState(false);
+  const [parallelStorageType, setParallelStorageType] = useState<StorageType | null>(null);
 
   const hasExistingKey = settings?.apiKeyStorage?.openrouter !== undefined;
   const hasExistingParallelKey = settings?.apiKeyStorage?.parallel !== undefined;
 
-  // Sync OpenRouter storage type when settings load for the first time
-  if (settings?.apiKeyStorage?.openrouter && !initializedRef.current) {
-    initializedRef.current = true;
-    if (storageType !== settings.apiKeyStorage.openrouter) {
+  useEffect(() => {
+    if (settings?.apiKeyStorage?.openrouter && !initializedRef.current) {
+      initializedRef.current = true;
       setStorageType(settings.apiKeyStorage.openrouter);
     }
-  }
+  }, [settings?.apiKeyStorage?.openrouter]);
 
-  // Sync Parallel.ai storage type when settings load for the first time
-  if (settings?.apiKeyStorage?.parallel && !parallelInitializedRef.current) {
-    parallelInitializedRef.current = true;
-    if (parallelStorageType !== settings.apiKeyStorage.parallel) {
+  useEffect(() => {
+    if (settings?.apiKeyStorage?.parallel && !parallelInitializedRef.current) {
+      parallelInitializedRef.current = true;
       setParallelStorageType(settings.apiKeyStorage.parallel);
     }
-  }
+  }, [settings?.apiKeyStorage?.parallel]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = async () => {
     if (!apiKey.trim() || !storageType)
       return;
 
-    setIsSaving(true);
     try {
-      // Validate inputs with Zod before sending
       const validated = apiKeyUpdateSchema.parse({
         apiKey: apiKey.trim(),
         storeServerSide: storageType === "server",
       });
 
-      // Provider handles both server action and localStorage sync
-      await setApiKey("openrouter", validated.apiKey, validated.storeServerSide);
+      await setApiKeyMutation.mutateAsync({
+        provider: "openrouter",
+        apiKey: validated.apiKey,
+        storeServerSide: validated.storeServerSide,
+      });
 
+      syncApiKeyToLocalStorage("openrouter", validated.apiKey, validated.storeServerSide);
+      loadApiKeysFromStorage();
       setApiKeyValue("");
       toast.success(hasExistingKey ? "API key updated" : "API key saved");
     }
@@ -111,41 +127,40 @@ export function IntegrationsTab() {
           : "Failed to save API key";
       toast.error(message);
     }
-    finally {
-      setIsSaving(false);
-    }
-  }, [apiKey, storageType, setApiKey, hasExistingKey]);
+  };
 
-  const handleDelete = useCallback(async () => {
-    setIsDeleting(true);
+  const handleDelete = async () => {
     try {
-      // Provider handles both server action and localStorage cleanup
-      await removeApiKey("openrouter");
+      await removeApiKeyMutation.mutateAsync("openrouter");
+      removeApiKeyFromLocalStorage("openrouter");
+      loadApiKeysFromStorage();
+      setStorageType(null);
+      initializedRef.current = false;
       toast.success("API key removed");
     }
     catch {
       toast.error("Failed to remove API key");
     }
-    finally {
-      setIsDeleting(false);
-    }
-  }, [removeApiKey]);
+  };
 
-  const handleParallelSave = useCallback(async () => {
+  const handleParallelSave = async () => {
     if (!parallelApiKey.trim() || !parallelStorageType)
       return;
 
-    setIsParallelSaving(true);
     try {
-      // Validate inputs with Zod before sending
       const validated = apiKeyUpdateSchema.parse({
         apiKey: parallelApiKey.trim(),
         storeServerSide: parallelStorageType === "server",
       });
 
-      // Provider handles both server action and localStorage sync
-      await setApiKey("parallel", validated.apiKey, validated.storeServerSide);
+      await setApiKeyMutation.mutateAsync({
+        provider: "parallel",
+        apiKey: validated.apiKey,
+        storeServerSide: validated.storeServerSide,
+      });
 
+      syncApiKeyToLocalStorage("parallel", validated.apiKey, validated.storeServerSide);
+      loadApiKeysFromStorage();
       setParallelApiKeyValue("");
       toast.success(hasExistingParallelKey ? "API key updated" : "API key saved");
     }
@@ -158,29 +173,30 @@ export function IntegrationsTab() {
           : "Failed to save API key";
       toast.error(message);
     }
-    finally {
-      setIsParallelSaving(false);
-    }
-  }, [parallelApiKey, parallelStorageType, setApiKey, hasExistingParallelKey]);
+  };
 
-  const handleParallelDelete = useCallback(async () => {
-    setIsParallelDeleting(true);
+  const handleParallelDelete = async () => {
     try {
-      // Provider handles both server action and localStorage cleanup
-      await removeApiKey("parallel");
+      await removeApiKeyMutation.mutateAsync("parallel");
+      removeApiKeyFromLocalStorage("parallel");
+      loadApiKeysFromStorage();
+      setParallelStorageType(null);
+      parallelInitializedRef.current = false;
       toast.success("API key removed");
     }
     catch {
       toast.error("Failed to remove API key");
     }
-    finally {
-      setIsParallelDeleting(false);
-    }
-  }, [removeApiKey]);
+  };
 
-  if (loading) {
+  if (isLoading) {
     return <IntegrationsTabSkeleton />;
   }
+
+  const isSaving = setApiKeyMutation.isPending && setApiKeyMutation.variables?.provider === "openrouter";
+  const isDeleting = removeApiKeyMutation.isPending && removeApiKeyMutation.variables === "openrouter";
+  const isParallelSaving = setApiKeyMutation.isPending && setApiKeyMutation.variables?.provider === "parallel";
+  const isParallelDeleting = removeApiKeyMutation.isPending && removeApiKeyMutation.variables === "parallel";
 
   return (
     <div className="flex h-full flex-col">
@@ -247,9 +263,7 @@ export function IntegrationsTab() {
                   >
                     {showApiKey
                       ? <EyeOffIcon className="size-4" />
-                      : (
-                          <EyeIcon className="size-4" />
-                        )}
+                      : <EyeIcon className="size-4" />}
                   </button>
                 </div>
               </div>
@@ -450,9 +464,7 @@ export function IntegrationsTab() {
                   >
                     {showParallelApiKey
                       ? <EyeOffIcon className="size-4" />
-                      : (
-                          <EyeIcon className="size-4" />
-                        )}
+                      : <EyeIcon className="size-4" />}
                   </button>
                 </div>
               </div>

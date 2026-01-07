@@ -15,6 +15,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { authClient } from "~/lib/auth-client";
+import { useQueryClient } from "@tanstack/react-query";
 
 const signInSchema = z.object({
   email: z.email("Invalid email address"),
@@ -34,6 +35,7 @@ type ValidationError = {
 
 export function LoginForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -93,8 +95,8 @@ export function LoginForm() {
         }
 
         if (data) {
-          router.refresh();
-          router.push("/");
+          // Force a hard navigation to ensure all client-side state is reset
+          window.location.href = "/";
         }
       }
       else {
@@ -122,8 +124,8 @@ export function LoginForm() {
         }
 
         if (data) {
-          router.refresh();
-          router.push("/");
+          // Force a hard navigation to ensure all client-side state is reset
+          window.location.href = "/";
         }
       }
     }

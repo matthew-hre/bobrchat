@@ -2,14 +2,13 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect } from "react";
 import { toast } from "sonner";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
 import { ChatView } from "~/components/chat/chat-view";
-import { useModelContext } from "~/components/chat/model-context";
-import { useChatInputFeatures } from "~/hooks/use-chat-input-features";
+import { useChatUIStore } from "~/lib/stores/chat-ui-store";
 
 type ChatThreadProps = {
   params: Promise<{ id: string }>;
@@ -18,58 +17,36 @@ type ChatThreadProps = {
 };
 
 function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): React.ReactNode {
-  const [input, setInput] = useState<string>("");
-  const [browserApiKey, setBrowserApiKey] = useState<string | null>(null);
-  const [parallelBrowserApiKey, setParallelBrowserApiKey] = useState<string | null>(null);
   const { id } = use(params);
-  const { selectedModelId } = useModelContext();
+  const {
+    input,
+    setInput,
+    clearInput,
+    searchEnabled,
+    setSearchEnabled,
+    loadApiKeysFromStorage,
+    consumePendingMessage,
+  } = useChatUIStore();
 
-  const { features, getLatestValues } = useChatInputFeatures(
-    { key: "search", defaultValue: false, persist: true },
-  );
-
+  // Load API keys from localStorage on mount
   useEffect(() => {
-    const key = localStorage.getItem("openrouter_api_key");
-    if (key) {
-      setBrowserApiKey(key);
-    }
-    const parallelKey = localStorage.getItem("parallel_api_key");
-    if (parallelKey) {
-      setParallelBrowserApiKey(parallelKey);
-    }
-  }, []);
-
-  // Keep ref for browserApiKey for closure
-  const browserApiKeyRef = useRef(browserApiKey);
-  useEffect(() => {
-    browserApiKeyRef.current = browserApiKey;
-  }, [browserApiKey]);
-
-  // Keep ref for parallelBrowserApiKey for closure
-  const parallelBrowserApiKeyRef = useRef(parallelBrowserApiKey);
-  useEffect(() => {
-    parallelBrowserApiKeyRef.current = parallelBrowserApiKey;
-  }, [parallelBrowserApiKey]);
-
-  // Keep ref for selectedModelId for closure
-  const selectedModelIdRef = useRef(selectedModelId);
-  useEffect(() => {
-    selectedModelIdRef.current = selectedModelId;
-  }, [selectedModelId]);
+    loadApiKeysFromStorage();
+  }, [loadApiKeysFromStorage]);
 
   const { messages, sendMessage, status } = useChat<ChatUIMessage>({
     id,
     transport: new DefaultChatTransport({
       api: "/api/chat",
       prepareSendMessagesRequest: ({ messages: allMessages }) => {
-        const latestValues = getLatestValues();
+        // Access Zustand state directly - always current, no refs needed
+        const state = useChatUIStore.getState();
         const body = {
           messages: allMessages,
           threadId: id,
-          searchEnabled: latestValues.search,
-          ...(browserApiKeyRef.current && { browserApiKey: browserApiKeyRef.current }),
-          ...(parallelBrowserApiKeyRef.current && { parallelBrowserApiKey: parallelBrowserApiKeyRef.current }),
-          ...(selectedModelIdRef.current && { modelId: selectedModelIdRef.current }),
+          searchEnabled: state.searchEnabled,
+          ...(state.browserApiKey && { browserApiKey: state.browserApiKey }),
+          ...(state.parallelApiKey && { parallelBrowserApiKey: state.parallelApiKey }),
+          ...(state.selectedModelId && { modelId: state.selectedModelId }),
         };
         return { body };
       },
@@ -80,20 +57,14 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
     },
   });
 
-  // Check for pending message from creation (e.g. from homepage)
+  // Handle pending message from homepage
   useEffect(() => {
-    const pendingMessage = sessionStorage.getItem("pending_message");
-    if (pendingMessage) {
-      try {
-        const messageParts = JSON.parse(pendingMessage);
-        sendMessage(messageParts);
-        sessionStorage.removeItem("pending_message");
-      }
-      catch (e) {
-        console.error("Failed to parse pending message", e);
-      }
+    const pending = consumePendingMessage();
+    if (pending) {
+      sendMessage(pending);
+      clearInput();
     }
-  }, [sendMessage]);
+  }, [consumePendingMessage, sendMessage, clearInput]);
 
   return (
     <ChatView
@@ -102,10 +73,8 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
       setInput={setInput}
       sendMessage={sendMessage}
       isLoading={status === "submitted" || status === "streaming"}
-      searchEnabled={features.search.value}
-      onSearchChange={(enabled) => {
-        features.search.setValue(enabled);
-      }}
+      searchEnabled={searchEnabled}
+      onSearchChange={setSearchEnabled}
       hasApiKey={hasApiKey}
     />
   );

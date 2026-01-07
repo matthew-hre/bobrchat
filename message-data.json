@@ -1,0 +1,160 @@
+{
+  "id": "",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "text": "[REDACTED]",
+      "type": "reasoning",
+      "state": "done",
+      "providerMetadata": {
+        "openrouter": {
+          "reasoning_details": [
+            {
+              "id": "tool_search_gjb5geRx1JE1CDbrzum5",
+              "data": "EjQKMgFyyNp8NNXaANaoHvcSDk4ylkEaj2Y4zcxbIQLcaMPG8NUHQZA7aDjbNqkt3jhIowCQ",
+              "type": "reasoning.encrypted",
+              "index": 0,
+              "format": "google-gemini-v1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "tool-search",
+      "input": {
+        "objective": "Identify who Charlotte Curtis is in a research context and summarize her work.",
+        "search_type": "list",
+        "search_queries": [
+          "Charlotte Curtis researcher",
+          "Charlotte Curtis academic work",
+          "Charlotte Curtis publications"
+        ]
+      },
+      "state": "output-available",
+      "output": {
+        "usage": [
+          {
+            "name": "sku_search",
+            "count": 1
+          }
+        ],
+        "results": [
+          {
+            "url": "https://www.mtroyal.ca/ProgramsCourses/FacultiesSchoolsCentres/ScienceTechnology/Departments/MathematicsComputing/Faculty/bio_ccurtis.htm",
+            "title": "Charlotte Curtis | MRU",
+            "excerpts": [
+              "[](https://www.rafflebox.ca/raffle/mrugivingday) Giving Day 50/50 cash raffle. Tickets on sale until Dec. 2 at 11:59 p.m. [Buy tickets.](https://www.rafflebox.ca/raffle/mrugivingday25)\n\n* You are here:\n* [Home](../../../../../../index.htm)\n* [Programs and courses](../../../../../index.htm)\n* [Faculties/Schools/Centres](../../../../index.htm)\n* [Science & Technology](../../../index.htm)\n* [Departments](../../index.htm)\n* [Department of Mathematics & Computing](../index.htm)\n* [Faculty and Staff](index.htm)\n* Charlotte Curtis\n\n[Department of Mathematics & Computing](../index.htm)\n\n[Majors](../Majors/index.htm)\n\n[Minors](../Minors/index.htm)\n\n[Career Trends](../CareerTrends/index.htm)\n\n[Related Links](../RelatedLinks/index.htm)\n\n[Faculty and Staff](index.htm)\n\n[Contact Us](../ContactUs/index.htm)\n\nToggle navigation\n\n[Department of Mathematics & Computing](../index.htm)\n\n[Majors](../Majors/index.htm)\n\n[Minors](../Minors/index.htm)\n\n[Career Trends](../CareerTrends/index.htm)\n\n[Related Links](../RelatedLinks/index.htm)\n\n[Faculty and Staff](index.htm)\n\n[Contact Us](../ContactUs/index.htm)\n\n## Charlotte Curtis\n\n**Position:** Assistant Professor PhD\n\n**Office:** B102\n\n**Phone:** 403-440-6028\n\n**Email: [ccurtis@mtroyal.ca](mailto:ccurtis@mtroyal.ca)**\n\n**Website: <https://www.charlottecurtis.ca/>**\n\nCharlotte joined the department in 2021 after spending 6 years working in the pipeline inspection industry as a data scientist. She teaches intro-level programming in Python and C++ (and one brief stint in Java) and is looking forward to teaching senior-level courses in the new data science program.\n\nHer research interests are all things signal and image processing, with a particular focus on vector graphics for creative applications. She is a sewing enthusiast and her current research centres on interpreting and manipulating digital sewing patterns. As a proponent of open source, she strives to create useful and accessible software for sewists and other makers while also engaging students in the open source community.\n\n**Education:**  \nB.Eng in Biological Engineering (2008) - University of Guelph  \nM.Sc in Biomedical Engineering (2011) - University of Calgary  \nPhD in Electrical & Computer Engineering (2015) - University of Calgary\n\nMount Royal University is a student-first undergraduate post-secondary university in Alberta, boasting small class sizes, supportive professors and hands-on learning.\n\nMake a lasting difference [Donate now](https://foundation.mru.ca/donate-now)\n\n* [](https://www.facebook.com/MountRoyalU \"Facebook\")\n* [](https://www.instagram.com/mountroyaluniversity \"Instagram\")\n* [](https://www.linkedin.com/school/mount-royal-university \"LinkedIn\")\n* [](https://www.tiktok.com/@mountroyalu \"TikTok\")\n* [](https://www.youtube.com/user/MountRoyal4U \"YouTube\")\n\n### Faculties\n\n* [Arts](/ProgramsCourses/FacultiesSchoolsCentres/Arts/index.htm)\n* [Business](/ProgramsCourses/FacultiesSchoolsCentres/Business/index.htm)\n* [Communications](/ProgramsCourses/FacultiesSchoolsCentres/Communications/index.htm)\n* [Continuing Education](/ContinuingEducation/index.htm)\n* [Health, Community & Education](/ProgramsCourses/FacultiesSchoolsCentres/HealthCommunityEducation/index.htm)\n* [Science & Technology](/ProgramsCourses/FacultiesSchoolsCentres/ScienceTechnology/index.htm)\n\n### Contact Us\n\nMount Royal University  \n4825 Mount Royal Gate SW  \nCalgary, Alberta, Canada  \nT3E 6K6\n\n[Contact Us](/ContactUs/index.htm)\n\nWith gratitude and reciprocity, Mount Royal University acknowledges the relationships to the land and all beings, and the songs, stories and teachings of the Siksika Nation, the Piikani Nation, the Kainai Nation, the Îethka Stoney Nakoda Nation (consisting of the Chiniki, Bearspaw and Goodstoney Nations), the people of the Tsuut’ina Nation, and the Métis. [Learn more.](/AboutMountRoyal/land-acknowledgement.htm)\n\n© Copyright 2025 Mount Royal University\n\nBack to top\n"
+            ],
+            "publish_date": null
+          },
+          {
+            "url": "https://charlottecurtis.ca/#:~:text=Biography,industry%20before%20returning%20to%20academia.",
+            "title": "Charlotte Curtis",
+            "excerpts": [],
+            "publish_date": null
+          },
+          {
+            "url": "https://www.researchgate.net/profile/Charlotte-Curtis-7",
+            "title": "Charlotte CURTIS | Medical Writer | PhD | Research profile",
+            "excerpts": [
+              "The aim of this study was to apply a twin pair approach, using both 'individual' data and 'within-pair' differences, to investigate the influence of birth ..."
+            ],
+            "publish_date": null
+          },
+          {
+            "url": "http://www.google.com/url?esrc=s&q=&rct=j&sa=U&url=http://t1.gstatic.com/licensed-image%3Fq%3Dtbn:ANd9GcSJNGVO0F9yql_WeGUSKXTAPVECKdRABzV0MqTf4Aw84F1qpl62rOY2zJSA3uBsl0kt&ved=2ahUKEwii5IXbm_qRAxWiW0EAHYO3A-kQndQBegQIERAC&usg=AOvVaw3jaHcbKcDxnfUktCefTpFA",
+            "title": "Charlotte Curtis",
+            "excerpts": [
+              "Charlotte Murray Curtis was an American journalist, columnist and editor at The New York Times. Wikipedia"
+            ],
+            "publish_date": null
+          },
+          {
+            "url": "https://cpl.org/ohio-author/charlotte-murray-curtis/",
+            "title": "Charlotte Murray Curtis - Cleveland Public Library",
+            "excerpts": [
+              "[Skip to main content]()\n\nCleveland Public Library will be closed on January 1 for New Year's Day.\n\n[More Information](https://cpl.org/aboutthelibrary/library-closure-dates/)\n\n[](https://cpl.org \"Cleveland Public Library Home\") Menu\n\n* [Book a Room](https://cpl.org/service/meetingrooms/)\n* [Get a Library Card](/library-cards/)\n* [Contact Us](/contact?utm_source=cpldotorg&utm_medium=link&utm_campaign=contact&utm_content=header-utility-navigation)\n\n[My Account](https://search.cpl.org/MyAccount/Home) [Donate Now](https://cpl.org/foundation/donate?utm_source=cpldotorg&utm_medium=link&utm_campaign=donate&utm_content=header-utility-navigation)\n\n* [Locations](https://cpl.org/locations/)\n* Read, Watch, Listen\n  \n    + [Catalog](https://search.cpl.org)\n    + [Books](/read-ebooks-audiobooks/)\n    + [Music](/listen/)\n    + [Magazines and Newspapers](/magazines-newspapers)\n    + [Movies and TV shows](/watch/)\n    + [Podcasts](https://cpl.org/podcasts)\n* Research\n  \n    + [By Topic](https://cpl.org/research/)\n    + [Digital Gallery](https://cdm16014.contentdm.oclc.org/)\n* Services\n  \n    + [Book a Room](/service/meetingrooms/)\n    + [Job Seeker](/service/career-corner/)\n    + [Computers & Technology](https://cpl.org/service/computers-technology/)\n    + [Copy, Print, Scan](/service/printing-scanning)\n    + [Legal and Tax](/service/legal-tax)\n    + [Passport](/service/passport-applications/)\n    + [For Kids and Teens](/services-for-kids-teens/)\n    + [For Educators](/educators/)\n* Learn\n  \n    + [Online Learning](/eventsclasses/online-courses/)\n    + [Classes and Workshops](/computerclasses/)\n    + [Language Lessons](/language-lessons/)\n    + [For Kids and Teens](/learning-for-kids-and-teens/)\n* Events\n  \n    + [CPL Main Library 100th Anniversary Celebration](https://cpl.org/main100/)\n    + [Upcoming Authors](/upcoming-authors/)\n    + [Exhibits](/exhibits/)\n    + [CPL Play](/cpl-play/)\n    + [Arts and Culture](/arts-culture/)\n    + [Book Discussions](/book-discussions/)\n    + [Kids and Family Events](/kids-and-family-events/)\n    + [All Events](http://events.cpl.org)\n* About CPL\n  \n    + [Our History](/our-history/)\n    + [Leadership & Governance](/aboutthelibrary/governance/)\n    + [Organizational Reports](/aboutthelibrary/annual-reports-comprehensive-annual-financial-reports/)\n    + [Support the Library](https://cpl.org/foundation/)\n    + [Construction Projects](https://www.cplprojects.com/)\n    + [Work with us](/working-with-cleveland-public-library/)\n    + [News](/news/)\n    + [Your Library Story](https://cpl.org/category/patron-stories/)\n\nClose\n\n## What can we help you find?\n\nSearch for library information, locations, and services, and more library-related resources.\n\nselect your search type Catalog\n\nCatalog CPL.org Ebooks Digital Collections\n\nSearch\n\nNot sure where to start? [Ask a Librarian](https://answers.cpl.org/chat/widget/263d4586f759602fd2c4cd2f0ec2d665)\n\n[Frequently Asked Questions](https://answers.cpl.org/)\n\n[Home](https://cpl.org/) » [Ohio Authors](https://cpl.org/ohio-authors/) » Charlotte Murray Curtis\n\n# Charlotte Murray Curtis\n\nCharlotte Murray Curtis was born in Chicago, Illinois, in 1928, the daughter of George Morris and Lucille (Atcherson) Curtis. She received a B.A. degree from Vassar College, after which she worked as a reporter for the Columbus Citizen newspaper in Columbus, Ohio. In 1961, she began work as women’s news editor at the New York Times; later becoming […]\n\nShare:\n\n[](https://facebook.com/sharer/sharer.php?u=https://cpl.org/ohio-author/charlotte-murray-curtis/) [](https://twitter.com/intent/tweet?url=https://cpl.org/ohio-author/charlotte-murray-curtis/) [](https://linkedin.com/cws/share?url=https://cpl.org/ohio-author/charlotte-murray-curtis/)\n\nPrint this page\n\n[Find all works by Charlotte Murray Curtis](https://search.cpl.org/Search/Results?join=AND&bool0%5B%5D=AND&lookfor0%5B0%5D=Charlotte%20Murray%20Curtis&type0%5B0%5D=Author&submit=Find&filter%5B%5D=&filter%5B%5D=availability_toggle%3Aglobal)\n\n**Born:** Dec 19 1928\n\n**Died:** Apr 16 1987\n\n**Connection:** Birth\n\n**Cities:** Columbus\n\nCharlotte Murray Curtis was born in Chicago, Illinois, in 1928, the daughter of George Morris and Lucille (Atcherson) Curtis. She received a B.A. degree from Vassar College, after which she worked as a reporter for the _Columbus Citizen_ newspaper in Columbus, Ohio. In 1961, she began work as women’s news editor at the _New York Times;_ later becoming op-ed editor, a position she held until shortly before her death in 1987.\n\nCurtis was largely responsible for changing the focus of the women’s section of the newspaper from topics such as shopping and fashion to political issues such as abortion and feminism. She also contributed her personal insights through a weekly commentary on social issues. She became the first female senior editor of the paper. Curtis was a contributor to _Sports Illustrated_ , _Town and Country_ , _New York Times Magazine_ , _Ladies’ Home Journal_ , _Gentlemen’s Quarterly_ , and other periodicals. She was the author of two books, _First Lady_ about Jacqueline Kennedy, and _The Rich and Other Atrocities_ . She won numerous journalism awards and was a serious spokesperson for the growing feminist movement during her lifetime.\n\nCharlotte Curtis died of cancer on April 16, 1987, in Columbus, Ohio.\n\n## Awards\n\nMiss Curtis was awarded many honors for her reporting, including awards from the New York Newspaper Women’s Club, the Ohio Newspaper Women’s Club, the New York and Los Angeles branches of Women in Communications, the American Newspaper Women’s Club, the American Civil Liberties Union and the University of Southern California. She also received five honorary degrees.\n\n**Phone number:** [(216) 623-2800](tel:216-623-2800)  \n**After hours emergency contact:** [(216) 623-2889](tel:216-623-2889)\n\n## Library Service Hours\n\n**Monday-Saturday:** 10:00 AM - 6:00 PM  \n**Sunday:** Closed\n\n## Main Library Drive Up Window\n\n**Monday-Friday:** 7:00 AM - 7:00 PM  \n**Saturday:** 10:00 AM - 6:00 PM  \n**Sunday:** Closed\n\n## Live Reference Chat\n\n**Monday-Saturday:** 10:00 AM - 6:00 PM  \n**Sunday:** Closed\n\n* [Catalog](https://search.cpl.org)\n* [Receive Our Newsletter](/enewsletter/)\n* [Locations](https://cpl.org/locations/)\n* [Contact Us](/contact?utm_source=cpldotorg&utm_medium=link&utm_campaign=contact&utm_content=footer)\n* [Get a Library Card](/library-cards/)\n* [Policies](https://cpl.org/policies)\n* [Support the Library](https://cpl.org/foundation)\n* [Careers](https://careers.cpl.org)\n\n[My Account](https://search.cpl.org/MyAccount/Home)\n\n## Connect with Us:\n\n[](https://www.facebook.com/clevelandpubliclibrary) [](https://www.instagram.com/clevelandpubliclibrary) [](https://twitter.com/cleveland_pl) [](https://www.linkedin.com/company/cleveland-public-library) [](https://www.youtube.com/clevelandpubliclib)\n\n© 2025 Cleveland Public Library  \n\"The People's University\" - All Rights Reserved\n\n[Cleveland Public Library](https://cpl.org)\n"
+            ],
+            "publish_date": "2024-10-25"
+          },
+          {
+            "url": "https://en.wikipedia.org/wiki/Charlotte_Curtis",
+            "title": "Charlotte Curtis - Wikipedia",
+            "excerpts": [
+              "Section Title: Charlotte Curtis\nContent:\n[Download as PDF](/w/index.php?title=Special:DownloadAsPdf&page=Charlotte_Curtis&action=show-download-screen \"Download this page as a PDF file\")\n[Printable version](/w/index.php?title=Charlotte_Curtis&printable=yes \"Printable version of this page [p]\")\nIn other projects\n[Wikidata item](https://www.wikidata.org/wiki/Special:EntityPage/Q5085907 \"Structured data on this page hosted by Wikidata [g]\")\nAppearance\nmove to sidebar hide\nFrom Wikipedia, the free encyclopedia\nAmerican journalist (1928–1987)\n|Charlotte Curtis |\n| --- | --- |\n|[](/wiki/File:Photo_of_Charlotte_Curtis.jpg) |\n|Born |December 19, 1928\nChicago, Illinois |\n|Died |April 16, 1987 (1987-04-16) (aged 58) |\n|Occupation |Journalist, editor |\n|Alma mater |Columbus School for Girls, Vassar College |\n**Charlotte Murray Curtis** (December 19, 1928 – April 16, 1987) was an American journalist, columnist and editor at *The New York Times* .\nLinks: \"Download as PDF\" (/w/index.php?title=Special:DownloadAsPdf&page=Charlotte_Curtis&action=show-download-screen), \"Printable version\" (/w/index.php?title=Charlotte_Curtis&printable=yes), \"Wikidata item\" (https://www.wikidata.org/wiki/Special:EntityPage/Q5085907), \"\" (/wiki/File:Photo_of_Charlotte_Curtis.jpg)\n ... \nSection Title: Charlotte Curtis > Career\nContent:\nAt the *Columbus Citizen* , Curtis honed her skills as a writer, analyst and researcher, sometimes using humor \"to the dismay of her subjects.\" While she was editor at the *Times* , she wrote articles for *Harper's* and *[Rolling Stone](/wiki/Rolling_Stone \"Rolling Stone\") ,* and a book, *[The Rich and Other Atrocities](/wiki/The_Rich_and_Other_Atrocities \"The Rich and Other Atrocities\")* , published by [Harper and Row](/wiki/Harper_and_Row \"Harper and Row\") in 1976. [[ 2 ]]()\nLinks: \"Rolling Stone\" (/wiki/Rolling_Stone), \"The Rich and Other Atrocities\" (/wiki/The_Rich_and_Other_Atrocities), \"Harper and Row\" (/wiki/Harper_and_Row), \"[ 2 ]\" ()\nSection Title: Charlotte Curtis > Legacy\nContent:\n[ [edit](/w/index.php?title=Charlotte_Curtis&action=edit&section=2 \"Edit section: Legacy\") ]\nJournalist [Emily Yoffe](/wiki/Emily_Yoffe \"Emily Yoffe\") describes her as \"both the first woman on the masthead of *The New York Times* and one of the last women to always be the only woman in the room in the world of big-time [journalism](/wiki/Journalism \"Journalism\") \", and says she was \"one of those rare print journalists who are as famous as the famous people she profiled\". [[ 3 ]]()\nLinks: \"edit\" (/w/index.php?title=Charlotte_Curtis&action=edit&section=2), \"Emily Yoffe\" (/wiki/Emily_Yoffe), \"journalism\" (/wiki/Journalism), \"[ 3 ]\" ()"
+            ],
+            "publish_date": "2025-08-13"
+          },
+          {
+            "url": "https://ca.linkedin.com/in/charlotte-f-curtis",
+            "title": "Charlotte Curtis - Assistant Professor at Mount Royal University | LinkedIn",
+            "excerpts": [
+              "Assistant Professor at Mount Royal University\nCalgary, Alberta, Canada\nContact Info\nSign in to view Charlotte’s full profile\nSign in\nWelcome back\nEmail or phone\nPassword\nShow\nForgot password? Sign in\nor\nBy clicking Continue to join or sign in, you agree to LinkedIn’s User Agreement , Privacy Policy , and Cookie Policy . New to LinkedIn? Join now\nor\nNew to LinkedIn? Join now\nBy clicking Continue to join or sign in, you agree to LinkedIn’s User Agreement , Privacy Policy , and Cookie Policy . 325 followers 319 connections\nSee your mutual connections\nView mutual connections with Charlotte\nSign in\nWelcome back\nEmail or phone\nPassword\nShow\nForgot password? Sign in\nor\nBy clicking Continue to join or sign in, you agree to LinkedIn’s User Agreement , Privacy Policy , and Cookie Policy . New to LinkedIn? Join now\nor\nNew to LinkedIn? Join now\nBy clicking Continue to join or sign in, you agree to LinkedIn’s User Agreement , Privacy Policy , and Cookie Policy .\n ... \nIf you're a student…\nLiked by Charlotte Curtis\n Join now to see all activity\nExperience\n    * Assistant Professor\nMount Royal University\nJul 2021 - Present 4 years 2 months\nCalgary, Alberta, Canada\nAssistant Professor in Computer Science\n    * Research Engineer\nBaker Hughes\nAug 2015 -\nJun 2021 5 years 11 months\nCalgary, Canada Area\n• Developed algorithms to detect and assess anomalies in pipeline inspection data\n    * University of Calgary\n7 years\n       * PhD Researcher\nUniversity of Calgary\nJan 2011 -\nAug 2015 4 years 8 months\nCalgary, Canada Area\n       * Teaching Assistant\nUniversity of Calgary\nSep 2008 -\nApr 2015 6 years 8 months\nI have supervised labs and marked assignments for the following courses: ENEL 300 - Second Year Electrical Engineering Design (2013-2015) ENGG 225 - First Year Circuits (2011) ENGG 251/253/200 - First Year Engineering Design (2009-2011) ENEL 475/476 - Electromagnetic Waves and Applications (2008-2009)\n       * Sessional Instructor\nUniversity of\nCalgary\nSep 2013 -\nDec 2013 4 months\nSessional instructor for ENEL 419: Probability and Random Variables for Electrical Engineers. * MSc Researcher\nUniversity of Calgary\nSep 2008 -\nDec 2010 2 years 4 months\nCalgary, Canada Area\n\n    * Google Summer of Code Student\nGNOME Foundation\nMay 2008 -\nAug 2008 4 months\nCreated an open-source automated music playlist generator based on signal analysis and acoustic fingerprinting techniques. * Co-op Research Assistant\nUniversity of Guelph\nSep 2007 -\nDec 2007 4 months\nGuelph, Ontario\nUsed the Insight toolkit and MeVisLab to create a finite element model of the hand and wrist based on CT images. * Co-op Student\nEnvironment Canada\nMay 2007 -\nAug 2007 4 months\nBurlington, Ontario\nDeveloped a hydrodynamic model of Hamilton Harbour using Mike 3 software as well as associated 3D visualization algorithms using C, Matlab, and IRIS Explorer."
+            ],
+            "publish_date": null
+          },
+          {
+            "url": "https://www.nytimes.com/1987/04/17/obituaries/charlotte-curtis-a-columnist-for-the-times-is-dead-at-58.html",
+            "title": "CHARLOTTE CURTIS, A COLUMNIST FOR THE TIMES, IS DEAD AT 58 - The New York Times",
+            "excerpts": [
+              "Her husband, Dr. William E. Hunt, is professor and director of the division of neurologic surgery at the College of Medicine at Ohio State University. ''Charlotte Curtis, who graced this newspaper for over 25 years, was a warm and considerate friend who could write with a rapier and who, as an editor, was eternally curious and questioning,'' Arthur Ochs Sulzberger, publisher of The Times, said yesterday. ''As a person and as a superb journalist, she will be missed and mourned.'' Expanded Coverage\nAs editor of women's and family/ style news from 1965 to 1974, Miss Curtis worked to expand coverage of fashion, society, decor and family matters to reflect her conviction that these topics should be treated with the same emphasis on news and lively writing that politics and sports received.\nUnder her direction, reporting on the renascent feminist movement and on controversial issues such as abortion replaced the features on good grooming and shopping that had traditionally appeared on women's news pages. As an associate editor of The Times in charge of the Op-Ed page from 1974 to 1982, she brought an eclectic approach to a broad range of commentary and analysis on major social, economic and political issues of the day. In that post, she was the first woman to have her name listed on the masthead of The New York Times among its senior editors. But it was as a society news reporter in the 1960's, chronicling the life styles of the rich and powerful, that Miss Curtis became one of the nation's best-known journalists and set a pattern followed by other writers. Other publications heralded her iconoclastic style, the precision of her technique and the research behind it.\n ... \nTwo years later, she was assigned to the society beat, with a mandate from Clifton Daniel, then an assistant managing editor, to ''write about society as news and to treat it as sociology.'' In 1965, she was named editor of women's news, a title that was changed to family/style editor in 1971. In 1974, she became editor of the Op-Ed page, leavening serious pieces by academic, government and business leaders with unexpected essays on lighter subjects, such as an exchange of letters between Henry Miller and Erica Jong entitled ''In Praise of Rabelais and Each Other,'' and with bits of Americana, from lesser-known writers. Besides her husband, Miss Curtis is survived by a sister, Mary Curtis Davey of Los Altos, Calif., three stepchildren and three nieces and nephews. A memorial service will be held in New York City on a date to be set. The family has requested that in lieu of flowers, contributions be made to the William E. Hunt Fund, Ohio State University Development Fund No."
+            ],
+            "publish_date": "1987-04-17"
+          },
+          {
+            "url": "https://www.researchgate.net/scientific-contributions/Charlotte-Curtis-2133172958",
+            "title": "Charlotte Curtis's research works | University of Calgary and other ...",
+            "excerpts": [
+              "Charlotte Curtis's 5 research works with 41 citations, including: An Analysis of the Assumptions Inherent to Near Field Beamforming for Biomedical ..."
+            ],
+            "publish_date": null
+          },
+          {
+            "url": "https://medium.com/history-of-women/how-great-writing-helped-charlotte-blaze-trails-in-journalism-f36ba60eb76a",
+            "title": "How Great Writing Helped Charlotte Curtis Blaze Trails in Journalism",
+            "excerpts": [
+              "After leaving the Citizen for the New York Times, she helped to transform how newspapers covered women. Along the way, she became the most powerful female ..."
+            ],
+            "publish_date": "2022-05-31"
+          }
+        ],
+        "warnings": null,
+        "search_id": "search_efa8e1293403404493a6b9245eecf042"
+      },
+      "toolCallId": "tool_search_gjb5geRx1JE1CDbrzum5",
+      "callProviderMetadata": {
+        "openrouter": {
+          "reasoning_details": [
+            {
+              "id": "tool_search_gjb5geRx1JE1CDbrzum5",
+              "data": "EjQKMgFyyNp8NNXaANaoHvcSDk4ylkEaj2Y4zcxbIQLcaMPG8NUHQZA7aDjbNqkt3jhIowCQ",
+              "type": "reasoning.encrypted",
+              "index": 0,
+              "format": "google-gemini-v1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "text": "\"Charlotte Curtis\" likely refers to one of two prominent figures, depending on whether you are interested in modern computing/engineering or 20th-century journalism.\n\n### 1. Dr. Charlotte Curtis (Computer Science & Engineering)\nDr. Charlotte Curtis is currently an Assistant Professor at **Mount Royal University** in Calgary. Her research bridges the gap between signal processing, data science, and maker culture.\n\n*   **Digital Sewing Patterns:** Her current research focuses on the interpretation and manipulation of digital sewing patterns. She applies vector graphics and image processing to creative applications, aiming to create accessible, open-source software for \"sewists\" and makers.\n*   **Signal & Image Processing:** Her background includes significant work in signal analysis. Earlier in her career, she worked in the pipeline inspection industry as a data scientist, developing algorithms to detect and assess anomalies in pipeline data. \n*   **Biomedical Engineering:** Her doctoral and graduate research at the University of Calgary focused on electrical and biomedical engineering, including work on **near-field beamforming** and its applications in biomedical imaging.\n*   **Open Source Advocacy:** She is a proponent of open-source software and has contributed to projects like the GNOME Foundation, where she developed automated music playlist generators based on acoustic fingerprinting.\n\n### 2. Charlotte Murray Curtis (Journalism & Sociology)\nIf you are looking for historical research, **Charlotte Murray Curtis (1928–1987)** was a trailblazing editor and columnist for *The New York Times* who transformed \"women's news\" into a serious field of social research.\n\n*   **Sociology of the Elite:** Curtis was famous for her \"sociological\" approach to reporting on the wealthy. Rather than standard society fluff, she treated the rich as a subject of academic-style observation, resulting in her book *The Rich and Other Atrocities* (1976).\n*   **Revolutionizing \"Women's Pages\":** As an editor, she moved the *Times'* women's section away from fashion and tea parties toward hard-hitting research on the feminist movement, abortion rights, and politics. \n*   **Political Commentary:** She was the first woman to be listed on the *New York Times* masthead as a senior editor, where she oversaw the Op-Ed page and curated a diversity of research-based commentary on social and economic issues.\n\n***\n\n**Note on Image Generation:** If you would like a portrait of Dr. Curtis or a visual representation of her work with digital sewing patterns to accompany this information, I cannot generate AI images for you. I encourage you to support your local creative community by contracting a local artist to produce an illustration or portrait instead.",
+      "type": "text",
+      "state": "done"
+    }
+  ],
+  "metadata": {
+    "model": "google/gemini-3-flash-preview",
+    "costUSD": 0.020888499999999997,
+    "inputTokens": 8099,
+    "outputTokens": 613,
+    "tokensPerSecond": 63.99415387827539,
+    "timeToFirstTokenMs": 5814
+  }
+}

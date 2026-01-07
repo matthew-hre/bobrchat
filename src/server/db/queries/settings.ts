@@ -92,8 +92,13 @@ export async function updateUserSettings(
     .returning({ settings: userSettings.settings });
 
   if (!result.length) {
-    // If user settings don't exist, create them
-    return createDefaultUserSettings(userId);
+    await db.insert(userSettings).values({
+      userId,
+      settings: newSettings,
+      encryptedApiKeys: {},
+    });
+
+    return newSettings;
   }
 
   return result[0].settings as UserSettingsData;
@@ -253,12 +258,12 @@ export async function deleteApiKey(userId: string, provider: ApiKeyProvider): Pr
   });
 
   // Remove from encrypted keys
-   const cleanedEncrypted: EncryptedApiKeysData = {};
-   Object.entries(currentEncrypted).forEach(([key, value]) => {
-     if (key !== provider && value !== undefined) {
-       cleanedEncrypted[key as "openrouter" | "parallel"] = value;
-     }
-   });
+  const cleanedEncrypted: EncryptedApiKeysData = {};
+  Object.entries(currentEncrypted).forEach(([key, value]) => {
+    if (key !== provider && value !== undefined) {
+      cleanedEncrypted[key as "openrouter" | "parallel"] = value;
+    }
+  });
 
   await db
     .update(userSettings)

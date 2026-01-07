@@ -1,7 +1,7 @@
+"use client";
+
 import { PlusIcon } from "lucide-react";
-import { headers } from "next/headers";
 import Link from "next/link";
-import { Suspense } from "react";
 
 import {
   Sidebar,
@@ -11,34 +11,49 @@ import {
   SidebarHeader,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
-import { auth } from "~/lib/auth";
-import { groupThreadsByDate } from "~/lib/utils/thread-grouper";
-import { getThreadsByUserId } from "~/server/db/queries/chat";
+import { useSession } from "~/lib/auth-client";
+import { useThreads } from "~/lib/queries/use-threads";
+import { useUserSettings } from "~/lib/queries/use-user-settings";
 
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { ThreadList } from "./thread-list";
 import { UserProfileCard } from "./user-profile-card";
 
-async function ThreadListContainer() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return null;
-  }
-
-  const threads = await getThreadsByUserId(session.user.id);
-  const groupedThreads = groupThreadsByDate(threads);
-
-  return <ThreadList groupedThreads={groupedThreads} />;
+function ThreadListSkeleton() {
+  return (
+    <div className="space-y-2">
+      {[1, 2, 3].map(i => (
+        <Skeleton key={i} className="h-8 w-full" />
+      ))}
+    </div>
+  );
 }
 
-export async function ChatSidebar() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
+function UserProfileSkeleton() {
+  return (
+    <div className="space-y-3 p-4">
+      <div className="flex items-center gap-3">
+        <Skeleton className="size-9 shrink-0 rounded-full" />
+        <div className="min-w-0 flex-1">
+          <Skeleton className="mb-2 h-4 w-24" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ChatSidebar() {
+  const { data: session, isPending: sessionLoading } = useSession();
+  const { data: groupedThreads, isLoading: threadsLoading } = useThreads({
+    enabled: !!session,
   });
+  const { data: settings } = useUserSettings({
+    enabled: !!session,
+  });
+
+  const hasApiKey = settings?.apiKeyStorage?.openrouter !== undefined;
 
   return (
     <Sidebar collapsible="offcanvas">
@@ -52,7 +67,6 @@ export async function ChatSidebar() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-
             <Button
               variant="ghost"
               size="icon-sm"
@@ -70,37 +84,27 @@ export async function ChatSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <Suspense
-            fallback={(
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-8 w-full" />
-                ))}
-              </div>
-            )}
-          >
-            <ThreadListContainer />
-          </Suspense>
+          {threadsLoading
+            ? (
+                <ThreadListSkeleton />
+              )
+            : groupedThreads
+              ? (
+                  <ThreadList groupedThreads={groupedThreads} />
+                )
+              : null}
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-0">
-        <Suspense
-          fallback={(
-            <div className="space-y-3 p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="size-9 shrink-0 rounded-full" />
-                <div className="min-w-0 flex-1">
-                  <Skeleton className="mb-2 h-4 w-24" />
-                  <Skeleton className="h-3 w-32" />
-                </div>
-              </div>
-            </div>
-          )}
-        >
-          {session && (
-            <UserProfileCard session={session} />
-          )}
-        </Suspense>
+        {sessionLoading
+          ? (
+              <UserProfileSkeleton />
+            )
+          : session
+            ? (
+                <UserProfileCard session={session} hasApiKey={hasApiKey} />
+              )
+            : null}
       </SidebarFooter>
     </Sidebar>
   );

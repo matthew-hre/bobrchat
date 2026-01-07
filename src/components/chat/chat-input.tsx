@@ -3,11 +3,12 @@
 import { AlertCircle, PaperclipIcon, SearchIcon, SendIcon } from "lucide-react";
 import * as React from "react";
 
+import { useFavoriteModels, useModels } from "~/lib/queries/use-models";
+import { useChatUIStore } from "~/lib/stores/chat-ui-store";
 import { cn } from "~/lib/utils";
 
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { useModelContext } from "./model-context";
 import { ModelSelector } from "./model-selector";
 
 type ChatInputProps = {
@@ -29,7 +30,9 @@ export function ChatInput({
   onSearchChange,
   hasApiKey,
 }: ChatInputProps) {
-  const { models, selectedModelId, setSelectedModelId, isLoading } = useModelContext();
+  const favoriteModels = useFavoriteModels();
+  const { isLoading } = useModels({ enabled: hasApiKey });
+  const { selectedModelId, setSelectedModelId } = useChatUIStore();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -107,7 +110,7 @@ export function ChatInput({
           >
             {/* Model Selector */}
             <ModelSelector
-              models={models}
+              models={favoriteModels}
               selectedModelId={selectedModelId || undefined}
               onSelectModel={setSelectedModelId}
               isLoading={isLoading}
@@ -116,26 +119,25 @@ export function ChatInput({
             <div className="flex-1" />
             <div className="flex items-center gap-2">
               <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onSearchChange?.(!searchEnabled)}
-                className={cn(`
-                  hover:text-foreground
-                  gap-2 transition-colors
-                `, searchEnabled
-                  ? `
-                    text-primary
-                    hover:text-primary/80 hover:bg-primary/10
-                    dark:hover:text-primary/80 dark:hover:bg-primary/10
-                  `
-                  : `text-muted-foreground`)}
-                title={searchEnabled ? "Search enabled" : "Search disabled"}
-                suppressHydrationWarning
-              >
-                <SearchIcon size={16} />
-                Search
-              </Button>
+                 type="button"
+                 variant="ghost"
+                 size="sm"
+                 onClick={() => onSearchChange?.(!searchEnabled)}
+                 className={cn(`
+                   hover:text-foreground
+                   gap-2 transition-colors
+                 `, searchEnabled
+                   ? `
+                     text-primary
+                     hover:text-primary/80 hover:bg-primary/10
+                     dark:hover:text-primary/80 dark:hover:bg-primary/10
+                   `
+                   : `text-muted-foreground`)}
+                 title={searchEnabled ? "Search enabled" : "Search disabled"}
+               >
+                 <SearchIcon size={16} />
+                 Search
+               </Button>
 
               <Button
                 type="button"
