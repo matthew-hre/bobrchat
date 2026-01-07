@@ -83,7 +83,7 @@ export function ChatView({
             : `translate-y-2 scale-99 opacity-0`,
         )}
         >
-          <ChatMessages messages={messages} isLoading={isLoading} />
+          <ChatMessages messages={messages} isLoading={isLoading} searchEnabled={searchEnabled} />
         </div>
         <div ref={messagesEndRef} />
       </ScrollArea>

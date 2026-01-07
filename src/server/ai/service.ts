@@ -129,27 +129,6 @@ export async function streamChatResponse(
       if (part.type === "finish") {
         const usage = part.totalUsage;
         const totalTime = Date.now() - startTime;
-        // Extract search results from tool calls if available
-        const finishPart = part as any;
-        if (finishPart.toolCalls && Array.isArray(finishPart.toolCalls)) {
-          finishPart.toolCalls.forEach((call: any) => {
-            if (call.toolName === "search" && call.result) {
-              const results = Array.isArray(call.result) ? call.result : call.result.results;
-              if (Array.isArray(results)) {
-                results.forEach((item: any) => {
-                  if (item.url) {
-                    sources.push({
-                      id: item.url,
-                      sourceType: "url",
-                      url: item.url,
-                      title: item.title,
-                    });
-                  }
-                });
-              }
-            }
-          });
-        }
 
         return calculateResponseMetadata({
           inputTokens: usage.inputTokens ?? 0,

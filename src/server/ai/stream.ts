@@ -25,6 +25,31 @@ export function createStreamHandlers(
 }
 
 /**
+ * Extracts sources from a Parallel search tool result.
+ */
+function extractSourcesFromToolResult(result: unknown): Source[] {
+  if (!result)
+    return [];
+
+  try {
+    const data = typeof result === "string" ? JSON.parse(result) : result;
+    const items = Array.isArray(data) ? data : data.results || [];
+
+    return items
+      .filter((item: any) => item?.url)
+      .map((item: any) => ({
+        id: item.url,
+        sourceType: "url" as const,
+        url: item.url,
+        title: item.title,
+      }));
+  }
+  catch {
+    return [];
+  }
+}
+
+/**
  * Processes stream chunks and triggers appropriate handlers.
  *
  * @param part The stream chunk to process
@@ -43,5 +68,12 @@ export function processStreamChunk(part: TextStreamPart<ToolSet>, handlers: Stre
         title: part.title,
       }),
     });
+  }
+  else if (part.type === "tool-result") {
+    const toolPart = part as any;
+    if (toolPart.toolName === "search") {
+      const sources = extractSourcesFromToolResult(toolPart.result);
+      sources.forEach(handlers.onSource);
+    }
   }
 }
