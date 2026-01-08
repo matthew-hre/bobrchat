@@ -19,7 +19,7 @@ export function UserProfileCard({ session, hasApiKey }: UserProfileCardProps) {
 
   return (
     <Link
-      href="/settings?tab=profile"
+      href="?settings=profile"
       className={cn(`
         hover:bg-muted/50
         group/user flex cursor-pointer items-center gap-3 p-6 py-4

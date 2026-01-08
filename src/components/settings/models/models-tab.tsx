@@ -20,7 +20,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import Fuse from "fuse.js";
 import {
-  RefreshCwIcon,
+  Loader2,
   SearchIcon,
   SparklesIcon,
 } from "lucide-react";
@@ -29,6 +29,7 @@ import { toast } from "sonner";
 
 import { MODELS_KEY, useModels } from "~/lib/queries/use-models";
 import { useUpdateFavoriteModels, useUserSettings } from "~/lib/queries/use-user-settings";
+import { cn } from "~/lib/utils";
 
 import {
   Accordion,
@@ -42,6 +43,8 @@ import { Skeleton } from "../../ui/skeleton";
 import { ModelCard } from "./model-card";
 import { SortableFavoriteModel } from "./sortable-favorite-model";
 
+const MODELS_PER_PAGE = 30;
+
 export function ModelsTab() {
   const { data: settings } = useUserSettings({ enabled: true });
   const { data: models = [], isLoading, isFetching, refetch } = useModels({ enabled: true });
@@ -51,7 +54,9 @@ export function ModelsTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [displayedCount, setDisplayedCount] = useState(MODELS_PER_PAGE);
   const initializedRef = useRef(false);
+  const observerTargetRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -67,19 +72,13 @@ export function ModelsTab() {
     }
   }, [settings]);
 
-  const handleRefreshModels = async () => {
-    await queryClient.invalidateQueries({ queryKey: MODELS_KEY });
-    await refetch();
-    toast.success("Models updated successfully");
-  };
-
   const fuse = useMemo(() => {
     if (!models.length)
       return null;
     return new Fuse(models, {
       keys: ["name", "id", "description"],
-      threshold: 0.3,
-      minMatchCharLength: 2,
+      threshold: 0.2,
+      minMatchCharLength: 3,
     });
   }, [models]);
 
@@ -89,6 +88,40 @@ export function ModelsTab() {
     }
     return fuse.search(searchQuery).map(result => result.item);
   }, [searchQuery, fuse, models]);
+
+  // Reset displayed count when search query changes
+  useEffect(() => {
+    setDisplayedCount(MODELS_PER_PAGE);
+  }, [searchQuery]);
+
+  // Set up intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && displayedCount < searchResults.length) {
+          setDisplayedCount(prev => Math.min(prev + MODELS_PER_PAGE, searchResults.length));
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    if (observerTargetRef.current) {
+      observer.observe(observerTargetRef.current);
+    }
+
+    return () => {
+      if (observerTargetRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        observer.unobserve(observerTargetRef.current);
+      }
+    };
+  }, [displayedCount, searchResults.length]);
+
+  const handleRefreshModels = async () => {
+    await queryClient.invalidateQueries({ queryKey: MODELS_KEY });
+    await refetch();
+    toast.success("Models updated successfully");
+  };
 
   const toggleModel = (modelId: string) => {
     setSelectedModels((prev) => {
@@ -149,23 +182,8 @@ export function ModelsTab() {
   return (
     <div className="flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-border border-b px-6 py-4">
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Models</h2>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleRefreshModels}
-            disabled={isFetching}
-            className="absolute top-4 right-4 gap-2 text-sm"
-          >
-            <RefreshCwIcon
-              size={8}
-              className={isRefreshing ? "animate-spin" : ""}
-            />
-            {isRefreshing ? "Refreshing..." : "Refresh"}
-          </Button>
-        </div>
+      <div className="border-b p-6">
+        <h3 className="text-lg font-semibold">Models</h3>
         <p className="text-muted-foreground text-sm">
           Search and manage your favorite OpenRouter models (max 10)
         </p>
@@ -188,8 +206,22 @@ export function ModelsTab() {
             />
           </div>
           <div className="text-muted-foreground mt-2 text-xs">
-            {`${searchResults.length} of ${models.length} models`}
+            {`${searchResults.length} of ${models.length} models. `}
+            <Button
+              variant="link"
+              size="sm"
+              onClick={handleRefreshModels}
+              className="-ml-2 h-min text-xs"
+            >
+              Refresh model list?
+              <Loader2 className={cn(
+                "size-3 transition-transform duration-500",
+                isRefreshing ? "animate-spin" : "hidden",
+              )}
+              />
+            </Button>
           </div>
+
         </div>
       )}
 
@@ -245,7 +277,7 @@ export function ModelsTab() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        {isLoading
+        {isLoading || isRefreshing
           ? (
               <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map(i => (
@@ -291,10 +323,21 @@ export function ModelsTab() {
                   <div className="grid gap-3">
                     {searchResults
                       .filter(m => !selectedModels.includes(m.id))
+                      .slice(0, displayedCount)
                       .map((model) => {
                         const isSelected = selectedModels.includes(model.id);
                         return (<ModelCard key={model.id} model={model} isSelected={isSelected} toggleModel={toggleModel} />);
                       })}
+                    {/* Intersection observer target for infinite scroll */}
+                    <div ref={observerTargetRef} className="h-1" />
+                    {displayedCount < searchResults.filter(m => !selectedModels.includes(m.id)).length && (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className={`
+                          text-muted-foreground size-5 animate-spin
+                        `}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
       </div>

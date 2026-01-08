@@ -46,12 +46,12 @@ export function SettingsTabs() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  const activeTab = (searchParams.get("tab") as TabId) || "profile";
+  const activeTab = (searchParams.get("settings") as TabId) || "profile";
 
   const setActiveTab = useCallback(
     (tab: TabId) => {
       const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", tab);
+      params.set("settings", tab);
       params.delete("referrer");
       router.push(`?${params.toString()}`, { scroll: false });
     },
@@ -73,7 +73,11 @@ export function SettingsTabs() {
         <div className="flex items-center justify-between p-4">
           <h2 className="text-lg font-semibold">Settings</h2>
           <DialogClose asChild>
-            <Button variant="ghost" size="icon-sm">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="absolute top-4 right-4"
+            >
               <XIcon className="size-4" />
               <span className="sr-only">Close</span>
             </Button>

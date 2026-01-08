@@ -180,7 +180,7 @@ export function AttachmentsTab() {
       </div>
 
       <div className="flex-1 overflow-auto p-6">
-        <div className="mx-auto max-w-3xl space-y-4">
+        <div className="mx-auto space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">

@@ -315,7 +315,7 @@ export function ChatInput({
             >
               No API key configured. Set up your OpenRouter API key in
               <a
-                href="/settings?tab=integrations"
+                href="?settings=integrations"
                 className={`
                   ml-1 font-semibold underline
                   hover:no-underline

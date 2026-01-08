@@ -106,11 +106,10 @@ export function ProfileTab() {
             </CardHeader>
             <CardContent>
               <ul className="list-disc space-y-1 pl-5 text-sm">
-                <li>Search functionality via Parallel.ai</li>
-                <li>File uploads and context integration</li>
-                <li>Customizable model options</li>
                 <li>Analytics dashboard for usage tracking</li>
                 <li>Forking, Handoff, and Thread Referencing</li>
+                <li>Message editing and regenerating</li>
+                <li>Public thread sharing</li>
               </ul>
             </CardContent>
           </Card>

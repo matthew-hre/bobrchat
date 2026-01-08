@@ -5,6 +5,7 @@ import { JetBrains_Mono, Rethink_Sans } from "next/font/google";
 import { headers } from "next/headers";
 
 import "./globals.css";
+import { SettingsModalProvider } from "~/components/settings/settings-modal-provider";
 import { ChatSidebar } from "~/components/sidebar/chat-sidebar";
 import { FloatingSidebarToggle } from "~/components/sidebar/floating-sidebar-toggle";
 import { ThemeInitializer } from "~/components/theme/theme-initializer";
@@ -34,10 +35,8 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
-  modal,
 }: Readonly<{
   children: React.ReactNode;
-  modal: React.ReactNode;
 }>) {
   const queryClient = new QueryClient();
 
@@ -83,7 +82,7 @@ export default async function RootLayout({
               <main className="w-full">
                 {children}
               </main>
-              {modal}
+              <SettingsModalProvider />
             </SidebarProvider>
           </QueryProvider>
         </ThemeProvider>

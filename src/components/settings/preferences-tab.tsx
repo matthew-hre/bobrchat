@@ -28,7 +28,7 @@ const themeOptions: { value: Theme; label: string; icon: typeof SunIcon }[] = [
 const landingPageOptions: { value: LandingPageContentType; label: string; description: string }[] = [
   { value: "suggestions", label: "Prompts", description: "Show some suggested prompts" },
   { value: "greeting", label: "Greeting", description: "Simple welcome message" },
-  { value: "blank", label: "Blank", description: "Render noting: blank slate" },
+  { value: "blank", label: "Blank", description: "Render nothing: blank slate" },
 ];
 
 export function PreferencesTab() {
@@ -51,7 +51,6 @@ export function PreferencesTab() {
   const [autoThreadNaming, setAutoThreadNaming] = useState(
     () => settings?.autoThreadNaming ?? false,
   );
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   useEffect(() => {
     if (settings && !initializedRef.current) {
@@ -82,7 +81,6 @@ export function PreferencesTab() {
 
       await updatePreferences.mutateAsync(updates);
       applyTheme(themeVal);
-      setLastSaved(new Date());
     }
     catch (error) {
       console.error("Failed to save preferences:", error);
@@ -240,14 +238,6 @@ export function PreferencesTab() {
             </p>
           </div>
         </div>
-      </div>
-
-      <div className="text-muted-foreground flex justify-end p-4 text-xs">
-        {updatePreferences.isPending
-          ? "Saving..."
-          : lastSaved
-            ? `Saved ${lastSaved.toLocaleTimeString()}`
-            : ""}
       </div>
     </div>
   );
