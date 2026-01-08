@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { defineRelations } from "drizzle-orm";
 import { jsonb, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { users } from "./auth";
@@ -41,18 +41,19 @@ export const userSettings = pgTable("user_settings", {
     autoThreadNaming: false,
     apiKeyStorage: {},
   } as UserSettingsData),
-  // Encrypted API keys - only contains keys where apiKeyStorage[provider] === 'server'
   encryptedApiKeys: jsonb("encrypted_api_keys").notNull().default({} as EncryptedApiKeysData),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(() => new Date())
     .notNull(),
 });
 
-export const userSettingsRelations = relations(userSettings, ({ one }) => ({
-  user: one(users, {
-    fields: [userSettings.userId],
-    references: [users.id],
-  }),
+export const userSettingsRelations = defineRelations({ userSettings, users }, r => ({
+  userSettings: {
+    user: r.one.users({
+      from: r.userSettings.userId,
+      to: r.users.id,
+    }),
+  },
 }));
