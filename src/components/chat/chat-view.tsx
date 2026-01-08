@@ -5,6 +5,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import { useCallback } from "react";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { PendingFile } from "~/components/chat/file-preview";
 import type { LandingPageContentType } from "~/lib/db/schema/settings";
 
 import { ChatInput } from "~/components/chat/chat-input";
@@ -44,9 +45,17 @@ export function ChatView({
 }) {
   const { scrollRef, messagesEndRef, isInitialScrollComplete } = useChatScroll(messages, { threadId });
 
-  const handleSendMessage = useCallback((content: string) => {
+  const handleSendMessage = useCallback((content: string, files?: PendingFile[]) => {
+    const fileUIParts = files?.map(f => ({
+      type: "file" as const,
+      url: f.url,
+      mediaType: f.mediaType,
+      filename: f.filename,
+    }));
+
     sendMessage({
-      parts: [{ type: "text", text: content }],
+      text: content,
+      files: fileUIParts,
     });
   }, [sendMessage]);
 

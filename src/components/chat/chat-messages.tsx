@@ -33,7 +33,21 @@ export const ChatMessages = memo(({
           .join("");
 
         if (message.role === "user") {
-          return <UserMessage key={message.id} content={textContent} />;
+          const fileAttachments = message.parts
+            .filter(part => part.type === "file")
+            .map(part => ({
+              url: (part as any).url,
+              filename: (part as any).filename,
+              mediaType: (part as any).mediaType,
+            }));
+
+          return (
+            <UserMessage
+              key={message.id}
+              content={textContent}
+              attachments={fileAttachments.length > 0 ? fileAttachments : undefined}
+            />
+          );
         }
 
         const isLastMessage = messageIndex === messages.length - 1;

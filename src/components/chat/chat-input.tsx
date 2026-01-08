@@ -2,7 +2,11 @@
 
 import { AlertCircle, PaperclipIcon, SearchIcon, SendIcon, SquareIcon } from "lucide-react";
 import * as React from "react";
+import { toast } from "sonner";
 
+import type { PendingFile } from "~/components/chat/file-preview";
+
+import { FilePreview } from "~/components/chat/file-preview";
 import { useFavoriteModels, useModels } from "~/lib/queries/use-models";
 import { useChatUIStore } from "~/lib/stores/chat-ui-store";
 import { cn } from "~/lib/utils";
@@ -15,7 +19,7 @@ type ChatInputProps = {
   className?: string;
   value: string;
   onValueChange: (value: string) => void;
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, files?: PendingFile[]) => void;
   isLoading?: boolean;
   onStop?: () => void;
   searchEnabled?: boolean;
@@ -38,6 +42,113 @@ export function ChatInput({
   const { isLoading: isModelsLoading } = useModels({ enabled: hasApiKey });
   const { selectedModelId, setSelectedModelId } = useChatUIStore();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const [pendingFiles, setPendingFiles] = React.useState<PendingFile[]>([]);
+
+  const uploadFiles = React.useCallback(async (filesToUpload: FileList | File[]) => {
+    const files = Array.from(filesToUpload);
+    if (files.length === 0) return;
+
+    const tempFiles: PendingFile[] = files.map(file => ({
+      id: crypto.randomUUID(),
+      filename: file.name,
+      mediaType: file.type,
+      url: URL.createObjectURL(file),
+      isUploading: true,
+    }));
+
+    setPendingFiles(prev => [...prev, ...tempFiles]);
+
+    const formData = new FormData();
+    files.forEach(file => formData.append("files", file));
+
+    const fileLabel = files.length === 1 ? files[0].name : `${files.length} files`;
+
+    const uploadPromise = async () => {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const result = await response.json();
+
+      setPendingFiles((prev) => {
+        const updated = [...prev];
+        result.files.forEach((uploaded: PendingFile, index: number) => {
+          const tempFile = tempFiles[index];
+          const existingIndex = updated.findIndex(f => f.id === tempFile.id);
+          if (existingIndex !== -1) {
+            URL.revokeObjectURL(updated[existingIndex].url);
+            updated[existingIndex] = {
+              ...uploaded,
+              isUploading: false,
+            };
+          }
+        });
+        return updated;
+      });
+
+      return result;
+    };
+
+    toast.promise(uploadPromise(), {
+      loading: `Uploading ${fileLabel}...`,
+      success: `Uploaded ${fileLabel}`,
+      error: (err) => {
+        setPendingFiles(prev =>
+          prev.filter(f => !tempFiles.some(tf => tf.id === f.id)),
+        );
+        return `Failed to upload ${fileLabel}`;
+      },
+    });
+  }, []);
+
+  const handleRemoveFile = React.useCallback((id: string) => {
+    setPendingFiles((prev) => {
+      const file = prev.find(f => f.id === id);
+      if (file?.url.startsWith("blob:")) {
+        URL.revokeObjectURL(file.url);
+      }
+      return prev.filter(f => f.id !== id);
+    });
+  }, []);
+
+  const handlePaste = React.useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const files: File[] = [];
+    for (const item of items) {
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+    }
+
+    if (files.length > 0) {
+      e.preventDefault();
+      uploadFiles(files);
+    }
+  }, [uploadFiles]);
+
+  const handleAttachClick = React.useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileInputChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        uploadFiles(e.target.files);
+        e.target.value = "";
+      }
+    },
+    [uploadFiles],
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,12 +158,19 @@ export function ChatInput({
       return;
     }
 
-    if (!value.trim()) {
+    const hasContent = value.trim() || pendingFiles.length > 0;
+    if (!hasContent) {
       return;
     }
 
-    onSendMessage(value);
+    const isUploading = pendingFiles.some(f => f.isUploading);
+    if (isUploading) {
+      return;
+    }
+
+    onSendMessage(value, pendingFiles.length > 0 ? pendingFiles : undefined);
     onValueChange("");
+    setPendingFiles([]);
     textareaRef.current?.focus();
   };
 
@@ -62,6 +180,8 @@ export function ChatInput({
       handleSubmit(e);
     }
   };
+
+  const isUploading = pendingFiles.some(f => f.isUploading);
 
   return (
     <div className={cn(`bg-background p-4 pt-0`, className)}>
@@ -101,11 +221,19 @@ export function ChatInput({
             border-border bg-background relative flex flex-col border
           `)}
         >
+          {/* File Preview Area */}
+          {pendingFiles.length > 0 && (
+            <div className="border-border border-b p-3">
+              <FilePreview files={pendingFiles} onRemove={handleRemoveFile} />
+            </div>
+          )}
+
           <Textarea
             ref={textareaRef}
             value={value}
             onChange={e => onValueChange(e.target.value)}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder="Type your message here..."
             disabled={hasApiKey === false}
             className={`
@@ -115,6 +243,16 @@ export function ChatInput({
               disabled:opacity-50
             `}
             rows={2}
+          />
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,text/*,.pdf,.json,.csv,.md"
+            onChange={handleFileInputChange}
+            className="hidden"
           />
 
           {/* Bottom toolbar */}
@@ -157,11 +295,12 @@ export function ChatInput({
                 type="button"
                 variant="ghost"
                 size="sm"
-                disabled
-                className={`
+                onClick={handleAttachClick}
+                disabled={hasApiKey === false}
+                className={cn(`
                   text-muted-foreground gap-2
                   hover:text-foreground
-                `}
+                `, pendingFiles.length > 0 && "text-primary")}
               >
                 <PaperclipIcon size={8} />
                 Attach
@@ -171,7 +310,7 @@ export function ChatInput({
                 type={isLoading ? "button" : "submit"}
                 size="icon"
                 onClick={isLoading ? onStop : undefined}
-                disabled={isLoading ? !onStop : !value.trim()}
+                disabled={isLoading ? !onStop : (!value.trim() && pendingFiles.length === 0) || isUploading}
                 className="ml-1 size-8 shrink-0"
                 title={isLoading ? "Stop generating" : "Send message"}
               >

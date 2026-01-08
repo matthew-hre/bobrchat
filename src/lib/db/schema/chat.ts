@@ -34,3 +34,25 @@ export const messages = pgTable(
   },
   table => [index("messages_threadId_idx").on(table.threadId)],
 );
+
+export const attachments = pgTable(
+  "attachments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    messageId: uuid("message_id").references(() => messages.id, {
+      onDelete: "set null",
+    }),
+    filename: text("filename").notNull(),
+    mediaType: text("media_type").notNull(),
+    size: text("size").notNull(),
+    storagePath: text("storage_path").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  table => [
+    index("attachments_userId_idx").on(table.userId),
+    index("attachments_messageId_idx").on(table.messageId),
+  ],
+);
