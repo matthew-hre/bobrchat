@@ -28,14 +28,17 @@ export default async function ChatServer({ params }: ChatServerProps) {
     redirect("/");
   }
 
+  // Fetch thread, messages, and API key status in parallel
+  const [thread, initialMessages, hasServerApiKey] = await Promise.all([
+    getThreadById(id),
+    getMessagesByThreadId(id),
+    hasApiKey(session.user.id, "openrouter"),
+  ]);
+
   // Verify thread exists and user owns it
-  const thread = await getThreadById(id);
   if (!thread || thread.userId !== session.user.id) {
     redirect("/");
   }
-
-  const initialMessages = await getMessagesByThreadId(id);
-  const hasServerApiKey = await hasApiKey(session.user.id, "openrouter");
 
   return <ChatThread params={Promise.resolve({ id })} initialMessages={initialMessages} hasApiKey={hasServerApiKey} />;
 }

@@ -73,6 +73,22 @@ export async function getMessagesByThreadId(threadId: string): Promise<ChatUIMes
 }
 
 /**
+ * Check if a thread exists and is owned by the given user
+ *
+ * @param threadId ID of the thread
+ * @param userId ID of the user
+ * @return {Promise<boolean>} True if thread exists and is owned by user
+ */
+export async function isThreadOwnedByUser(threadId: string, userId: string): Promise<boolean> {
+  const result = await db
+    .select({ id: threads.id })
+    .from(threads)
+    .where(and(eq(threads.id, threadId), eq(threads.userId, userId)))
+    .limit(1);
+  return result.length > 0;
+}
+
+/**
  * Save a single message to a thread
  *
  * @param threadId ID of the thread
@@ -212,24 +228,34 @@ export async function getThreadsByUserId(userId: string) {
 
 /**
  * Delete a thread by ID (cascades to delete associated messages)
+ * Verifies ownership by requiring userId in the WHERE clause.
  *
  * @param threadId ID of the thread to delete
- * @return {Promise<void>}
+ * @param userId ID of the user who owns the thread
+ * @return {Promise<boolean>} True if deleted, false if not found or not owned
  */
-export async function deleteThreadById(threadId: string): Promise<void> {
-  await db.delete(threads).where(eq(threads.id, threadId));
+export async function deleteThreadById(threadId: string, userId: string): Promise<boolean> {
+  const result = await db
+    .delete(threads)
+    .where(and(eq(threads.id, threadId), eq(threads.userId, userId)))
+    .returning();
+  return result.length > 0;
 }
 
 /**
  * Rename a thread by ID
+ * Verifies ownership by requiring userId in the WHERE clause.
  *
  * @param threadId ID of the thread to rename
+ * @param userId ID of the user who owns the thread
  * @param newTitle New title for the thread
- * @return {Promise<void>}
+ * @return {Promise<boolean>} True if renamed, false if not found or not owned
  */
-export async function renameThreadById(threadId: string, newTitle: string): Promise<void> {
-  await db
+export async function renameThreadById(threadId: string, userId: string, newTitle: string): Promise<boolean> {
+  const result = await db
     .update(threads)
     .set({ title: newTitle, updatedAt: new Date() })
-    .where(eq(threads.id, threadId));
+    .where(and(eq(threads.id, threadId), eq(threads.userId, userId)))
+    .returning();
+  return result.length > 0;
 }

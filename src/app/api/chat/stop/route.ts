@@ -3,8 +3,7 @@ import { headers } from "next/headers";
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
 import { auth } from "~/lib/auth";
-import { saveMessage } from "~/server/db/queries/chat";
-import { validateThreadOwnership } from "~/server/db/utils/thread-validation";
+import { isThreadOwnedByUser, saveMessage } from "~/server/db/queries/chat";
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({
@@ -27,14 +26,10 @@ export async function POST(req: Request) {
     });
   }
 
-  try {
-    await validateThreadOwnership(threadId, session);
-  }
-  catch (error) {
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    const status = msg === "Thread not found" ? 404 : 403;
-    return new Response(JSON.stringify({ error: msg }), {
-      status,
+  const isOwned = await isThreadOwnedByUser(threadId, session.user.id);
+  if (!isOwned) {
+    return new Response(JSON.stringify({ error: "Thread not found or unauthorized" }), {
+      status: 403,
       headers: { "Content-Type": "application/json" },
     });
   }

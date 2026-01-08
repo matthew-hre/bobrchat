@@ -11,7 +11,6 @@ import { generateThreadTitle } from "~/server/ai/naming";
 import { deleteUserAttachmentsByIds, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/server/db/queries/attachments";
 import { createThread, deleteThreadById, getMessagesByThreadId, renameThreadById, saveMessage } from "~/server/db/queries/chat";
 import { getServerApiKey, hasApiKey } from "~/server/db/queries/settings";
-import { validateThreadOwnership } from "~/server/db/utils/thread-validation";
 
 function extractStoragePathsFromThreadMessages(messages: ChatUIMessage[]): string[] {
   const storagePaths: string[] = [];
@@ -72,6 +71,7 @@ export async function createNewThread(defaultName?: string): Promise<string> {
 
 /**
  * Saves a user message to the specified thread.
+ * Ownership is verified atomically by the saveMessage query.
  *
  * @param threadId ID of the thread
  * @param message Message to save
@@ -82,13 +82,16 @@ export async function saveUserMessage(threadId: string, message: ChatUIMessage):
     headers: await headers(),
   });
 
-  await validateThreadOwnership(threadId, session);
-  await saveMessage(threadId, session!.user!.id, message);
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  await saveMessage(threadId, session.user.id, message);
 }
 
 /**
  * Deletes a thread for the authenticated user.
- * Verifies ownership before deletion.
+ * Ownership is verified atomically by the deleteThreadById query.
  *
  * @param threadId ID of the thread to delete
  * @return {Promise<void>}
@@ -98,12 +101,18 @@ export async function deleteThread(threadId: string): Promise<void> {
     headers: await headers(),
   });
 
-  await validateThreadOwnership(threadId, session);
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
 
-  const userId = session!.user!.id;
-  const threadMessages = await getMessagesByThreadId(threadId);
+  const userId = session.user.id;
 
-  const fromLinked = await listThreadAttachments({ userId, threadId });
+  // Fetch messages and linked attachments in parallel
+  const [threadMessages, fromLinked] = await Promise.all([
+    getMessagesByThreadId(threadId),
+    listThreadAttachments({ userId, threadId }),
+  ]);
+
   const fromMessageUrls = await resolveUserAttachmentsByStoragePaths({
     userId,
     storagePaths: extractStoragePathsFromThreadMessages(threadMessages),
@@ -120,12 +129,15 @@ export async function deleteThread(threadId: string): Promise<void> {
     await deleteUserAttachmentsByIds({ userId, ids });
   }
 
-  await deleteThreadById(threadId);
+  const deleted = await deleteThreadById(threadId, userId);
+  if (!deleted) {
+    throw new Error("Thread not found or unauthorized");
+  }
 }
 
 /**
  * Renames a thread for the authenticated user.
- * Verifies ownership before renaming.
+ * Ownership is verified atomically by the renameThreadById query.
  *
  * @param threadId ID of the thread to rename
  * @param newTitle New title for the thread
@@ -136,13 +148,20 @@ export async function renameThread(threadId: string, newTitle: string): Promise<
     headers: await headers(),
   });
 
-  await validateThreadOwnership(threadId, session);
-  await renameThreadById(threadId, newTitle);
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  const renamed = await renameThreadById(threadId, session.user.id, newTitle);
+  if (!renamed) {
+    throw new Error("Thread not found or unauthorized");
+  }
 }
 
 /**
  * Regenerates the title of a thread using AI.
  * Requires either a server-stored API key or a browser-provided key.
+ * Ownership is verified atomically by the renameThreadById query.
  *
  * @param threadId ID of the thread to rename
  * @param browserApiKey Optional API key provided by the client (for browser-only storage)
@@ -153,21 +172,27 @@ export async function regenerateThreadName(threadId: string, browserApiKey?: str
     headers: await headers(),
   });
 
-  await validateThreadOwnership(threadId, session);
-  if (!session?.user)
+  if (!session?.user) {
     throw new Error("Not authenticated");
+  }
+
+  const userId = session.user.id;
+
+  // Fetch API key and messages in parallel
+  const [serverApiKey, threadMessages] = await Promise.all([
+    getServerApiKey(userId, "openrouter"),
+    getMessagesByThreadId(threadId),
+  ]);
 
   // Resolve API key: browser-provided key takes precedence over server-stored key.
   // This matches the behavior in the chat endpoint.
-  const serverApiKey = await getServerApiKey(session.user.id, "openrouter");
   const resolvedApiKey = browserApiKey ?? serverApiKey;
 
   if (!resolvedApiKey) {
     throw new Error("No API key configured. Provide a browser key or store one on the server.");
   }
 
-  const messages = await getMessagesByThreadId(threadId);
-  const textMessages = messages.filter(m => m.role === "user");
+  const textMessages = threadMessages.filter(m => m.role === "user");
 
   if (textMessages.length === 0) {
     throw new Error("No user messages found to generate title from");
@@ -182,7 +207,11 @@ export async function regenerateThreadName(threadId: string, browserApiKey?: str
     : "";
 
   const newTitle = await generateThreadTitle(userContent, resolvedApiKey);
-  await renameThreadById(threadId, newTitle);
+
+  const renamed = await renameThreadById(threadId, userId, newTitle);
+  if (!renamed) {
+    throw new Error("Thread not found or unauthorized");
+  }
 
   return newTitle;
 }
