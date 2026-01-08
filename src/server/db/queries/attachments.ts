@@ -12,10 +12,11 @@ export type AttachmentListItem = {
   id: string;
   filename: string;
   mediaType: string;
-  size: string;
+  size: number;
   storagePath: string;
   url: string;
   createdAt: Date;
+  isLinked: boolean;
 };
 
 type Cursor = {
@@ -91,6 +92,7 @@ export async function listUserAttachments(params: {
       size: attachments.size,
       storagePath: attachments.storagePath,
       createdAt: attachments.createdAt,
+      messageId: attachments.messageId,
     })
     .from(attachments)
     .where(where!)
@@ -100,10 +102,14 @@ export async function listUserAttachments(params: {
     )
     .limit(params.limit);
 
-  const items: AttachmentListItem[] = rows.map(r => ({
-    ...r,
-    url: `${serverEnv.R2_PUBLIC_URL}/${r.storagePath}`,
-  }));
+  const items: AttachmentListItem[] = rows.map((r) => {
+    const { messageId, ...rest } = r;
+    return {
+      ...rest,
+      isLinked: messageId !== null,
+      url: `${serverEnv.R2_PUBLIC_URL}/${r.storagePath}`,
+    };
+  });
 
   const last = rows.at(-1);
   const nextCursor = last && rows.length === params.limit

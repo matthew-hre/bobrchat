@@ -12,6 +12,14 @@ import { useAttachmentsPage, useDeleteAttachments } from "~/lib/queries/use-atta
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -67,6 +75,9 @@ export function AttachmentsTab() {
   const cursor = cursorStack[pageIndex];
 
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [confirmIds, setConfirmIds] = React.useState<string[]>([]);
+  const [confirmLinkedCount, setConfirmLinkedCount] = React.useState(0);
 
   const { data, isLoading, isError, error, refetch } = useAttachmentsPage({
     type,
@@ -118,17 +129,30 @@ export function AttachmentsTab() {
     });
   };
 
-  const handleDelete = async (ids: string[]) => {
+  const openConfirm = (ids: string[]) => {
     if (ids.length === 0)
       return;
 
-    await toast.promise(deleteAttachments.mutateAsync(ids), {
-      loading: ids.length === 1 ? "Deleting attachment..." : `Deleting ${ids.length} attachments...`,
-      success: ids.length === 1 ? "Attachment deleted" : "Attachments deleted",
+    const linkedCount = items.filter(i => ids.includes(i.id) && i.isLinked).length;
+    setConfirmIds(ids);
+    setConfirmLinkedCount(linkedCount);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (confirmIds.length === 0)
+      return;
+
+    await toast.promise(deleteAttachments.mutateAsync(confirmIds), {
+      loading: confirmIds.length === 1 ? "Deleting attachment..." : `Deleting ${confirmIds.length} attachments...`,
+      success: confirmIds.length === 1 ? "Attachment deleted" : "Attachments deleted",
       error: "Failed to delete attachments",
     });
 
     setSelected({});
+    setConfirmIds([]);
+    setConfirmLinkedCount(0);
+    setConfirmOpen(false);
     await refetch();
   };
 
@@ -182,7 +206,7 @@ export function AttachmentsTab() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => handleDelete(selectedIds)}
+                  onClick={() => openConfirm(selectedIds)}
                   disabled={deleteAttachments.isPending}
                 >
                   Delete selected (
@@ -205,6 +229,7 @@ export function AttachmentsTab() {
                     />
                   </TableHead>
                   <TableHead>File</TableHead>
+                  <TableHead className="w-24">Linked</TableHead>
                   <TableHead>
                     <button
                       type="button"
@@ -233,7 +258,7 @@ export function AttachmentsTab() {
               <TableBody>
                 {isLoading && (
                   <TableRow>
-                    <TableCell colSpan={4}>
+                    <TableCell colSpan={5}>
                       <div className="space-y-2 p-1">
                         <Skeleton className="h-10 w-full" />
                         <Skeleton className="h-10 w-full" />
@@ -244,7 +269,7 @@ export function AttachmentsTab() {
 
                 {isError && (
                   <TableRow>
-                    <TableCell colSpan={4}>
+                    <TableCell colSpan={5}>
                       <div className="p-2 text-sm">
                         <div className="text-destructive font-medium">Failed to load attachments</div>
                         <div className="text-muted-foreground mt-1">
@@ -258,7 +283,7 @@ export function AttachmentsTab() {
                 {!isLoading && !isError && items.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="text-muted-foreground py-6 text-center text-sm"
                     >
                       No attachments found.
@@ -290,6 +315,11 @@ export function AttachmentsTab() {
                         </div>
                       </div>
                     </TableCell>
+                    <TableCell className="text-muted-foreground w-24 text-xs">
+                      {item.isLinked
+                        ? <span className="text-amber-600">Yes</span>
+                        : <span className="text-muted-foreground">No</span>}
+                    </TableCell>
                     <TableCell className="text-muted-foreground w-32 text-xs">
                       {item.createdAt.toLocaleString()}
                     </TableCell>
@@ -297,7 +327,7 @@ export function AttachmentsTab() {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        onClick={() => handleDelete([item.id])}
+                        onClick={() => openConfirm([item.id])}
                         disabled={deleteAttachments.isPending}
                       >
                         <TrashIcon className="size-4" />
@@ -328,6 +358,41 @@ export function AttachmentsTab() {
           </Button>
         </div>
       </div>
+
+      <Dialog open={confirmOpen} onOpenChange={(open) => {
+        setConfirmOpen(open);
+        if (!open) {
+          setConfirmIds([]);
+          setConfirmLinkedCount(0);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete attachment{confirmIds.length === 1 ? "" : "s"}</DialogTitle>
+            <DialogDescription>
+              {confirmLinkedCount > 0
+                ? `${confirmLinkedCount} of ${confirmIds.length} selected attachment${confirmIds.length === 1 ? " is" : "s are"} linked to chat history. Deleting will remove file references from those messages. This cannot be undone.`
+                : `You are about to delete ${confirmIds.length} attachment${confirmIds.length === 1 ? "" : "s"}. This action cannot be undone.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+              disabled={deleteAttachments.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={deleteAttachments.isPending}
+            >
+              {deleteAttachments.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

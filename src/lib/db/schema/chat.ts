@@ -1,4 +1,4 @@
-import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { bigint, index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { users } from "./auth";
 
@@ -47,7 +47,7 @@ export const attachments = pgTable(
     }),
     filename: text("filename").notNull(),
     mediaType: text("media_type").notNull(),
-    size: text("size").notNull(),
+    size: bigint("size", { mode: "number" }).notNull(),
     storagePath: text("storage_path").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

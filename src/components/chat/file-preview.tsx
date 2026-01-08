@@ -18,11 +18,11 @@ export type PendingFile = {
 
 type FilePreviewProps = {
   files: PendingFile[];
-  onRemove: (id: string) => void;
+  onRemoveAction: (id: string) => void;
   className?: string;
 };
 
-export function FilePreview({ files, onRemove, className }: FilePreviewProps) {
+export function FilePreview({ files, onRemoveAction, className }: FilePreviewProps) {
   if (files.length === 0) {
     return null;
   }
@@ -33,7 +33,7 @@ export function FilePreview({ files, onRemove, className }: FilePreviewProps) {
         <FilePreviewItem
           key={file.id}
           file={file}
-          onRemove={() => onRemove(file.id)}
+          onRemove={() => onRemoveAction(file.id)}
         />
       ))}
     </div>
@@ -201,8 +201,8 @@ export function MessageAttachments({
                     <Image
                       src={img.url}
                       alt={img.filename || "Attached image"}
-                      width={32}
-                      height={32}
+                      width={256}
+                      height={256}
                       className="w-full max-w-xs object-contain"
                     />
                   </a>

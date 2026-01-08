@@ -278,7 +278,7 @@ export function ChatInput({
           {/* File Preview Area */}
           {pendingFiles.length > 0 && (
             <div className="border-border border-b p-3">
-              <FilePreview files={pendingFiles} onRemove={handleRemoveFile} />
+              <FilePreview files={pendingFiles} onRemoveAction={handleRemoveFile} />
             </div>
           )}
 

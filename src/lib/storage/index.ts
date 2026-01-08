@@ -28,22 +28,31 @@ function generateFileId(): string {
   return crypto.randomUUID();
 }
 
-export async function saveFile(file: File): Promise<UploadedFile> {
+export async function saveFile(
+  file: File,
+  options?: {
+    buffer?: Buffer;
+    contentTypeOverride?: string;
+    contentDisposition?: "inline" | "attachment";
+  },
+): Promise<UploadedFile> {
   const client = getR2Client();
 
   const fileId = generateFileId();
   const ext = path.extname(file.name);
   const key = `uploads/${fileId}${ext}`;
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = options?.buffer ?? Buffer.from(await file.arrayBuffer());
+  const contentType = options?.contentTypeOverride ?? file.type;
+  const disposition = options?.contentDisposition ?? "inline";
 
   await client.send(
     new PutObjectCommand({
       Bucket: serverEnv.R2_BUCKET_NAME,
       Key: key,
       Body: buffer,
-      ContentType: file.type,
-      ContentDisposition: `inline; filename="${file.name}"`,
+      ContentType: contentType,
+      ContentDisposition: `${disposition}; filename="${file.name}"`,
     }),
   );
 
@@ -52,7 +61,7 @@ export async function saveFile(file: File): Promise<UploadedFile> {
   return {
     id: fileId,
     filename: file.name,
-    mediaType: file.type,
+    mediaType: contentType,
     size: file.size,
     url: publicUrl,
     storagePath: key,

@@ -11,10 +11,11 @@ export type AttachmentItem = {
   id: string;
   filename: string;
   mediaType: string;
-  size: string;
+  size: number;
   storagePath: string;
   url: string;
   createdAt: Date;
+  isLinked: boolean;
 };
 
 type AttachmentsResponse = {

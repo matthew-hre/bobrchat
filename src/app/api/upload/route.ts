@@ -1,4 +1,6 @@
+import { fileTypeFromBuffer } from "file-type";
 import { headers } from "next/headers";
+import { Buffer } from "node:buffer";
 
 import { auth } from "~/lib/auth";
 import { db } from "~/lib/db";
@@ -6,7 +8,7 @@ import { attachments } from "~/lib/db/schema/chat";
 import { saveFile } from "~/lib/storage";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = [
+const ALLOWED_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "image/gif",
@@ -17,7 +19,7 @@ const ALLOWED_TYPES = [
   "text/csv",
   "application/pdf",
   "application/json",
-];
+]);
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({
@@ -54,22 +56,41 @@ export async function POST(req: Request) {
         continue;
       }
 
-      if (!ALLOWED_TYPES.includes(file.type)) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const detected = await fileTypeFromBuffer(buffer);
+      const detectedMime = detected?.mime;
+      const claimedMime = file.type || undefined;
+
+      const preferredMime = detectedMime ?? claimedMime ?? "application/octet-stream";
+      const isAllowed = ALLOWED_TYPES.has(preferredMime)
+        || (!!detectedMime && ALLOWED_TYPES.has(detectedMime))
+        || (!!claimedMime && ALLOWED_TYPES.has(claimedMime));
+
+      if (!isAllowed) {
         errors.push({
           filename: file.name,
-          error: `File type ${file.type} is not allowed`,
+          error: `File type ${preferredMime} is not allowed`,
         });
         continue;
       }
 
-      const uploaded = await saveFile(file);
+      // Downgrade disposition for non-visual types to reduce inline execution risk
+      const contentDisposition = preferredMime.startsWith("image/") || preferredMime === "application/pdf"
+        ? "inline"
+        : "attachment";
+
+      const uploaded = await saveFile(file, {
+        buffer,
+        contentTypeOverride: preferredMime,
+        contentDisposition,
+      });
 
       await db.insert(attachments).values({
         id: uploaded.id,
         userId: session.user.id,
         filename: uploaded.filename,
         mediaType: uploaded.mediaType,
-        size: String(uploaded.size),
+        size: uploaded.size,
         storagePath: uploaded.storagePath,
         messageId: null,
       });
