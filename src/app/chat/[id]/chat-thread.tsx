@@ -3,14 +3,16 @@
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
-import { use, useCallback, useEffect } from "react";
+import { use, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
 import { ChatView } from "~/components/chat/chat-view";
+import { useModels } from "~/lib/queries/use-models";
 import { THREADS_KEY } from "~/lib/queries/use-threads";
 import { useChatUIStore } from "~/lib/stores/chat-ui-store";
+import { getModelCapabilities } from "~/lib/utils/model-capabilities";
 
 type ChatThreadProps = {
   params: Promise<{ id: string }>;
@@ -33,6 +35,15 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
     markAssistantMessageStopped,
   } = useChatUIStore();
 
+  const { data: models } = useModels();
+
+  // Keep models in a ref so we can access them in the transport callback
+  // without triggering valid re-renders if we were to recreate the transport
+  const modelsRef = useRef(models);
+  useEffect(() => {
+    modelsRef.current = models;
+  }, [models]);
+
   // Load API keys from localStorage on mount
   useEffect(() => {
     loadApiKeysFromStorage();
@@ -45,6 +56,11 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
       prepareSendMessagesRequest: ({ messages: allMessages }) => {
         // Access Zustand state directly - always current, no refs needed
         const state = useChatUIStore.getState();
+
+        // Determine file support
+        const selectedModelInfo = modelsRef.current?.find(m => m.id === state.selectedModelId);
+        const capabilities = getModelCapabilities(selectedModelInfo);
+
         const body = {
           messages: allMessages,
           threadId: id,
@@ -52,6 +68,7 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
           ...(state.browserApiKey && { browserApiKey: state.browserApiKey }),
           ...(state.parallelApiKey && { parallelBrowserApiKey: state.parallelApiKey }),
           ...(state.selectedModelId && { modelId: state.selectedModelId }),
+          modelSupportsFiles: capabilities.supportsFiles,
         };
         return { body };
       },

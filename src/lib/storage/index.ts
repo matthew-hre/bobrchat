@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Buffer } from "node:buffer";
 import path from "node:path";
 
@@ -76,4 +76,16 @@ export async function deleteFile(storagePath: string): Promise<void> {
       Key: storagePath,
     }),
   );
+}
+
+export async function getFileContent(storagePath: string): Promise<string> {
+  const client = getR2Client();
+  const response = await client.send(
+    new GetObjectCommand({
+      Bucket: serverEnv.R2_BUCKET_NAME,
+      Key: storagePath,
+    }),
+  );
+
+  return response.Body?.transformToString() ?? "";
 }

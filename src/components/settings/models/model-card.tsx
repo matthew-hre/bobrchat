@@ -1,8 +1,9 @@
 import type { Model } from "@openrouter/sdk/models";
 
-import { BrainIcon, FileIcon, ImageIcon, SearchIcon } from "lucide-react";
+import { BrainIcon, FileTextIcon, ImageIcon, SearchIcon } from "lucide-react";
 
 import { cn } from "~/lib/utils";
+import { getModelCapabilities } from "~/lib/utils/model-capabilities";
 
 function formatPrice(price: number | null): string {
   if (!price)
@@ -13,6 +14,8 @@ function formatPrice(price: number | null): string {
 }
 
 export function ModelCard({ model, isSelected, toggleModel }: { model: Model; isSelected: boolean; toggleModel: (id: string) => void }) {
+  const capabilities = getModelCapabilities(model);
+
   return (
     <button
       key={model.id}
@@ -82,17 +85,20 @@ export function ModelCard({ model, isSelected, toggleModel }: { model: Model; is
 
       {/* Features */}
       <div className="flex flex-wrap gap-2">
-        {model.architecture.inputModalities.includes("image") && (
+        {capabilities.supportsImages && (
           <FeatureBadge icon={ImageIcon} label="Image Upload" />
         )}
-        {(model.contextLength && model.contextLength > 8096) && (
+        {capabilities.supportsPdf && (
+          <FeatureBadge
+            icon={FileTextIcon}
+            label={capabilities.supportsNativePdf ? "PDF (Native)" : "PDF (OpenRouter)"}
+          />
+        )}
+        {capabilities.supportsSearch && (
           <FeatureBadge icon={SearchIcon} label="Search" />
         )}
-        {model.supportedParameters.includes("reasoning") && (
+        {capabilities.supportsReasoning && (
           <FeatureBadge icon={BrainIcon} label="Reasoning" />
-        )}
-        {model.architecture.inputModalities.includes("file") && (
-          <FeatureBadge icon={FileIcon} label="File Upload" />
         )}
       </div>
     </button>
@@ -103,7 +109,7 @@ function FeatureBadge({
   icon: Icon,
   label,
 }: {
-  icon: typeof FileIcon;
+  icon: typeof FileTextIcon;
   label: string;
 }) {
   return (

@@ -20,9 +20,10 @@ type FilePreviewProps = {
   files: PendingFile[];
   onRemoveAction: (id: string) => void;
   className?: string;
+  supportsNativePdf?: boolean;
 };
 
-export function FilePreview({ files, onRemoveAction, className }: FilePreviewProps) {
+export function FilePreview({ files, onRemoveAction, className, supportsNativePdf = true }: FilePreviewProps) {
   if (files.length === 0) {
     return null;
   }
@@ -34,6 +35,7 @@ export function FilePreview({ files, onRemoveAction, className }: FilePreviewPro
           key={file.id}
           file={file}
           onRemove={() => onRemoveAction(file.id)}
+          supportsNativePdf={supportsNativePdf}
         />
       ))}
     </div>
@@ -43,12 +45,16 @@ export function FilePreview({ files, onRemoveAction, className }: FilePreviewPro
 function FilePreviewItem({
   file,
   onRemove,
+  supportsNativePdf,
 }: {
   file: PendingFile;
   onRemove: () => void;
+  supportsNativePdf: boolean;
 }) {
   const isImage = file.mediaType.startsWith("image/");
+  const isPdf = file.mediaType === "application/pdf";
   const isTextFile = file.mediaType === "text/plain";
+  const willBeProcessedByOpenRouter = isPdf && !supportsNativePdf;
 
   // Extract language from filename if it's a code file
   let language = "";
@@ -100,6 +106,17 @@ function FilePreviewItem({
             `}
             >
               {language.toUpperCase()}
+            </span>
+          )}
+          {willBeProcessedByOpenRouter && (
+            <span
+              className={`
+                rounded bg-amber-500/10 px-1.5 py-0.5 text-xs text-amber-600
+                dark:text-amber-400
+              `}
+              title="PDF will be processed by OpenRouter"
+            >
+              via OpenRouter
             </span>
           )}
         </div>

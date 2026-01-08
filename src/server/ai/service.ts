@@ -6,6 +6,8 @@ import { convertToModelMessages, stepCountIs, streamText } from "ai";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
+import { getFileContent } from "~/lib/storage";
+
 import { getTokenCosts } from "./cost";
 import { calculateResponseMetadata } from "./metrics";
 import { getModelProvider } from "./models";
@@ -22,6 +24,7 @@ import { createStreamHandlers, processStreamChunk } from "./stream";
  * @param searchEnabled Whether web search is enabled for this request.
  * @param parallelApiKey The Parallel Web API key for web search functionality.
  * @param onFirstToken Optional callback to capture first token timing from the messageMetadata handler.
+ * @param modelSupportsFiles Optional boolean indicating if the model natively supports file uploads.
  * @returns An object containing the text stream and a function to create metadata for each message part.
  */
 export async function streamChatResponse(
@@ -32,6 +35,7 @@ export async function streamChatResponse(
   searchEnabled?: boolean,
   parallelApiKey?: string,
   onFirstToken?: () => void,
+  modelSupportsFiles?: boolean,
 ) {
   if (!apiKey) {
     throw new Error("No API key configured. Please set up your OpenRouter API key in settings.");
@@ -44,7 +48,72 @@ export async function streamChatResponse(
   const provider = getModelProvider(apiKey);
   const { inputCostPerMillion, outputCostPerMillion } = await getTokenCosts(modelId);
   const systemPrompt = await generatePrompt(userId);
-  const convertedMessages = await convertToModelMessages(messages);
+
+  // Process messages to handle file extraction if needed
+  const processedMessages = await Promise.all(messages.map(async (msg) => {
+    // If model supports files, pass through unchanged
+    if (modelSupportsFiles !== false)
+      return msg;
+
+    // Filter parts: if text file and model doesn't support files, extract content
+    if (!msg.parts)
+      return msg;
+
+    const newParts = [];
+    let textContent = "";
+
+    for (const part of msg.parts) {
+      if (part.type === "file") {
+        const filePart = part as { mediaType?: string; storagePath?: string };
+        const isText = filePart.mediaType?.startsWith("text/")
+          || filePart.mediaType === "application/json"
+          || filePart.mediaType?.includes("csv"); // loose check
+
+        if (isText && filePart.storagePath) {
+          try {
+            const content = await getFileContent(filePart.storagePath);
+            textContent += `\n\n[File Content: ${filePart.storagePath}]\n${content}\n`;
+          }
+          catch (error) {
+            console.error(`Failed to fetch file content for ${filePart.storagePath}:`, error);
+            // If failed, maybe keep the original part or just ignore?
+            // Keeping original might fail the model call if it strictly rejects files.
+            // Let's add a placeholder error note.
+            textContent += `\n\n[Failed to read file content: ${filePart.storagePath}]\n`;
+          }
+        }
+        else {
+          // Keep non-text files (images, pdfs) as is, or filter them if model strictly rejects?
+          // The client validation should prevent images/PDFs if completely unsupported.
+          // But if we are here, it means modelSupportsFiles is false.
+          // Yet images might be supported (supportsImages is separate).
+          // We only extract TEXT files here.
+          newParts.push(part);
+        }
+      }
+      else if (part.type === "text") {
+        newParts.push(part);
+      }
+      else {
+        newParts.push(part);
+      }
+    }
+
+    // Append extracted text to the last text part, or create a new one
+    if (textContent) {
+      const lastPart = newParts[newParts.length - 1];
+      if (lastPart && lastPart.type === "text") {
+        (lastPart as { text: string }).text += textContent;
+      }
+      else {
+        newParts.push({ type: "text" as const, text: textContent });
+      }
+    }
+
+    return { ...msg, parts: newParts };
+  }));
+
+  const convertedMessages = await convertToModelMessages(processedMessages);
 
   const streamHandlers = createStreamHandlers(
     () => {
@@ -103,6 +172,12 @@ export async function streamChatResponse(
     };
   }
 
+  const hasPdfAttachment = messages.some(msg =>
+    msg.parts?.some(part =>
+      part.type === "file" && (part as { mediaType?: string }).mediaType === "application/pdf",
+    ),
+  );
+
   const result = streamText({
     model: provider(modelId),
     system: systemPrompt,
@@ -110,7 +185,17 @@ export async function streamChatResponse(
     tools,
     stopWhen: stepCountIs(8),
     providerOptions: {
-      openrouter: { usage: { include: true } },
+      openrouter: {
+        usage: { include: true },
+        ...(hasPdfAttachment && {
+          plugins: [{
+            id: "file-parser" as const,
+            pdf: {
+              engine: "pdf-text" as const,
+            },
+          }],
+        }),
+      },
     },
     onChunk({ chunk }) {
       processStreamChunk(chunk, streamHandlers);

@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const { messages, threadId, browserApiKey, parallelBrowserApiKey, searchEnabled, modelId }: { messages: ChatUIMessage[]; threadId?: string; browserApiKey?: string; parallelBrowserApiKey?: string; searchEnabled?: boolean; modelId?: string }
+  const { messages, threadId, browserApiKey, parallelBrowserApiKey, searchEnabled, modelId, modelSupportsFiles }: { messages: ChatUIMessage[]; threadId?: string; browserApiKey?: string; parallelBrowserApiKey?: string; searchEnabled?: boolean; modelId?: string; modelSupportsFiles?: boolean }
     = await req.json();
 
   if (threadId) {
@@ -87,7 +87,16 @@ export async function POST(req: Request) {
 
   const baseModelId = modelId || "google/gemini-3-flash-preview";
 
-  const { stream, createMetadata } = await streamChatResponse(messages, baseModelId, session.user.id, resolvedApiKey, searchEnabled, parallelApiKey, undefined);
+  const { stream, createMetadata } = await streamChatResponse(
+    messages,
+    baseModelId,
+    session.user.id,
+    resolvedApiKey,
+    searchEnabled,
+    parallelApiKey,
+    undefined,
+    modelSupportsFiles
+  );
 
   // Fire and forget: Auto-rename thread if enabled and this is the first message
   if (threadId && messages.length === 1 && messages[0].role === "user") {

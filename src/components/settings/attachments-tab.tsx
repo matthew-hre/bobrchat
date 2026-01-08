@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownIcon, ArrowUpIcon, FileTextIcon, FileTypeCorner, TrashIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, FileTextIcon, FileTypeCornerIcon, TrashIcon } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
 import { toast } from "sonner";
@@ -38,6 +38,7 @@ import {
 
 function FilePreview({ url, mediaType, filename }: { url: string; mediaType: string; filename: string }) {
   const isImage = mediaType.startsWith("image/");
+  const isPdf = mediaType === "application/pdf";
 
   if (isImage) {
     return (
@@ -51,19 +52,16 @@ function FilePreview({ url, mediaType, filename }: { url: string; mediaType: str
     );
   }
 
-  if (mediaType === "application/pdf") {
+  if (isPdf) {
     return (
       <div className="bg-muted flex size-8 items-center justify-center rounded">
-        <FileTextIcon className="text-primary size-5" />
+        <FileTypeCornerIcon className="text-primary size-5" />
       </div>
     );
   }
 
-  return (
-    <div className="bg-muted flex size-8 items-center justify-center rounded">
-      <FileTypeCorner className="text-primary size-5" />
-    </div>
-  );
+  // Plain text and other files don't need an icon - they're always supported
+  return null;
 }
 
 export function AttachmentsTab() {

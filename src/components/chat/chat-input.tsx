@@ -11,9 +11,11 @@ import { useFavoriteModels, useModels } from "~/lib/queries/use-models";
 import { useChatUIStore } from "~/lib/stores/chat-ui-store";
 import { cn } from "~/lib/utils";
 import { detectLanguage, getLanguageExtension } from "~/lib/utils/detect-language";
+import { canUploadFiles, getAcceptedFileTypes, getModelCapabilities, validateFilesForModel } from "~/lib/utils/model-capabilities";
 
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { ModelSelector } from "./model-selector";
 
 type ChatInputProps = {
@@ -30,6 +32,27 @@ type ChatInputProps = {
 
 const PASTE_TEXT_THRESHOLD = 2000;
 const PASTE_LINE_THRESHOLD = 25;
+
+function getAcceptedFileTypesDescription(capabilities: ReturnType<typeof getModelCapabilities>): string {
+  const types: string[] = [];
+
+  if (capabilities.supportsImages) {
+    types.push("images");
+  }
+
+  // Plain text files are always supported
+  types.push("text files (txt, md, code)");
+
+  if (capabilities.supportsFiles) {
+    types.push("JSON, CSV");
+  }
+
+  if (capabilities.supportsPdf) {
+    types.push("PDFs");
+  }
+
+  return types.join(", ");
+}
 
 export function ChatInput({
   className,
@@ -50,12 +73,28 @@ export function ChatInput({
 
   const [pendingFiles, setPendingFiles] = React.useState<PendingFile[]>([]);
 
+  const selectedModel = favoriteModels.find(m => m.id === selectedModelId);
+  const capabilities = getModelCapabilities(selectedModel);
+  const canUpload = canUploadFiles(capabilities);
+  const acceptedTypes = getAcceptedFileTypes(capabilities);
+
   const uploadFiles = React.useCallback(async (filesToUpload: FileList | File[]) => {
     const files = Array.from(filesToUpload);
     if (files.length === 0)
       return;
 
-    const tempFiles: PendingFile[] = files.map(file => ({
+    const { valid, invalid } = validateFilesForModel(files, capabilities);
+
+    if (invalid.length > 0) {
+      for (const { file, reason } of invalid) {
+        toast.error(`${file.name}: ${reason}`);
+      }
+    }
+
+    if (valid.length === 0)
+      return;
+
+    const tempFiles: PendingFile[] = valid.map(file => ({
       id: crypto.randomUUID(),
       filename: file.name,
       mediaType: file.type,
@@ -66,9 +105,9 @@ export function ChatInput({
     setPendingFiles(prev => [...prev, ...tempFiles]);
 
     const formData = new FormData();
-    files.forEach(file => formData.append("files", file));
+    valid.forEach(file => formData.append("files", file));
 
-    const fileLabel = files.length === 1 ? files[0].name : `${files.length} files`;
+    const fileLabel = valid.length === 1 ? valid[0].name : `${valid.length} files`;
 
     const uploadPromise = async () => {
       const response = await fetch("/api/upload", {
@@ -111,7 +150,7 @@ export function ChatInput({
         return `Failed to upload ${fileLabel}`;
       },
     });
-  }, []);
+  }, [capabilities]);
 
   const handleRemoveFile = React.useCallback((id: string) => {
     setPendingFiles((prev) => {
@@ -155,21 +194,25 @@ export function ChatInput({
       }
     }
 
-    // If we have files, upload them
-    if (files.length > 0) {
+    // If we have files and model supports uploads, upload them
+    if (files.length > 0 && canUpload) {
       e.preventDefault();
       uploadFiles(files);
       return;
     }
 
     // Check if pasted text is long and should be treated as a file
+    // Only convert to file if the model supports file uploads
     if (hasText) {
       e.preventDefault();
       for (const item of items) {
         if (item.kind === "string" && item.type === "text/plain") {
           item.getAsString((text) => {
             const lineCount = text.split("\n").length;
-            if (text.length > PASTE_TEXT_THRESHOLD || lineCount > PASTE_LINE_THRESHOLD) {
+            const isLongText = text.length > PASTE_TEXT_THRESHOLD || lineCount > PASTE_LINE_THRESHOLD;
+
+            // Only convert to file if model supports files
+            if (isLongText) {
               const language = detectLanguage(text);
               const extension = getLanguageExtension(language);
               const filename = `pasted-${Date.now()}.${extension}`;
@@ -181,7 +224,7 @@ export function ChatInput({
               uploadFiles([file]);
             }
             else {
-              // For short text, insert it into the textarea at cursor position
+              // For short text or when model doesn't support files, insert directly
               const textarea = textareaRef.current;
               if (textarea) {
                 const start = textarea.selectionStart;
@@ -203,7 +246,7 @@ export function ChatInput({
         }
       }
     }
-  }, [uploadFiles, onValueChange]);
+  }, [uploadFiles, onValueChange, canUpload, capabilities.supportsFiles]);
 
   const handleAttachClick = React.useCallback(() => {
     fileInputRef.current?.click();
@@ -293,7 +336,11 @@ export function ChatInput({
           {/* File Preview Area */}
           {pendingFiles.length > 0 && (
             <div className="border-border border-b p-3">
-              <FilePreview files={pendingFiles} onRemoveAction={handleRemoveFile} />
+              <FilePreview
+                files={pendingFiles}
+                onRemoveAction={handleRemoveFile}
+                supportsNativePdf={capabilities.supportsNativePdf}
+              />
             </div>
           )}
 
@@ -319,9 +366,10 @@ export function ChatInput({
             ref={fileInputRef}
             type="file"
             multiple
-            accept="image/*,text/*,.pdf,.json,.csv,.md"
+            accept={acceptedTypes || undefined}
             onChange={handleFileInputChange}
             className="hidden"
+            disabled={!canUpload}
           />
 
           {/* Bottom toolbar */}
@@ -339,41 +387,54 @@ export function ChatInput({
 
             <div className="flex-1" />
             <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onSearchChange?.(!searchEnabled)}
-                className={cn(`
-                  hover:text-foreground
-                  gap-2 transition-colors
-                `, searchEnabled
-                  ? `
-                    text-primary
-                    hover:text-primary/80 hover:bg-primary/10
-                    dark:hover:text-primary/80 dark:hover:bg-primary/10
-                  `
-                  : `text-muted-foreground`)}
-                title={searchEnabled ? "Search enabled" : "Search disabled"}
-              >
-                <SearchIcon size={16} />
-                Search
-              </Button>
+              {capabilities.supportsSearch && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onSearchChange?.(!searchEnabled)}
+                  className={cn(`
+                    hover:text-foreground
+                    gap-2 transition-colors
+                  `, searchEnabled
+                    ? `
+                      text-primary
+                      hover:text-primary/80 hover:bg-primary/10
+                      dark:hover:text-primary/80 dark:hover:bg-primary/10
+                    `
+                    : `text-muted-foreground`)}
+                  title={searchEnabled ? "Search enabled" : "Search disabled"}
+                >
+                  <SearchIcon size={16} />
+                  Search
+                </Button>
+              )}
 
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleAttachClick}
-                disabled={hasApiKey === false}
-                className={cn(`
-                  text-muted-foreground gap-2
-                  hover:text-foreground
-                `, pendingFiles.length > 0 && "text-primary")}
-              >
-                <PaperclipIcon size={8} />
-                Attach
-              </Button>
+              {canUpload && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleAttachClick}
+                      disabled={hasApiKey === false}
+                      className={cn(`
+                        text-muted-foreground gap-2
+                        hover:text-foreground
+                      `, pendingFiles.length > 0 && "text-primary")}
+                    >
+                      <PaperclipIcon size={8} />
+                      Attach
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {`Accepts: ${getAcceptedFileTypesDescription(capabilities)}`}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
               <Button
                 type={isLoading ? "button" : "submit"}
