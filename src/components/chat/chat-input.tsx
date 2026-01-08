@@ -181,8 +181,23 @@ export function ChatInput({
               uploadFiles([file]);
             }
             else {
-              // For short text, insert it into the textarea manually
-              onValueChange((value || "") + text);
+              // For short text, insert it into the textarea at cursor position
+              const textarea = textareaRef.current;
+              if (textarea) {
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const currentValue = textarea.value;
+                const newValue = currentValue.slice(0, start) + text + currentValue.slice(end);
+                onValueChange(newValue);
+
+                // Move cursor after inserted text
+                setTimeout(() => {
+                  textarea.selectionStart = textarea.selectionEnd = start + text.length;
+                }, 0);
+              }
+              else {
+                onValueChange((value || "") + text);
+              }
             }
           });
         }
