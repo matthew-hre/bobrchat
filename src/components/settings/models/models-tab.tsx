@@ -20,8 +20,12 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import Fuse from "fuse.js";
 import {
+  BrainIcon,
+  FileTextIcon,
+  ImageIcon,
   Loader2,
   SearchIcon,
+  SlidersHorizontalIcon,
   SparklesIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -30,6 +34,7 @@ import { toast } from "sonner";
 import { MODELS_KEY, useModels } from "~/lib/queries/use-models";
 import { useUpdateFavoriteModels, useUserSettings } from "~/lib/queries/use-user-settings";
 import { cn } from "~/lib/utils";
+import { getModelCapabilities } from "~/lib/utils/model-capabilities";
 
 import {
   Accordion,
@@ -39,11 +44,21 @@ import {
 } from "../../ui/accordion";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 import { Skeleton } from "../../ui/skeleton";
 import { ModelCard } from "./model-card";
 import { SortableFavoriteModel } from "./sortable-favorite-model";
 
 const MODELS_PER_PAGE = 30;
+
+type CapabilityFilter = "image" | "pdf" | "search" | "reasoning";
+type SortOrder = "provider-asc" | "provider-desc" | "model-asc" | "model-desc" | "cost-asc" | "cost-desc";
 
 export function ModelsTab() {
   const { data: settings } = useUserSettings({ enabled: true });
@@ -55,6 +70,9 @@ export function ModelsTab() {
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [displayedCount, setDisplayedCount] = useState(MODELS_PER_PAGE);
+  const [capabilityFilters, setCapabilityFilters] = useState<CapabilityFilter[]>([]);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("provider-asc");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const initializedRef = useRef(false);
   const observerTargetRef = useRef<HTMLDivElement>(null);
 
@@ -83,16 +101,71 @@ export function ModelsTab() {
   }, [models]);
 
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim() || !fuse) {
-      return models;
-    }
-    return fuse.search(searchQuery).map(result => result.item);
-  }, [searchQuery, fuse, models]);
+    let results = models;
 
-  // Reset displayed count when search query changes
+    if (searchQuery.trim() && fuse) {
+      results = fuse.search(searchQuery).map(result => result.item);
+    }
+
+    if (capabilityFilters.length > 0) {
+      results = results.filter((model) => {
+        const caps = getModelCapabilities(model);
+        return capabilityFilters.every((filter) => {
+          switch (filter) {
+            case "image":
+              return caps.supportsImages;
+            case "pdf":
+              return caps.supportsPdf || caps.supportsNativePdf;
+            case "search":
+              return caps.supportsSearch;
+            case "reasoning":
+              return caps.supportsReasoning;
+            default:
+              return true;
+          }
+        });
+      });
+    }
+
+    const sorted = [...results].sort((a, b) => {
+      const [providerA, modelA] = a.id.split("/");
+      const [providerB, modelB] = b.id.split("/");
+
+      switch (sortOrder) {
+        case "provider-asc":
+          return providerA.localeCompare(providerB) || modelA.localeCompare(modelB);
+        case "provider-desc":
+          return providerB.localeCompare(providerA) || modelB.localeCompare(modelA);
+        case "model-asc":
+          return modelA.localeCompare(modelB);
+        case "model-desc":
+          return modelB.localeCompare(modelA);
+        case "cost-asc":
+          return (a.pricing?.completion ?? 0) - (b.pricing?.completion ?? 0);
+        case "cost-desc":
+          return (b.pricing?.completion ?? 0) - (a.pricing?.completion ?? 0);
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [searchQuery, fuse, models, capabilityFilters, sortOrder]);
+
+  // Reset displayed count when search query or filters change
   useEffect(() => {
     setDisplayedCount(MODELS_PER_PAGE);
-  }, [searchQuery]);
+  }, [searchQuery, capabilityFilters, sortOrder]);
+
+  const toggleCapabilityFilter = (filter: CapabilityFilter) => {
+    setCapabilityFilters(prev =>
+      prev.includes(filter)
+        ? prev.filter(f => f !== filter)
+        : [...prev, filter],
+    );
+  };
+
+  const activeFilterCount = capabilityFilters.length + (sortOrder !== "provider-asc" ? 1 : 0);
 
   // Set up intersection observer for infinite scroll
   useEffect(() => {
@@ -192,19 +265,99 @@ export function ModelsTab() {
       {/* Search Bar */}
       {models.length > 0 && (
         <div className="border-border border-b px-6 py-3">
-          <div className="relative">
-            <SearchIcon className={`
-              text-muted-foreground absolute top-1/2 left-3 size-4
-              -translate-y-1/2
-            `}
-            />
-            <Input
-              placeholder="Search by name, ID, or description..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <SearchIcon className={`
+                text-muted-foreground absolute top-1/2 left-3 size-4
+                -translate-y-1/2
+              `}
+              />
+              <Input
+                placeholder="Search by name, ID, or description..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button
+              variant={filtersOpen ? "secondary" : "outline"}
+              size="icon"
+              className="relative shrink-0"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
+              <SlidersHorizontalIcon className="size-4" />
+              {activeFilterCount > 0 && (
+                <span className={`
+                  bg-primary text-primary-foreground absolute -top-1 -right-1
+                  flex size-4 items-center justify-center rounded-full text-xs
+                `}
+                >
+                  {activeFilterCount}
+                </span>
+              )}
+            </Button>
           </div>
+          {filtersOpen && (
+            <div className={`
+              mt-2 flex flex-wrap items-center justify-between gap-2
+            `}
+            >
+              <div className="flex flex-row gap-2">
+                <Button
+                  variant={capabilityFilters.includes("image") ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => toggleCapabilityFilter("image")}
+                >
+                  <ImageIcon className="size-3" />
+                  Image
+                </Button>
+                <Button
+                  variant={capabilityFilters.includes("pdf") ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => toggleCapabilityFilter("pdf")}
+                >
+                  <FileTextIcon className="size-3" />
+                  PDF
+                </Button>
+                <Button
+                  variant={capabilityFilters.includes("search") ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => toggleCapabilityFilter("search")}
+                >
+                  <SearchIcon className="size-3" />
+                  Search
+                </Button>
+                <Button
+                  variant={capabilityFilters.includes("reasoning") ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => toggleCapabilityFilter("reasoning")}
+                >
+                  <BrainIcon className="size-3" />
+                  Reasoning
+                </Button>
+              </div>
+              <Select
+                value={sortOrder}
+                onValueChange={v => setSortOrder(v as SortOrder)}
+              >
+                <SelectTrigger className={`
+                  w-48 gap-1 text-sm
+                  data-[size=default]:h-8
+                `}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="provider-asc">Provider (A-Z)</SelectItem>
+                  <SelectItem value="provider-desc">Provider (Z-A)</SelectItem>
+                  <SelectItem value="model-asc">Model (A-Z)</SelectItem>
+                  <SelectItem value="model-desc">Model (Z-A)</SelectItem>
+                  <SelectItem value="cost-asc">Output Cost (Low)</SelectItem>
+                  <SelectItem value="cost-desc">Output Cost (High)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="text-muted-foreground mt-2 text-xs">
             {`${searchResults.length} of ${models.length} models. `}
             <Button

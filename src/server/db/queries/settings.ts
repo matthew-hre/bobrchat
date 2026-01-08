@@ -302,11 +302,11 @@ export async function hasApiKey(userId: string, provider: ApiKeyProvider): Promi
     .from(userSettings)
     .where(and(
       eq(userSettings.userId, userId),
-      sql`(${userSettings.settings}->'apiKeyStorage'->>${provider}) IS NOT NULL`,
+      sql`(${userSettings.settings}->'apiKeyStorage'->>${sql.raw(`'${provider}'`)}) IS NOT NULL`,
       sql`
         CASE 
-          WHEN (${userSettings.settings}->'apiKeyStorage'->>${provider}) = 'server' 
-          THEN (${userSettings.encryptedApiKeys}->>${provider}) IS NOT NULL
+          WHEN (${userSettings.settings}->'apiKeyStorage'->>${sql.raw(`'${provider}'`)}) = 'server' 
+          THEN (${userSettings.encryptedApiKeys}->>${sql.raw(`'${provider}'`)}) IS NOT NULL
           ELSE true
         END
       `,

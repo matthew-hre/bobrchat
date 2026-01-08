@@ -68,6 +68,7 @@ export function ModelCard({ model, isSelected, toggleModel }: { model: Model; is
         <div>
           <span className="text-muted-foreground">
             Input:
+            {" "}
           </span>
           <span className="font-mono font-medium">
             {formatPrice(model.pricing?.prompt ?? null)}
@@ -76,6 +77,7 @@ export function ModelCard({ model, isSelected, toggleModel }: { model: Model; is
         <div>
           <span className="text-muted-foreground">
             Output:
+            {" "}
           </span>
           <span className="font-mono font-medium">
             {formatPrice(model.pricing?.completion ?? null)}
