@@ -8,11 +8,11 @@ import { SuggestionsContent } from "./landing-pages/suggestions-content";
 export function LandingPageContent({
   type,
   isVisible,
-  onSuggestionClick,
+  onSuggestionClickAction,
 }: {
   type: LandingPageContentType;
   isVisible: boolean;
-  onSuggestionClick?: (suggestion: string) => void;
+  onSuggestionClickAction?: (suggestion: string) => void;
 }) {
   if (type === "blank") {
     return null;
@@ -26,7 +26,7 @@ export function LandingPageContent({
         pointerEvents: isVisible ? "auto" : "none",
       }}
     >
-      {type === "suggestions" && <SuggestionsContent onSuggestionClick={onSuggestionClick} />}
+      {type === "suggestions" && <SuggestionsContent onSuggestionClickAction={onSuggestionClickAction} />}
       {type === "greeting" && <GreetingContent />}
     </div>
   );

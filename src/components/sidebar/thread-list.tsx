@@ -1,18 +1,28 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { GroupedThreads } from "~/lib/utils/thread-grouper";
+
+import { Skeleton } from "~/components/ui/skeleton";
 
 import { DeleteThreadDialog } from "./delete-thread-dialog";
 import { ThreadItem } from "./thread-item";
 
 type ThreadListProps = {
   groupedThreads: GroupedThreads;
+  hasNextPage?: boolean;
+  fetchNextPage?: () => void;
+  isFetchingNextPage?: boolean;
 };
 
-export function ThreadList({ groupedThreads }: ThreadListProps) {
+export function ThreadList({
+  groupedThreads,
+  hasNextPage,
+  fetchNextPage,
+  isFetchingNextPage,
+}: ThreadListProps) {
   const pathname = usePathname();
   const currentChatId = pathname.startsWith("/chat/")
     ? pathname.split("/chat/")[1]
@@ -26,6 +36,33 @@ export function ThreadList({ groupedThreads }: ThreadListProps) {
   const handleDeleteClick = useCallback((threadId: string, threadTitle: string) => {
     setThreadToDelete({ id: threadId, title: threadTitle });
   }, []);
+
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hasNextPage || !fetchNextPage)
+      return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    const el = loadMoreRef.current;
+    if (el) {
+      observer.observe(el);
+    }
+
+    return () => {
+      if (el) {
+        observer.unobserve(el);
+      }
+    };
+  }, [hasNextPage, fetchNextPage, isFetchingNextPage]);
 
   const renderGroup = (
     title: string,
@@ -64,6 +101,18 @@ export function ThreadList({ groupedThreads }: ThreadListProps) {
       {renderGroup("Last 7 Days", groupedThreads.last7Days)}
       {renderGroup("Last 30 Days", groupedThreads.last30Days)}
       {renderGroup("Older", groupedThreads.older)}
+
+      {hasNextPage && (
+        <div ref={loadMoreRef} className="px-1 py-2">
+          {isFetchingNextPage && (
+            <div className="space-y-1">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          )}
+        </div>
+      )}
+
       {threadToDelete && (
         <DeleteThreadDialog
           open={!!threadToDelete}

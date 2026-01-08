@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "~/lib/auth-client";
+import { GreetingContent } from "./greeting-content";
 
 const DEFAULT_PROMPTS = [
   "Could I beat a bear in a fight?",
@@ -10,41 +10,17 @@ const DEFAULT_PROMPTS = [
 ];
 
 export function SuggestionsContent({
-  onSuggestionClick,
+  onSuggestionClickAction,
 }: {
-  onSuggestionClick?: (suggestion: string) => void;
+  onSuggestionClickAction?: (suggestion: string) => void;
 }) {
-  const { data: session } = useSession();
-  const firstName = session?.user?.name?.split(" ")[0];
-  const isMounted = typeof window !== "undefined";
-
-  // Don't render until user name is loaded
-  if (!firstName) {
-    return null;
-  }
-
   return (
-    <div className={`
-      space-y-6 transition-all duration-300
-      ${isMounted
-      ? `opacity-100`
-      : `opacity-0`}
-    `}
-    >
-      <div>
-        <h2 className="text-2xl font-semibold">
-          Hi
-          {" "}
-          {firstName}
-          , what's on your mind?
-        </h2>
-      </div>
-
+    <GreetingContent>
       <div className="grid grid-cols-1 gap-3">
         {DEFAULT_PROMPTS.map(prompt => (
           <button
             key={prompt}
-            onClick={() => onSuggestionClick?.(prompt)}
+            onClick={() => onSuggestionClickAction?.(prompt)}
             className={`
               hover:bg-card
               focus-visible:ring-primary focus-visible:ring-2
@@ -57,6 +33,6 @@ export function SuggestionsContent({
           </button>
         ))}
       </div>
-    </div>
+    </GreetingContent>
   );
 }

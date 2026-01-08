@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiKeyProvider, UserSettingsData } from "~/lib/db/schema/settings";
 import type { PreferencesUpdate } from "~/lib/schemas/settings";
 
+import { USER_SETTINGS_KEY } from "~/lib/queries/query-keys";
 import {
   deleteApiKey,
   syncUserSettings,
@@ -13,7 +14,7 @@ import {
   updatePreferences,
 } from "~/server/actions/settings";
 
-export const USER_SETTINGS_KEY = ["user-settings"] as const;
+export { USER_SETTINGS_KEY };
 
 export function useUserSettings(options: { enabled?: boolean } = {}) {
   return useQuery({

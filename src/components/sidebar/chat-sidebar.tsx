@@ -21,12 +21,12 @@ import { Skeleton } from "../ui/skeleton";
 import { ThreadList } from "./thread-list";
 import { UserProfileCard } from "./user-profile-card";
 
-function useMounted() {
-  const [mounted, setMounted] = useState(false);
+function useHydrated() {
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    setMounted(true);
+    setHydrated(true);
   }, []);
-  return mounted;
+  return hydrated;
 }
 
 function ThreadListSkeleton() {
@@ -40,13 +40,17 @@ function ThreadListSkeleton() {
 }
 
 function ThreadListContent() {
-  const mounted = useMounted();
+  const hydrated = useHydrated();
   const { data: session } = useSession();
-  const { data: groupedThreads, isLoading: threadsLoading } = useThreads({
-    enabled: mounted && !!session,
-  });
+  const {
+    data: groupedThreads,
+    isLoading: threadsLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useThreads();
 
-  if (!mounted) {
+  if (!hydrated) {
     return <ThreadListSkeleton />;
   }
 
@@ -59,7 +63,14 @@ function ThreadListContent() {
   }
 
   if (groupedThreads) {
-    return <ThreadList groupedThreads={groupedThreads} />;
+    return (
+      <ThreadList
+        groupedThreads={groupedThreads}
+        hasNextPage={hasNextPage}
+        fetchNextPage={fetchNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+      />
+    );
   }
 
   return null;
@@ -80,19 +91,13 @@ function UserProfileSkeleton() {
 }
 
 function UserProfileContent() {
-  const mounted = useMounted();
+  const hydrated = useHydrated();
   const { data: session, isPending: sessionLoading } = useSession();
-  const { data: settings } = useUserSettings({
-    enabled: mounted && !!session,
-  });
+  const { data: settings } = useUserSettings();
 
   const hasApiKey = settings?.apiKeyStorage?.openrouter !== undefined;
 
-  if (!mounted) {
-    return <UserProfileSkeleton />;
-  }
-
-  if (sessionLoading) {
+  if (!hydrated || sessionLoading) {
     return <UserProfileSkeleton />;
   }
 

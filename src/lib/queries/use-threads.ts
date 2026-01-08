@@ -1,13 +1,14 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { GroupedThreads } from "~/lib/utils/thread-grouper";
 
+import { THREADS_KEY } from "~/lib/queries/query-keys";
 import { groupThreadsByDate } from "~/lib/utils/thread-grouper";
 import { createNewThread, deleteThread, regenerateThreadName, renameThread } from "~/server/actions/chat";
 
-export const THREADS_KEY = ["threads"] as const;
+export { THREADS_KEY };
 
 type ThreadFromApi = {
   id: string;
@@ -18,27 +19,48 @@ type ThreadFromApi = {
   updatedAt: string;
 };
 
-async function fetchThreads(): Promise<ThreadFromApi[]> {
-  const response = await fetch("/api/threads");
+type ThreadsResponse = {
+  threads: ThreadFromApi[];
+  nextCursor: string | null;
+};
+
+async function fetchThreads({ pageParam }: { pageParam: string | undefined }): Promise<ThreadsResponse> {
+  const params = new URLSearchParams({ limit: "50" });
+  if (pageParam) {
+    params.set("cursor", pageParam);
+  }
+  const response = await fetch(`/api/threads?${params.toString()}`);
   if (!response.ok)
     throw new Error("Failed to fetch threads");
   return response.json();
 }
 
 export function useThreads(options: { enabled?: boolean } = {}) {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: THREADS_KEY,
     queryFn: fetchThreads,
-    staleTime: 30 * 1000, // 30 seconds
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: lastPage => lastPage.nextCursor ?? undefined,
+    staleTime: 30 * 1000,
     enabled: options.enabled,
-    select: (threads): GroupedThreads => {
-      const parsed = threads.map(t => ({
-        ...t,
-        lastMessageAt: t.lastMessageAt ? new Date(t.lastMessageAt) : null,
-      }));
-      return groupThreadsByDate(parsed);
-    },
   });
+
+  const groupedThreads: GroupedThreads | undefined = query.data
+    ? (() => {
+        const allThreads = query.data.pages.flatMap(page =>
+          page.threads.map(t => ({
+            ...t,
+            lastMessageAt: t.lastMessageAt ? new Date(t.lastMessageAt) : null,
+          })),
+        );
+        return groupThreadsByDate(allThreads);
+      })()
+    : undefined;
+
+  return {
+    ...query,
+    data: groupedThreads,
+  };
 }
 
 export function useCreateThread() {

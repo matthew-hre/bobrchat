@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, lt } from "drizzle-orm";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
@@ -226,20 +226,43 @@ export async function getThreadById(threadId: string) {
 }
 
 /**
- * Get all threads for a user, ordered by most recent conversation first
+ * Get paginated threads for a user, sorted by last message (most recent first)
  *
  * @param userId ID of the user
- * @return {Promise<any[]>} Array of threads
+ * @param options.limit Number of threads to fetch (default 50)
+ * @param options.cursor Cursor for pagination (lastMessageAt of last thread from previous page)
+ * @return {Promise<{ threads: any[]; nextCursor: string | null }>}
  */
-export async function getThreadsByUserId(userId: string) {
+export async function getThreadsByUserId(
+  userId: string,
+  options: { limit?: number; cursor?: string } = {},
+) {
+  const { limit = 50, cursor } = options;
   const start = Date.now();
+
+  const conditions = [eq(threads.userId, userId)];
+
+  if (cursor) {
+    const cursorDate = new Date(cursor);
+    conditions.push(lt(threads.lastMessageAt, cursorDate));
+  }
+
   const result = await db
     .select()
     .from(threads)
-    .where(eq(threads.userId, userId))
-    .orderBy(desc(threads.lastMessageAt));
-  logTiming("db.getThreadsByUserId", start, { count: result.length });
-  return result;
+    .where(and(...conditions))
+    .orderBy(desc(threads.lastMessageAt))
+    .limit(limit + 1);
+
+  const hasMore = result.length > limit;
+  const threadList = hasMore ? result.slice(0, limit) : result;
+  const nextCursor = hasMore && threadList.length > 0
+    ? threadList[threadList.length - 1].lastMessageAt?.toISOString() ?? null
+    : null;
+
+  logTiming("db.getThreadsByUserId", start, { count: threadList.length, hasMore });
+
+  return { threads: threadList, nextCursor };
 }
 
 /**

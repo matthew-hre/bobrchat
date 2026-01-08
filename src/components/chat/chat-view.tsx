@@ -83,7 +83,11 @@ export function ChatView({
             )}
           >
             <div className="h-max w-full max-w-lg">
-              <LandingPageContent type={landingPageContent!} isVisible={!!showLandingPageContent} onSuggestionClick={handleSuggestionClick} />
+              <LandingPageContent
+                type={landingPageContent!}
+                isVisible={!!showLandingPageContent}
+                onSuggestionClickAction={handleSuggestionClick}
+              />
             </div>
           </div>
         )}
