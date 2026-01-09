@@ -138,6 +138,7 @@ export const ChatMessages = memo(({
                   ttft: message.metadata ? message.metadata.timeToFirstTokenMs : null,
                   costUsd: message.metadata ? message.metadata.costUSD.toFixed(6) : null,
                   content: textContent,
+                  sourceCount: message.metadata?.sources ? message.metadata.sources.length : null,
                 }}
                 onRetry={() => { }}
                 isRetrying={false}

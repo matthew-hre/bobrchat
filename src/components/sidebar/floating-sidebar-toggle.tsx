@@ -1,6 +1,7 @@
 "use client";
 
-import { PanelLeftIcon } from "lucide-react";
+import { PanelLeftIcon, PlusIcon } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "~/components/ui/button";
 import { useSidebar } from "~/components/ui/sidebar";
@@ -33,7 +34,21 @@ export function FloatingSidebarToggle() {
       <Button
         data-slot="floating-sidebar-toggle"
         data-sidebar="floating-toggle-button"
-        variant="secondary"
+        variant="ghost"
+        size="icon-sm"
+        className="pointer-events-auto size-7 border"
+        title="New Thread"
+        aria-label="New Thread"
+        asChild
+      >
+        <Link href="/">
+          <PlusIcon className="size-4" />
+        </Link>
+      </Button>
+      <Button
+        data-slot="floating-sidebar-toggle"
+        data-sidebar="floating-toggle-button"
+        variant="ghost"
         size="icon-sm"
         className="pointer-events-auto size-7 border"
         onClick={toggleSidebar}

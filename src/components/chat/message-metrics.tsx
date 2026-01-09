@@ -19,6 +19,7 @@ export type MessageMetricsData = {
   ttft: number | null;
   costUsd: string | null;
   content: string;
+  sourceCount: number | null;
 };
 
 type MessageMetricsProps = {
@@ -245,7 +246,16 @@ export function MessageMetrics({
                 </Tooltip>
               )
             : (
-                <span>{formatCost(metrics.costUsd)}</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-help">
+                      {formatCost(metrics.costUsd)}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    This cost is an estimate based on model usage and may vary.
+                  </TooltipContent>
+                </Tooltip>
               )
         )}
       </div>
