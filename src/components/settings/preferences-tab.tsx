@@ -39,6 +39,9 @@ export function PreferencesTab() {
   const { setTheme: applyTheme } = useTheme();
 
   const [theme, setTheme] = useState<Theme>(() => settings?.theme ?? "system");
+
+  const [boringMode, setBoringMode] = useState(settings?.boringMode ?? false);
+
   const [customInstructions, setCustomInstructions] = useState(
     () => settings?.customInstructions ?? "",
   );
@@ -56,6 +59,7 @@ export function PreferencesTab() {
     if (settings && !initializedRef.current) {
       initializedRef.current = true;
       setTheme(settings.theme);
+      setBoringMode(settings.boringMode);
       setCustomInstructions(settings.customInstructions ?? "");
       setDefaultThreadName(settings.defaultThreadName);
       setLandingPageContent(settings.landingPageContent);
@@ -65,6 +69,7 @@ export function PreferencesTab() {
 
   const handleSave = async (
     themeVal: Theme,
+    boringMode: boolean,
     customInst: string,
     defaultName: string,
     landingPageVal: LandingPageContentType,
@@ -73,6 +78,7 @@ export function PreferencesTab() {
     try {
       const updates = preferencesSchema.parse({
         theme: themeVal,
+        boringMode,
         customInstructions: customInst,
         defaultThreadName: defaultName,
         landingPageContent: landingPageVal,
@@ -81,6 +87,12 @@ export function PreferencesTab() {
 
       await updatePreferences.mutateAsync(updates);
       applyTheme(themeVal);
+      if (boringMode) {
+        document.documentElement.classList.add("boring");
+      }
+      else {
+        document.documentElement.classList.remove("boring");
+      }
     }
     catch (error) {
       console.error("Failed to save preferences:", error);
@@ -118,7 +130,7 @@ export function PreferencesTab() {
                     type="button"
                     onClick={() => {
                       setTheme(option.value);
-                      handleSave(option.value, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming);
+                      handleSave(option.value, boringMode, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming);
                     }}
                     className={cn(
                       `
@@ -151,6 +163,24 @@ export function PreferencesTab() {
             </div>
           </div>
 
+          {/* Boring Mode Toggle */}
+          <div className="flex items-center justify-between space-x-2">
+            <div className="flex flex-col space-y-1">
+              <Label htmlFor="boringMode">Boring Mode</Label>
+              <span className="text-muted-foreground text-xs">
+                Disable the green accent for a lamer look.
+              </span>
+            </div>
+            <Switch
+              id="boringMode"
+              checked={boringMode}
+              onCheckedChange={(checked) => {
+                setBoringMode(checked);
+                handleSave(theme, checked, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming);
+              }}
+            />
+          </div>
+
           {/* Default Thread Name */}
           <div className="space-y-2">
             <Label htmlFor="defaultThreadName">Default Thread Name</Label>
@@ -159,7 +189,7 @@ export function PreferencesTab() {
               type="text"
               value={defaultThreadName}
               onChange={e => setDefaultThreadName(e.target.value)}
-              onBlur={() => handleSave(theme, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming)}
+              onBlur={() => handleSave(theme, boringMode, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming)}
               placeholder="New Chat"
             />
             <p className="text-muted-foreground text-xs">
@@ -180,7 +210,7 @@ export function PreferencesTab() {
               checked={autoThreadNaming}
               onCheckedChange={(checked) => {
                 setAutoThreadNaming(checked);
-                handleSave(theme, customInstructions, defaultThreadName, landingPageContent, checked);
+                handleSave(theme, boringMode, customInstructions, defaultThreadName, landingPageContent, checked);
               }}
             />
           </div>
@@ -197,7 +227,7 @@ export function PreferencesTab() {
                     type="button"
                     onClick={() => {
                       setLandingPageContent(option.value);
-                      handleSave(theme, customInstructions, defaultThreadName, option.value, autoThreadNaming);
+                      handleSave(theme, boringMode, customInstructions, defaultThreadName, option.value, autoThreadNaming);
                     }}
                     className={cn(
                       `
@@ -229,9 +259,9 @@ export function PreferencesTab() {
               id="customInstructions"
               value={customInstructions}
               onChange={e => setCustomInstructions(e.target.value)}
-              onBlur={() => handleSave(theme, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming)}
+              onBlur={() => handleSave(theme, boringMode, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming)}
               placeholder="Add any custom instructions for the AI assistant..."
-              className="h-full max-h-60 resize-none border-0"
+              className="h-full max-h-60 resize-none"
             />
             <p className="text-muted-foreground text-xs">
               These instructions will be included in every conversation.

@@ -17,9 +17,12 @@ export function ThemeInitializer() {
         if (!response.ok)
           return;
 
-        const settings = (await response.json()) as { theme?: string };
+        const settings = (await response.json()) as { theme?: string; boringMode?: boolean };
         if (settings.theme) {
           setTheme(settings.theme);
+        }
+        if (settings.boringMode) {
+          document.documentElement.classList.add("boring");
         }
       }
       catch (error) {

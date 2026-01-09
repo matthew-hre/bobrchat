@@ -5,6 +5,7 @@ import { z } from "zod";
  */
 export const preferencesSchema = z.object({
   theme: z.enum(["light", "dark", "system"]),
+  boringMode: z.boolean().default(false),
   customInstructions: z.string().max(5000).optional(),
   defaultThreadName: z
     .string()

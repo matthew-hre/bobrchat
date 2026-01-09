@@ -31,6 +31,7 @@ export async function getUserSettings(userId: string): Promise<UserSettingsData>
     // Return default settings if user settings don't exist yet
     return {
       theme: "dark",
+      boringMode: false,
       defaultThreadName: "New Chat",
       landingPageContent: "suggestions",
       autoThreadNaming: false,
@@ -66,6 +67,7 @@ export async function getUserSettingsWithMetadata(userId: string) {
 export async function createDefaultUserSettings(userId: string): Promise<UserSettingsData> {
   const defaultSettings: UserSettingsData = {
     theme: "dark",
+    boringMode: false,
     defaultThreadName: "New Chat",
     autoThreadNaming: false,
     landingPageContent: "suggestions",

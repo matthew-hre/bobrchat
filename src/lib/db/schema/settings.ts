@@ -13,6 +13,7 @@ export type LandingPageContentType = "suggestions" | "greeting" | "blank";
 
 export type UserSettingsData = {
   theme: "dark" | "light" | "system";
+  boringMode: boolean;
   customInstructions?: string;
   defaultThreadName: string;
   landingPageContent: LandingPageContentType;
@@ -38,6 +39,7 @@ export const userSettings = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     settings: jsonb("settings").notNull().default({
       theme: "dark",
+      boringMode: false,
       defaultThreadName: "New Chat",
       landingPageContent: "suggestions",
       autoThreadNaming: false,

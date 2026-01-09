@@ -126,6 +126,22 @@
   --sidebar-ring: oklch(0.72 0.19 135);
 }
 
+html.boring {
+  --primary: oklch(0.55 0.02 260);
+  --ring: oklch(0.55 0.02 260);
+  --chart-1: oklch(0.55 0.02 260);
+  --sidebar-primary: oklch(0.55 0.02 260);
+  --sidebar-ring: oklch(0.55 0.02 260);
+}
+
+html.boring.dark {
+  --primary: oklch(0.65 0.02 260);
+  --ring: oklch(0.65 0.02 260);
+  --chart-1: oklch(0.65 0.02 260);
+  --sidebar-primary: oklch(0.65 0.02 260);
+  --sidebar-ring: oklch(0.65 0.02 260);
+}
+
 .markdown h1 {
   @apply mt-6 mb-4 text-2xl font-semibold first:mt-0;
 }
