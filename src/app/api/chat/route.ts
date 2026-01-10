@@ -3,10 +3,11 @@ import type { UIMessage } from "ai";
 import { headers } from "next/headers";
 
 import { auth } from "~/features/auth/lib/auth";
+import { getUserSettings } from "~/features/settings/queries";
+import { resolveKey } from "~/lib/api-keys/server";
 import { generateThreadTitle } from "~/server/ai/naming";
 import { streamChatResponse } from "~/server/ai/service";
 import { isThreadOwnedByUser, renameThreadById, saveMessage } from "~/server/db/queries/chat";
-import { getServerApiKey, getUserSettings } from "~/server/db/queries/settings";
 
 export type SourceInfo = {
   id: string;
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const { messages, threadId, browserApiKey, parallelBrowserApiKey, searchEnabled, modelId, modelSupportsFiles }: { messages: ChatUIMessage[]; threadId?: string; browserApiKey?: string; parallelBrowserApiKey?: string; searchEnabled?: boolean; modelId?: string; modelSupportsFiles?: boolean }
+  const { messages, threadId, openrouterClientKey, parallelClientKey, searchEnabled, modelId, modelSupportsFiles }: { messages: ChatUIMessage[]; threadId?: string; openrouterClientKey?: string; parallelClientKey?: string; searchEnabled?: boolean; modelId?: string; modelSupportsFiles?: boolean }
     = await req.json();
 
   if (threadId) {
@@ -60,25 +61,21 @@ export async function POST(req: Request) {
     }
   }
 
-  // Resolve API keys: browser-provided keys take precedence over server-stored keys.
-  // This allows ephemeral overrides regardless of the user's apiKeyStorage preference.
-  // The apiKeyStorage setting only controls *persistence*, not enforcement.
+  // Resolve API keys: client-provided keys take precedence over server-stored keys.
   // Fetch both keys in parallel when search is enabled.
-  const [serverApiKey, serverParallelApiKey] = await Promise.all([
-    getServerApiKey(session.user.id, "openrouter"),
-    searchEnabled ? getServerApiKey(session.user.id, "parallel") : Promise.resolve(undefined),
+  const [openrouterKey, parallelKey] = await Promise.all([
+    resolveKey(session.user.id, "openrouter", openrouterClientKey),
+    searchEnabled ? resolveKey(session.user.id, "parallel", parallelClientKey) : Promise.resolve(undefined),
   ]);
-  const resolvedApiKey = browserApiKey ?? serverApiKey;
-  const parallelApiKey = searchEnabled ? (parallelBrowserApiKey ?? serverParallelApiKey) : undefined;
 
-  if (!resolvedApiKey) {
+  if (!openrouterKey) {
     return new Response(JSON.stringify({ error: "No API key configured. Provide a browser key or store one on the server." }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  if (searchEnabled && !parallelApiKey) {
+  if (searchEnabled && !parallelKey) {
     return new Response(JSON.stringify({ error: "Web search is enabled but no Parallel API key configured. Provide a browser key or store one on the server." }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
@@ -91,9 +88,9 @@ export async function POST(req: Request) {
     messages,
     baseModelId,
     session.user.id,
-    resolvedApiKey,
+    openrouterKey,
     searchEnabled,
-    parallelApiKey,
+    parallelKey,
     undefined,
     modelSupportsFiles,
   );
@@ -113,7 +110,7 @@ export async function POST(req: Request) {
       try {
         const settings = await getUserSettings(session.user.id);
         if (settings.autoThreadNaming) {
-          const title = await generateThreadTitle(userMessage, resolvedApiKey);
+          const title = await generateThreadTitle(userMessage, openrouterKey);
           await renameThreadById(threadId, session.user.id, title);
         }
       }

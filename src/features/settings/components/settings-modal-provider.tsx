@@ -3,12 +3,12 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
-import { SettingsTabs } from "~/components/settings/settings-tabs";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "~/components/ui/dialog";
+import { SettingsTabs } from "~/features/settings/components/settings-tabs";
 
 export function SettingsModalProvider() {
   const router = useRouter();

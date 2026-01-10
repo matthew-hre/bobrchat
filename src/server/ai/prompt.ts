@@ -1,4 +1,4 @@
-import { getUserSettings } from "../db/queries/settings";
+import { getUserSettings } from "~/features/settings/queries";
 
 export async function generatePrompt(userId: string): Promise<string> {
   let customInstructions = "";

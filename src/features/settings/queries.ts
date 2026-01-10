@@ -1,10 +1,10 @@
-import { and, eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-import type { ApiKeyProvider, EncryptedApiKeysData, UserSettingsData } from "~/lib/db/schema/settings";
+import type { ApiKeyProvider, EncryptedApiKeysData, UserSettingsData } from "~/features/settings/types";
 
 import { db } from "~/lib/db";
 import { userSettings } from "~/lib/db/schema/settings";
-import { decryptValue, encryptValue } from "~/lib/encryption";
+import { encryptValue } from "~/lib/encryption";
 
 // Performance logging helper
 function logTiming(operation: string, startTime: number, metadata?: Record<string, unknown>) {
@@ -56,31 +56,6 @@ export async function getUserSettingsWithMetadata(userId: string) {
     .limit(1);
 
   return result[0] || null;
-}
-
-/**
- * Create default settings for a new user
- *
- * @param userId ID of the user
- * @return {Promise<UserSettingsData>} Created user settings
- */
-export async function createDefaultUserSettings(userId: string): Promise<UserSettingsData> {
-  const defaultSettings: UserSettingsData = {
-    theme: "dark",
-    boringMode: false,
-    defaultThreadName: "New Chat",
-    autoThreadNaming: false,
-    landingPageContent: "suggestions",
-    apiKeyStorage: {},
-  };
-
-  await db.insert(userSettings).values({
-    userId,
-    settings: defaultSettings,
-    encryptedApiKeys: {},
-  });
-
-  return defaultSettings;
 }
 
 /**
@@ -142,42 +117,6 @@ export async function updateUserSettingsPartial(
   };
 
   return updateUserSettings(userId, merged);
-}
-
-/**
- * Get the actual decrypted API key for a provider (server-side keys only)
- *
- * @param userId ID of the user
- * @param provider API provider name (e.g., 'openrouter', 'parallel')
- * @return {Promise<string | undefined>} The decrypted API key or undefined if not set
- * @throws {Error} If decryption fails (corrupted data or wrong key)
- */
-export async function getServerApiKey(
-  userId: string,
-  provider: ApiKeyProvider,
-): Promise<string | undefined> {
-  const result = await db
-    .select({ encryptedApiKeys: userSettings.encryptedApiKeys })
-    .from(userSettings)
-    .where(eq(userSettings.userId, userId))
-    .limit(1);
-
-  if (!result.length) {
-    return undefined;
-  }
-
-  const encrypted = (result[0].encryptedApiKeys as EncryptedApiKeysData)[provider];
-  if (!encrypted) {
-    return undefined;
-  }
-
-  try {
-    return decryptValue(encrypted);
-  }
-  catch (error) {
-    console.error(`Failed to decrypt ${provider} API key for user ${userId}:`, error);
-    throw error;
-  }
 }
 
 /**
@@ -288,35 +227,6 @@ export async function deleteApiKey(userId: string, provider: ApiKeyProvider): Pr
       updatedAt: new Date(),
     })
     .where(eq(userSettings.userId, userId));
-}
-
-/**
- * Check if user has an API key configured for a provider
- *
- * @param userId ID of the user
- * @param provider API provider name (e.g., 'openrouter', 'parallel')
- * @return {Promise<boolean>} True if user has an API key configured
- */
-export async function hasApiKey(userId: string, provider: ApiKeyProvider): Promise<boolean> {
-  const start = Date.now();
-  const result = await db
-    .select({ count: sql<number>`1` })
-    .from(userSettings)
-    .where(and(
-      eq(userSettings.userId, userId),
-      sql`(${userSettings.settings}->'apiKeyStorage'->>${sql.raw(`'${provider}'`)}) IS NOT NULL`,
-      sql`
-        CASE 
-          WHEN (${userSettings.settings}->'apiKeyStorage'->>${sql.raw(`'${provider}'`)}) = 'server' 
-          THEN (${userSettings.encryptedApiKeys}->>${sql.raw(`'${provider}'`)}) IS NOT NULL
-          ELSE true
-        END
-      `,
-    ))
-    .limit(1);
-  logTiming("db.hasApiKey", start);
-
-  return result.length > 0;
 }
 
 /**

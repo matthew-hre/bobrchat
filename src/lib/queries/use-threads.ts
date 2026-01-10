@@ -101,8 +101,8 @@ export function useRegenerateThreadName() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ threadId, browserApiKey }: { threadId: string; browserApiKey?: string }) =>
-      regenerateThreadName(threadId, browserApiKey),
+    mutationFn: ({ threadId, clientKey }: { threadId: string; clientKey?: string }) =>
+      regenerateThreadName(threadId, clientKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: THREADS_KEY });
     },

@@ -6,7 +6,7 @@ import { useCallback } from "react";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 import type { PendingFile } from "~/components/chat/file-preview";
-import type { LandingPageContentType } from "~/lib/db/schema/settings";
+import type { LandingPageContentType } from "~/features/settings/types";
 
 import { ChatInput } from "~/components/chat/chat-input";
 import { LandingPageContent } from "~/components/chat/landing-page-content";
@@ -28,7 +28,6 @@ export function ChatView({
   onSearchChange,
   landingPageContent,
   showLandingPage,
-  hasApiKey,
 }: {
   messages: ChatUIMessage[];
   input: string;
@@ -41,7 +40,6 @@ export function ChatView({
   onSearchChange?: (enabled: boolean) => void;
   landingPageContent?: LandingPageContentType;
   showLandingPage?: boolean;
-  hasApiKey?: boolean;
 }) {
   const { scrollRef, messagesEndRef, isInitialScrollComplete } = useChatScroll(messages, { threadId });
 
@@ -113,7 +111,6 @@ export function ChatView({
           onStop={onStop}
           searchEnabled={searchEnabled}
           onSearchChange={onSearchChange}
-          hasApiKey={hasApiKey}
         />
       </div>
     </div>

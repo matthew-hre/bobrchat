@@ -17,10 +17,9 @@ import { getModelCapabilities } from "~/lib/utils/model-capabilities";
 type ChatThreadProps = {
   params: Promise<{ id: string }>;
   initialMessages: ChatUIMessage[];
-  hasApiKey: boolean;
 };
 
-function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): React.ReactNode {
+function ChatThread({ params, initialMessages }: ChatThreadProps): React.ReactNode {
   const { id } = use(params);
   const queryClient = useQueryClient();
   const {
@@ -65,8 +64,8 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
           messages: allMessages,
           threadId: id,
           searchEnabled: state.searchEnabled,
-          ...(state.browserApiKey && { browserApiKey: state.browserApiKey }),
-          ...(state.parallelApiKey && { parallelBrowserApiKey: state.parallelApiKey }),
+          ...(state.openrouterKey && { openrouterClientKey: state.openrouterKey }),
+          ...(state.parallelKey && { parallelClientKey: state.parallelKey }),
           ...(state.selectedModelId && { modelId: state.selectedModelId }),
           modelSupportsFiles: capabilities.supportsFiles,
         };
@@ -140,7 +139,6 @@ function ChatThread({ params, initialMessages, hasApiKey }: ChatThreadProps): Re
       onStop={handleStop}
       searchEnabled={searchEnabled}
       onSearchChange={setSearchEnabled}
-      hasApiKey={hasApiKey}
     />
   );
 }

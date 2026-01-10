@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { PendingFile } from "~/components/chat/file-preview";
 
 import { FilePreview } from "~/components/chat/file-preview";
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { useFavoriteModels, useModels } from "~/lib/queries/use-models";
 import { useChatUIStore } from "~/lib/stores/chat-ui-store";
 import { cn } from "~/lib/utils";
@@ -27,7 +28,6 @@ type ChatInputProps = {
   onStop?: () => void;
   searchEnabled?: boolean;
   onSearchChange?: (enabled: boolean) => void;
-  hasApiKey?: boolean;
 };
 
 const PASTE_TEXT_THRESHOLD = 2000;
@@ -63,10 +63,12 @@ export function ChatInput({
   onStop,
   searchEnabled = false,
   onSearchChange,
-  hasApiKey,
 }: ChatInputProps) {
+  const { data: settings } = useUserSettings();
+  const hasOpenRouterKey = settings?.configuredApiKeys?.openrouter;
+
   const favoriteModels = useFavoriteModels();
-  const { isLoading: isModelsLoading } = useModels({ enabled: hasApiKey });
+  const { isLoading: isModelsLoading } = useModels({ enabled: hasOpenRouterKey });
   const { selectedModelId, setSelectedModelId } = useChatUIStore();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -300,7 +302,7 @@ export function ChatInput({
     <div className={cn(`bg-background p-4 pt-0`, className)}>
       <div className="mx-auto max-w-3xl space-y-3">
         {/* API Key Warning */}
-        {hasApiKey === false && (
+        {hasOpenRouterKey === false && (
           <div
             className={`
               flex gap-3 border border-amber-500/50 bg-amber-500/5 p-3
@@ -352,7 +354,7 @@ export function ChatInput({
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder="Type your message here..."
-            disabled={hasApiKey === false}
+            disabled={hasOpenRouterKey === false}
             className={`
               max-h-50 min-h-13 resize-none rounded-none border-0 px-3 py-3
               text-base
@@ -419,7 +421,7 @@ export function ChatInput({
                       variant="ghost"
                       size="sm"
                       onClick={handleAttachClick}
-                      disabled={hasApiKey === false}
+                      disabled={hasOpenRouterKey === false}
                       className={cn(`
                         text-muted-foreground gap-2
                         hover:text-foreground

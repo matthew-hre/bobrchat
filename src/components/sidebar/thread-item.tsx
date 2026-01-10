@@ -32,7 +32,7 @@ function ThreadItemComponent({
   onDeleteClick,
 }: ThreadItemProps) {
   const router = useRouter();
-  const browserApiKey = useChatUIStore(state => state.browserApiKey);
+  const openrouterKey = useChatUIStore(state => state.openrouterKey);
   const isStreaming = useChatUIStore(state => state.streamingThreadId === id);
   const deleteThreadMutation = useDeleteThread();
   const renameThreadMutation = useRenameThread();
@@ -75,7 +75,7 @@ function ThreadItemComponent({
 
   const handleRegenerateNameClick = async () => {
     try {
-      await regenerateThreadNameMutation.mutateAsync({ threadId: id, browserApiKey: browserApiKey ?? undefined });
+      await regenerateThreadNameMutation.mutateAsync({ threadId: id, clientKey: openrouterKey ?? undefined });
       toast.success("Thread name regenerated");
     }
     catch (error) {

@@ -14,19 +14,18 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import type { ApiKeyProvider } from "~/lib/db/schema/settings";
-
-import { useRemoveApiKey, useSetApiKey, useUserSettings } from "~/lib/queries/use-user-settings";
-import { apiKeyUpdateSchema } from "~/lib/schemas/settings";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Separator } from "~/components/ui/separator";
+import { Skeleton } from "~/components/ui/skeleton";
+import { useRemoveApiKey, useSetApiKey, useUserSettings } from "~/features/settings/hooks/use-user-settings";
+import { removeClientKey, setClientKey } from "~/lib/api-keys/client";
 import { useChatUIStore } from "~/lib/stores/chat-ui-store";
 import { cn } from "~/lib/utils";
 
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Separator } from "../ui/separator";
-import { Skeleton } from "../ui/skeleton";
+import { apiKeyUpdateSchema } from "../../types";
 
 type StorageType = "client" | "server";
 
@@ -44,24 +43,6 @@ const storageOptions: { value: StorageType; label: string; description: string; 
     icon: ServerIcon,
   },
 ];
-
-function syncApiKeyToLocalStorage(
-  provider: ApiKeyProvider,
-  apiKey: string,
-  storeServerSide: boolean,
-) {
-  const localStorageKey = `${provider}_api_key`;
-  if (storeServerSide) {
-    localStorage.removeItem(localStorageKey);
-  }
-  else {
-    localStorage.setItem(localStorageKey, apiKey);
-  }
-}
-
-function removeApiKeyFromLocalStorage(provider: ApiKeyProvider) {
-  localStorage.removeItem(`${provider}_api_key`);
-}
 
 export function IntegrationsTab() {
   const { data: settings, isLoading } = useUserSettings({ enabled: true });
@@ -113,7 +94,12 @@ export function IntegrationsTab() {
         storeServerSide: validated.storeServerSide,
       });
 
-      syncApiKeyToLocalStorage("openrouter", validated.apiKey, validated.storeServerSide);
+      if (validated.storeServerSide) {
+        removeClientKey("openrouter");
+      }
+      else {
+        setClientKey("openrouter", validated.apiKey);
+      }
       loadApiKeysFromStorage();
       setApiKeyValue("");
       toast.success(hasExistingKey ? "API key updated" : "API key saved");
@@ -132,7 +118,7 @@ export function IntegrationsTab() {
   const handleDelete = async () => {
     try {
       await removeApiKeyMutation.mutateAsync("openrouter");
-      removeApiKeyFromLocalStorage("openrouter");
+      removeClientKey("openrouter");
       loadApiKeysFromStorage();
       setStorageType(null);
       initializedRef.current = false;
@@ -159,7 +145,12 @@ export function IntegrationsTab() {
         storeServerSide: validated.storeServerSide,
       });
 
-      syncApiKeyToLocalStorage("parallel", validated.apiKey, validated.storeServerSide);
+      if (validated.storeServerSide) {
+        removeClientKey("parallel");
+      }
+      else {
+        setClientKey("parallel", validated.apiKey);
+      }
       loadApiKeysFromStorage();
       setParallelApiKeyValue("");
       toast.success(hasExistingParallelKey ? "API key updated" : "API key saved");
@@ -178,7 +169,7 @@ export function IntegrationsTab() {
   const handleParallelDelete = async () => {
     try {
       await removeApiKeyMutation.mutateAsync("parallel");
-      removeApiKeyFromLocalStorage("parallel");
+      removeClientKey("parallel");
       loadApiKeysFromStorage();
       setParallelStorageType(null);
       parallelInitializedRef.current = false;

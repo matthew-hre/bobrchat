@@ -2,17 +2,17 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { ApiKeyProvider, UserSettingsData } from "~/lib/db/schema/settings";
-import type { PreferencesUpdate } from "~/lib/schemas/settings";
+import type { PreferencesUpdate, UserSettingsData } from "~/features/settings/types";
+import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
-import { USER_SETTINGS_KEY } from "~/lib/queries/query-keys";
 import {
   deleteApiKey,
   syncUserSettings,
   updateApiKey,
   updateFavoriteModels,
   updatePreferences,
-} from "~/server/actions/settings";
+} from "~/features/settings/actions";
+import { USER_SETTINGS_KEY } from "~/lib/queries/query-keys";
 
 export { USER_SETTINGS_KEY };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { LandingPageContentType } from "~/lib/db/schema/settings";
+import type { LandingPageContentType } from "~/features/settings/types";
 
 import { GreetingContent } from "./landing-pages/greeting-content";
 import { SuggestionsContent } from "./landing-pages/suggestions-content";

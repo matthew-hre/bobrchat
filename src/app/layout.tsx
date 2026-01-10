@@ -5,7 +5,6 @@ import { JetBrains_Mono, Rethink_Sans } from "next/font/google";
 import { headers } from "next/headers";
 
 import "./globals.css";
-import { SettingsModalProvider } from "~/components/settings/settings-modal-provider";
 import { ChatSidebar } from "~/components/sidebar/chat-sidebar";
 import { FloatingSidebarToggle } from "~/components/sidebar/floating-sidebar-toggle";
 import { ThemeInitializer } from "~/components/theme/theme-initializer";
@@ -13,9 +12,10 @@ import { ThemeProvider } from "~/components/theme/theme-provider";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { Toaster } from "~/components/ui/sonner";
 import { auth } from "~/features/auth/lib/auth";
+import { syncUserSettings } from "~/features/settings/actions";
+import { SettingsModalProvider } from "~/features/settings/components/settings-modal-provider";
 import { THREADS_KEY, USER_SETTINGS_KEY } from "~/lib/queries/query-keys";
 import { QueryProvider } from "~/lib/queries/query-provider";
-import { syncUserSettings } from "~/server/actions/settings";
 import { getThreadsByUserId } from "~/server/db/queries/chat";
 
 const rethinkSans = Rethink_Sans({ subsets: ["latin"], variable: "--font-sans" });

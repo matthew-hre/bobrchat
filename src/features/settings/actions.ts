@@ -5,26 +5,30 @@ import type { Model, ModelsListResponse } from "@openrouter/sdk/models";
 import { OpenRouter } from "@openrouter/sdk";
 import { headers } from "next/headers";
 
-import type { ApiKeyProvider, EncryptedApiKeysData, UserSettingsData } from "~/lib/db/schema/settings";
-import type { FavoriteModelsInput, PreferencesUpdate, ProfileUpdate } from "~/lib/schemas/settings";
+import type { EncryptedApiKeysData, UserSettingsData } from "~/features/settings/types";
+import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
 import { auth } from "~/features/auth/lib/auth";
-import {
-  apiKeyUpdateSchema,
-  favoriteModelsUpdateSchema,
-  preferencesUpdateSchema,
-  profileUpdateSchema,
-} from "~/lib/schemas/settings";
+import { hasKeyConfigured, resolveKey } from "~/lib/api-keys/server";
+
+import type { FavoriteModelsInput, PreferencesUpdate, ProfileUpdate } from "./types";
+
 import {
   deleteApiKey as deleteApiKeyQuery,
-  getServerApiKey,
   getUserSettings,
   getUserSettingsWithMetadata,
   removeApiKeyPreference,
   removeEncryptedKey,
   updateApiKey as updateApiKeyQuery,
+  updateUserSettings,
   updateUserSettingsPartial,
-} from "~/server/db/queries/settings";
+} from "./queries";
+import {
+  apiKeyUpdateSchema,
+  favoriteModelsUpdateSchema,
+  preferencesUpdateSchema,
+  profileUpdateSchema,
+} from "./types";
 
 /**
  * Update user preferences (theme, custom instructions, default thread name, landing page content)
@@ -138,6 +142,27 @@ export async function updateProfile(updates: ProfileUpdate): Promise<void> {
 }
 
 /**
+ * Create default settings for a new user
+ *
+ * @param userId ID of the user
+ * @return {Promise<UserSettingsData>} Created user settings
+ */
+export async function createDefaultUserSettings(userId: string): Promise<UserSettingsData> {
+  const defaultSettings: UserSettingsData = {
+    theme: "dark",
+    boringMode: false,
+    defaultThreadName: "New Chat",
+    autoThreadNaming: false,
+    landingPageContent: "suggestions",
+    apiKeyStorage: {},
+  };
+
+  await updateUserSettings(userId, defaultSettings);
+
+  return defaultSettings;
+}
+
+/**
  * Sync user settings and clean up orphaned data
  * Cleanup is performed lazily (roughly 1 in 10 calls) to reduce DB overhead
  * Requires authentication
@@ -165,13 +190,23 @@ export async function syncUserSettings(): Promise<UserSettingsData | null> {
     console.warn(`[PERF] syncUserSettings.cleanupEncryptedApiKeys: ${Date.now() - cleanupStart}ms`);
   }
 
-  // Return fresh settings
+  // Return fresh settings with configured API keys info
   const getSettingsStart = Date.now();
-  const settings = await getUserSettings(session.user.id);
+  const [settings, hasOpenRouter, hasParallel] = await Promise.all([
+    getUserSettings(session.user.id),
+    hasKeyConfigured(session.user.id, "openrouter"),
+    hasKeyConfigured(session.user.id, "parallel"),
+  ]);
   console.warn(`[PERF] syncUserSettings.getUserSettings: ${Date.now() - getSettingsStart}ms`);
 
   console.warn(`[PERF] syncUserSettings.total: ${Date.now() - totalStart}ms`);
-  return settings;
+  return {
+    ...settings,
+    configuredApiKeys: {
+      openrouter: hasOpenRouter,
+      parallel: hasParallel,
+    },
+  };
 }
 
 /**
@@ -251,11 +286,11 @@ export async function cleanupEncryptedApiKeys(): Promise<void> {
  * Fetch all available models from OpenRouter catalogue
  * Requires authentication and a valid OpenRouter API key
  *
- * @param apiKey Optional API key (uses server-stored key if not provided)
+ * @param clientKey Optional client-provided API key (uses server-stored key if not provided)
  * @return {Promise<Model[]>} Array of available models with metadata
  * @throws {Error} If not authenticated or no API key available
  */
-export async function fetchOpenRouterModels(apiKey?: string) {
+export async function fetchOpenRouterModels(clientKey?: string) {
   // Get authenticated session
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -265,19 +300,16 @@ export async function fetchOpenRouterModels(apiKey?: string) {
     throw new Error("Not authenticated");
   }
 
-  // Use provided key or fetch from server storage
-  let keyToUse = apiKey;
-  if (!keyToUse) {
-    keyToUse = await getServerApiKey(session.user.id, "openrouter");
-  }
+  // Resolve key: client-provided takes precedence over server-stored
+  const openrouterKey = await resolveKey(session.user.id, "openrouter", clientKey);
 
-  if (!keyToUse) {
+  if (!openrouterKey) {
     throw new Error("No OpenRouter API key configured");
   }
 
   try {
     const openRouter = new OpenRouter({
-      apiKey: keyToUse,
+      apiKey: openrouterKey,
     });
 
     const result: ModelsListResponse = await openRouter.models.list({});

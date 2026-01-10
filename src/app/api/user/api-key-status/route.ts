@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 
 import { auth } from "~/features/auth/lib/auth";
-import { hasApiKey } from "~/server/db/queries/settings";
+import { hasKeyConfigured } from "~/lib/api-keys/server";
 
 export async function GET() {
   const session = await auth.api.getSession({
@@ -15,7 +15,7 @@ export async function GET() {
     });
   }
 
-  const apiKeyConfigured = await hasApiKey(session.user.id, "openrouter");
+  const apiKeyConfigured = await hasKeyConfigured(session.user.id, "openrouter");
 
   return new Response(
     JSON.stringify({ hasApiKey: apiKeyConfigured }),

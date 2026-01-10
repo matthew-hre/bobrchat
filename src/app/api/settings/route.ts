@@ -1,9 +1,9 @@
 import { headers } from "next/headers";
 
-import type { UserSettingsData } from "~/lib/db/schema/settings";
+import type { UserSettingsData } from "~/features/settings/types";
 
 import { auth } from "~/features/auth/lib/auth";
-import { getUserSettings } from "~/server/db/queries/settings";
+import { getUserSettings } from "~/features/settings/queries";
 
 /**
  * GET /api/settings

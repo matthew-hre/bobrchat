@@ -1,11 +1,10 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Skeleton } from "~/components/ui/skeleton";
 import { useSession } from "~/features/auth/lib/auth-client";
 import { cn } from "~/lib/utils";
-
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Skeleton } from "../ui/skeleton";
 
 export function ProfileTab() {
   const { data: session, isPending } = useSession();

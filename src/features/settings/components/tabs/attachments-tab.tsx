@@ -7,10 +7,8 @@ import { toast } from "sonner";
 
 import type { AttachmentOrder, AttachmentTypeFilter } from "~/lib/queries/use-attachments";
 
-import { useAttachmentsPage, useDeleteAttachments } from "~/lib/queries/use-attachments";
-
-import { Button } from "../ui/button";
-import { Checkbox } from "../ui/checkbox";
+import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -18,15 +16,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../ui/dialog";
+} from "~/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Skeleton } from "../ui/skeleton";
+} from "~/components/ui/select";
+import { Skeleton } from "~/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -34,7 +32,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from "~/components/ui/table";
+import { useAttachmentsPage, useDeleteAttachments } from "~/lib/queries/use-attachments";
 
 function FilePreview({ url, mediaType, filename }: { url: string; mediaType: string; filename: string }) {
   const isImage = mediaType.startsWith("image/");

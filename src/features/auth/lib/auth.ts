@@ -2,9 +2,9 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 
+import { createDefaultUserSettings } from "~/features/settings/actions";
 import { db } from "~/lib/db";
 import { serverEnv } from "~/lib/env";
-import { createDefaultUserSettings } from "~/server/db/queries/settings";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {

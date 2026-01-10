@@ -1,33 +1,9 @@
 import { defineRelations } from "drizzle-orm";
 import { index, jsonb, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 
+import type { EncryptedApiKeysData, UserSettingsData } from "~/features/settings/types";
+
 import { users } from "./auth";
-
-/**
- * Supported API key providers.
- * Add new providers here to extend support across the application.
- */
-export type ApiKeyProvider = "openrouter" | "parallel";
-
-export type LandingPageContentType = "suggestions" | "greeting" | "blank";
-
-export type UserSettingsData = {
-  theme: "dark" | "light" | "system";
-  boringMode: boolean;
-  customInstructions?: string;
-  defaultThreadName: string;
-  landingPageContent: LandingPageContentType;
-  autoThreadNaming: boolean;
-  // Tracks which API key providers have server-side encrypted storage enabled
-  // 'client' = stored in browser localStorage, 'server' = stored encrypted on server
-  apiKeyStorage: Partial<Record<ApiKeyProvider, "client" | "server">>;
-  // List of favorite model IDs from OpenRouter (max 10)
-  favoriteModels?: string[];
-};
-
-// Storage for encrypted API keys (only populated if user opts into server storage)
-// Values are in "hex(iv):hex(ciphertext):hex(authTag)" format
-export type EncryptedApiKeysData = Partial<Record<ApiKeyProvider, string>>;
 
 export const userSettings = pgTable(
   "user_settings",

@@ -31,27 +31,27 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { MODELS_KEY, useModels } from "~/lib/queries/use-models";
-import { useUpdateFavoriteModels, useUserSettings } from "~/lib/queries/use-user-settings";
-import { cn } from "~/lib/utils";
-import { getModelCapabilities } from "~/lib/utils/model-capabilities";
-
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "../../ui/accordion";
-import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
+} from "~/components/ui/accordion";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../ui/select";
-import { Skeleton } from "../../ui/skeleton";
+} from "~/components/ui/select";
+import { Skeleton } from "~/components/ui/skeleton";
+import { useUpdateFavoriteModels, useUserSettings } from "~/features/settings/hooks/use-user-settings";
+import { MODELS_KEY, useModels } from "~/lib/queries/use-models";
+import { cn } from "~/lib/utils";
+import { getModelCapabilities } from "~/lib/utils/model-capabilities";
+
 import { ModelCard } from "./model-card";
 import { SortableFavoriteModel } from "./sortable-favorite-model";
 

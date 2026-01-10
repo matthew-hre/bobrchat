@@ -5,17 +5,17 @@ import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import type { LandingPageContentType } from "~/lib/db/schema/settings";
+import type { LandingPageContentType } from "~/features/settings/types";
 
-import { useUpdatePreferences, useUserSettings } from "~/lib/queries/use-user-settings";
-import { preferencesSchema } from "~/lib/schemas/settings";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Skeleton } from "~/components/ui/skeleton";
+import { Switch } from "~/components/ui/switch";
+import { Textarea } from "~/components/ui/textarea";
+import { useUpdatePreferences, useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Skeleton } from "../ui/skeleton";
-import { Switch } from "../ui/switch";
-import { Textarea } from "../ui/textarea";
+import { preferencesSchema } from "../../types";
 
 type Theme = "light" | "dark" | "system";
 

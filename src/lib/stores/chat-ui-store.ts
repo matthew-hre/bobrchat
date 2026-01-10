@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { getClientKey } from "~/lib/api-keys/client";
+
 type ChatUIStore = {
   // Chat input
   input: string;
@@ -16,8 +18,8 @@ type ChatUIStore = {
   setSearchEnabled: (enabled: boolean) => void;
 
   // Browser API keys (loaded from localStorage once, not persisted by zustand)
-  browserApiKey: string | null;
-  parallelApiKey: string | null;
+  openrouterKey: string | null;
+  parallelKey: string | null;
   loadApiKeysFromStorage: () => void;
 
   // TODO: Properly type this
@@ -55,14 +57,12 @@ export const useChatUIStore = create<ChatUIStore>()(
       setSearchEnabled: enabled => set({ searchEnabled: enabled }),
 
       // Browser API keys (not persisted by zustand, loaded manually from localStorage)
-      browserApiKey: null,
-      parallelApiKey: null,
+      openrouterKey: null,
+      parallelKey: null,
       loadApiKeysFromStorage: () => {
-        if (typeof window === "undefined")
-          return;
         set({
-          browserApiKey: localStorage.getItem("openrouter_api_key"),
-          parallelApiKey: localStorage.getItem("parallel_api_key"),
+          openrouterKey: getClientKey("openrouter"),
+          parallelKey: getClientKey("parallel"),
         });
       },
 

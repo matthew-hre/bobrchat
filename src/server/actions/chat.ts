@@ -5,12 +5,12 @@ import { headers } from "next/headers";
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
 import { auth } from "~/features/auth/lib/auth";
+import { hasKeyConfigured, resolveKey } from "~/lib/api-keys/server";
 import { serverEnv } from "~/lib/env";
 import { deleteFile } from "~/lib/storage";
 import { generateThreadTitle } from "~/server/ai/naming";
 import { deleteUserAttachmentsByIds, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/server/db/queries/attachments";
 import { createThread, deleteThreadById, getMessagesByThreadId, renameThreadById, saveMessage } from "~/server/db/queries/chat";
-import { getServerApiKey, hasApiKey } from "~/server/db/queries/settings";
 
 // Performance logging helper
 function logTiming(operation: string, startTime: number, metadata?: Record<string, unknown>) {
@@ -71,11 +71,11 @@ export async function createNewThread(defaultName?: string): Promise<string> {
 
   const threadName = defaultName || "New Chat";
 
-  // Run hasApiKey and createThread in parallel to hide cold start latency
+  // Run hasKeyConfigured and createThread in parallel to hide cold start latency
   // If user doesn't have an API key, we'll delete the thread (rare case)
   const dbStart = Date.now();
   const [hasKey, threadId] = await Promise.all([
-    hasApiKey(session.user.id, "openrouter"),
+    hasKeyConfigured(session.user.id, "openrouter"),
     createThread(session.user.id, threadName),
   ]);
   logTiming("createNewThread.parallelDbOps", dbStart, { hasKey });
@@ -219,14 +219,14 @@ export async function renameThread(threadId: string, newTitle: string): Promise<
 
 /**
  * Regenerates the title of a thread using AI.
- * Requires either a server-stored API key or a browser-provided key.
+ * Requires either a server-stored API key or a client-provided key.
  * Ownership is verified atomically by the renameThreadById query.
  *
  * @param threadId ID of the thread to rename
- * @param browserApiKey Optional API key provided by the client (for browser-only storage)
+ * @param clientKey Optional API key provided by the client (from localStorage)
  * @return {Promise<string>} The new title
  */
-export async function regenerateThreadName(threadId: string, browserApiKey?: string): Promise<string> {
+export async function regenerateThreadName(threadId: string, clientKey?: string): Promise<string> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -238,16 +238,12 @@ export async function regenerateThreadName(threadId: string, browserApiKey?: str
   const userId = session.user.id;
 
   // Fetch API key and messages in parallel
-  const [serverApiKey, threadMessages] = await Promise.all([
-    getServerApiKey(userId, "openrouter"),
+  const [openrouterKey, threadMessages] = await Promise.all([
+    resolveKey(userId, "openrouter", clientKey),
     getMessagesByThreadId(threadId),
   ]);
 
-  // Resolve API key: browser-provided key takes precedence over server-stored key.
-  // This matches the behavior in the chat endpoint.
-  const resolvedApiKey = browserApiKey ?? serverApiKey;
-
-  if (!resolvedApiKey) {
+  if (!openrouterKey) {
     throw new Error("No API key configured. Provide a browser key or store one on the server.");
   }
 
@@ -265,7 +261,7 @@ export async function regenerateThreadName(threadId: string, browserApiKey?: str
         .join("")
     : "";
 
-  const newTitle = await generateThreadTitle(userContent, resolvedApiKey);
+  const newTitle = await generateThreadTitle(userContent, openrouterKey);
 
   const renamed = await renameThreadById(threadId, userId, newTitle);
   if (!renamed) {
