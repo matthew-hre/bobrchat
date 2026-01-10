@@ -74,7 +74,7 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
     }),
     messages: initialMessages,
     onError: (error) => {
-      toast.error(error.message || "Failed to send message");
+      toast.error((`API Error: ${error.message}`) || "Failed to send message");
     },
     onFinish: () => {
       // Refresh the threads list to reflect any automatic renaming

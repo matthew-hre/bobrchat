@@ -279,10 +279,6 @@ export function ChatInput({
       return false;
     }
 
-    if (pendingFiles.length > 0) {
-      return false;
-    }
-
     if (hasOpenRouterKey === false) {
       return false;
     }
