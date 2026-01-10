@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { JetBrains_Mono, Rethink_Sans } from "next/font/google";
@@ -31,6 +31,18 @@ export const metadata: Metadata = {
   icons: {
     icon: "https://fav.farm/🦫",
   },
+  robots: "noindex, nofollow",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "oklch(0.98 0.001 260)" },
+    { media: "(prefers-color-scheme: dark)", color: "oklch(0.16 0.01 260)" },
+  ],
 };
 
 export default async function RootLayout({

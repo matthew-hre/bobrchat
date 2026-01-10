@@ -6,5 +6,11 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
  * @returns A function that takes a model ID and returns the corresponding model configuration.
  */
 export function getModelProvider(apiKey: string) {
-  return createOpenRouter({ apiKey });
+  return createOpenRouter({
+    apiKey,
+    headers: {
+      "HTTP-Referer": "https://chat.matthew-hre.com",
+      "X-Title": "BobrChat",
+    },
+  });
 }
