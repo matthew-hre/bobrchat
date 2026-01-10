@@ -4,10 +4,10 @@ import type { Model } from "@openrouter/sdk/models";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchOpenRouterModels } from "~/features/settings/actions";
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { getClientKey } from "~/lib/api-keys/client";
 
-import { useUserSettings } from "../../features/settings/hooks/use-user-settings";
+import { fetchOpenRouterModels } from "../actions";
 
 export const MODELS_KEY = ["models"] as const;
 
@@ -27,7 +27,7 @@ export function useModels(options: { enabled?: boolean } = {}) {
       return fetchOpenRouterModels(clientKey);
     },
     enabled: hasApiKey && options.enabled,
-    staleTime: 24 * 60 * 60 * 1000, // 24 hours
+    staleTime: 24 * 60 * 60 * 1000,
     gcTime: 24 * 60 * 60 * 1000,
   });
 }
@@ -42,5 +42,5 @@ export function useFavoriteModels(): Model[] {
 
   return settings.favoriteModels
     .map((modelId: string) => allModels.find((m: Model) => m.id === modelId))
-    .filter((m): m is Model => m !== undefined);
+    .filter((m: Model | undefined): m is Model => m !== undefined);
 }

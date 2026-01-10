@@ -3,7 +3,8 @@ import type { Model } from "@openrouter/sdk/models";
 import { BrainIcon, FileTextIcon, ImageIcon, SearchIcon } from "lucide-react";
 
 import { cn } from "~/lib/utils";
-import { getModelCapabilities } from "~/lib/utils/model-capabilities";
+
+import { getModelCapabilities } from "../utils/model-capabilities";
 
 function formatPrice(price: number | null): string {
   if (!price)

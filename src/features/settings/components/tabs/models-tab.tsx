@@ -47,13 +47,15 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Skeleton } from "~/components/ui/skeleton";
+import {
+  getModelCapabilities,
+  ModelCard,
+  MODELS_KEY,
+  SortableFavoriteModel,
+  useModels,
+} from "~/features/models";
 import { useUpdateFavoriteModels, useUserSettings } from "~/features/settings/hooks/use-user-settings";
-import { MODELS_KEY, useModels } from "~/lib/queries/use-models";
 import { cn } from "~/lib/utils";
-import { getModelCapabilities } from "~/lib/utils/model-capabilities";
-
-import { ModelCard } from "./model-card";
-import { SortableFavoriteModel } from "./sortable-favorite-model";
 
 const MODELS_PER_PAGE = 30;
 

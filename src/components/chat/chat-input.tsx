@@ -7,12 +7,11 @@ import { toast } from "sonner";
 import type { PendingFile } from "~/components/chat/file-preview";
 
 import { FilePreview } from "~/components/chat/file-preview";
+import { canUploadFiles, getAcceptedFileTypes, getModelCapabilities, useFavoriteModels, useModels, validateFilesForModel } from "~/features/models";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
-import { useFavoriteModels, useModels } from "~/lib/queries/use-models";
 import { useChatUIStore } from "~/lib/stores/chat-ui-store";
 import { cn } from "~/lib/utils";
 import { detectLanguage, getLanguageExtension } from "~/lib/utils/detect-language";
-import { canUploadFiles, getAcceptedFileTypes, getModelCapabilities, validateFilesForModel } from "~/lib/utils/model-capabilities";
 
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";

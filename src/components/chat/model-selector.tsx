@@ -13,7 +13,7 @@ import {
 import * as React from "react";
 
 import { cn } from "~/lib/utils";
-import { getModelCapabilities } from "~/lib/utils/model-capabilities";
+import { getModelCapabilities } from "~/features/models";
 
 import { Button } from "../ui/button";
 import {

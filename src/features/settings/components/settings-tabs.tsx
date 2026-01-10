@@ -21,7 +21,7 @@ import { DialogClose } from "../../../components/ui/dialog";
 import { Separator } from "../../../components/ui/separator";
 import { AttachmentsTab } from "./tabs/attachments-tab";
 import { IntegrationsTab } from "./tabs/integrations-tab";
-import { ModelsTab } from "./tabs/models/models-tab";
+import { ModelsTab } from "./tabs/models-tab";
 import { PreferencesTab } from "./tabs/preferences-tab";
 import { ProfileTab } from "./tabs/profile-tab";
 

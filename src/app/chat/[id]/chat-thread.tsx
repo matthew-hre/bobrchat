@@ -9,10 +9,9 @@ import { toast } from "sonner";
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
 import { ChatView } from "~/components/chat/chat-view";
-import { useModels } from "~/lib/queries/use-models";
+import { getModelCapabilities, useModels } from "~/features/models";
 import { THREADS_KEY } from "~/lib/queries/use-threads";
 import { useChatUIStore } from "~/lib/stores/chat-ui-store";
-import { getModelCapabilities } from "~/lib/utils/model-capabilities";
 
 type ChatThreadProps = {
   params: Promise<{ id: string }>;
