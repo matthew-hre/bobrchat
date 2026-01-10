@@ -148,6 +148,7 @@ export async function createDefaultUserSettings(userId: string): Promise<UserSet
     defaultThreadName: "New Chat",
     autoThreadNaming: false,
     landingPageContent: "suggestions",
+    sendMessageKeyboardShortcut: "enter",
     apiKeyStorage: {},
   };
 

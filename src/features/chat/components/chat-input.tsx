@@ -2,17 +2,17 @@
 
 import { AlertCircle, PaperclipIcon, SearchIcon, SendIcon, SquareIcon } from "lucide-react";
 import * as React from "react";
-import { toast } from "sonner";
 
 import type { PendingFile } from "~/features/chat/components/messages/file-preview";
 
 import { Button } from "~/components/ui/button";
+import { Kbd } from "~/components/ui/kbd";
 import { Textarea } from "~/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { FilePreview } from "~/features/chat/components/messages/file-preview";
+import { useFileAttachments } from "~/features/chat/hooks/use-file-attachments";
 import { useChatUIStore } from "~/features/chat/store";
-import { detectLanguage, getLanguageExtension } from "~/features/chat/utils/detect-language";
-import { canUploadFiles, getAcceptedFileTypes, getModelCapabilities, useFavoriteModels, useModels, validateFilesForModel } from "~/features/models";
+import { canUploadFiles, getAcceptedFileTypes, getModelCapabilities, useFavoriteModels, useModels } from "~/features/models";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
@@ -28,9 +28,6 @@ type ChatInputProps = {
   searchEnabled?: boolean;
   onSearchChange?: (enabled: boolean) => void;
 };
-
-const PASTE_TEXT_THRESHOLD = 2000;
-const PASTE_LINE_THRESHOLD = 25;
 
 function getAcceptedFileTypesDescription(capabilities: ReturnType<typeof getModelCapabilities>): string {
   const types: string[] = [];
@@ -67,205 +64,32 @@ export function ChatInput({
   const hasOpenRouterKey = settings?.configuredApiKeys?.openrouter;
   const hasParallelApiKey = settings?.configuredApiKeys?.parallel;
 
+  const keyboardShortcut = settings?.sendMessageKeyboardShortcut || "enter";
+
   const favoriteModels = useFavoriteModels();
   const { isLoading: isModelsLoading } = useModels({ enabled: hasOpenRouterKey });
   const { selectedModelId, setSelectedModelId } = useChatUIStore();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const [pendingFiles, setPendingFiles] = React.useState<PendingFile[]>([]);
 
   const selectedModel = favoriteModels.find(m => m.id === selectedModelId);
   const capabilities = getModelCapabilities(selectedModel);
   const canUpload = canUploadFiles(capabilities);
   const acceptedTypes = getAcceptedFileTypes(capabilities);
 
-  const uploadFiles = React.useCallback(async (filesToUpload: FileList | File[]) => {
-    const files = Array.from(filesToUpload);
-    if (files.length === 0)
-      return;
-
-    const { valid, invalid } = validateFilesForModel(files, capabilities);
-
-    if (invalid.length > 0) {
-      for (const { file, reason } of invalid) {
-        toast.error(`${file.name}: ${reason}`);
-      }
-    }
-
-    if (valid.length === 0)
-      return;
-
-    const tempFiles: PendingFile[] = valid.map(file => ({
-      id: crypto.randomUUID(),
-      filename: file.name,
-      mediaType: file.type,
-      url: URL.createObjectURL(file),
-      isUploading: true,
-    }));
-
-    setPendingFiles(prev => [...prev, ...tempFiles]);
-
-    const formData = new FormData();
-    valid.forEach(file => formData.append("files", file));
-
-    const fileLabel = valid.length === 1 ? valid[0].name : `${valid.length} files`;
-
-    const uploadPromise = async () => {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const result = await response.json();
-
-      setPendingFiles((prev) => {
-        const updated = [...prev];
-        result.files.forEach((uploaded: PendingFile, index: number) => {
-          const tempFile = tempFiles[index];
-          const existingIndex = updated.findIndex(f => f.id === tempFile.id);
-          if (existingIndex !== -1) {
-            URL.revokeObjectURL(updated[existingIndex].url);
-            updated[existingIndex] = {
-              ...uploaded,
-              isUploading: false,
-            };
-          }
-        });
-        return updated;
-      });
-
-      return result;
-    };
-
-    toast.promise(uploadPromise(), {
-      loading: `Uploading ${fileLabel}...`,
-      success: `Uploaded ${fileLabel}`,
-      error: () => {
-        setPendingFiles(prev =>
-          prev.filter(f => !tempFiles.some(tf => tf.id === f.id)),
-        );
-        return `Failed to upload ${fileLabel}`;
-      },
-    });
-  }, [capabilities]);
-
-  const handleRemoveFile = React.useCallback((id: string) => {
-    setPendingFiles((prev) => {
-      const file = prev.find(f => f.id === id);
-      if (file?.url.startsWith("blob:")) {
-        URL.revokeObjectURL(file.url);
-      }
-
-      // If the file has been uploaded (has storagePath), delete it from the database
-      if (file?.storagePath) {
-        fetch("/api/attachments", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids: [id] }),
-        }).catch((error) => {
-          console.error("Failed to delete attachment:", error);
-          toast.error("Failed to delete attachment");
-        });
-      }
-
-      return prev.filter(f => f.id !== id);
-    });
-  }, []);
-
-  const handlePaste = React.useCallback((e: React.ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items)
-      return;
-
-    const files: File[] = [];
-    let hasText = false;
-
-    for (const item of items) {
-      if (item.kind === "file") {
-        const file = item.getAsFile();
-        if (file)
-          files.push(file);
-      }
-      else if (item.kind === "string" && item.type === "text/plain") {
-        hasText = true;
-      }
-    }
-
-    // If we have files and model supports uploads, upload them
-    if (files.length > 0 && canUpload) {
-      e.preventDefault();
-      uploadFiles(files);
-      return;
-    }
-
-    // Check if pasted text is long and should be treated as a file
-    // Only convert to file if the model supports file uploads
-    if (hasText) {
-      e.preventDefault();
-      for (const item of items) {
-        if (item.kind === "string" && item.type === "text/plain") {
-          item.getAsString((text) => {
-            const lineCount = text.split("\n").length;
-            const isLongText = text.length > PASTE_TEXT_THRESHOLD || lineCount > PASTE_LINE_THRESHOLD;
-
-            // Only convert to file if model supports files
-            if (isLongText) {
-              const language = detectLanguage(text);
-              const extension = getLanguageExtension(language);
-              const filename = `pasted-${Date.now()}.${extension}`;
-
-              const file = new File([text], filename, {
-                type: "text/plain",
-              });
-
-              uploadFiles([file]);
-            }
-            else {
-              // For short text or when model doesn't support files, insert directly
-              const textarea = textareaRef.current;
-              if (textarea) {
-                const start = textarea.selectionStart;
-                const end = textarea.selectionEnd;
-                const currentValue = textarea.value;
-                const newValue = currentValue.slice(0, start) + text + currentValue.slice(end);
-                onValueChange(newValue);
-
-                // Move cursor after inserted text
-                setTimeout(() => {
-                  textarea.selectionStart = textarea.selectionEnd = start + text.length;
-                }, 0);
-              }
-              else {
-                onValueChange((value || "") + text);
-              }
-            }
-          });
-        }
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploadFiles, onValueChange, canUpload, capabilities.supportsFiles]);
-
-  const handleAttachClick = React.useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleFileInputChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files.length > 0) {
-        uploadFiles(e.target.files);
-        e.target.value = "";
-      }
-    },
-    [uploadFiles],
-  );
-
-  const isUploading = pendingFiles.some(f => f.isUploading);
+  const {
+    pendingFiles,
+    fileInputRef,
+    isUploading,
+    handleRemoveFile,
+    handlePaste,
+    handleAttachClick,
+    handleFileInputChange,
+    clearPendingFiles,
+  } = useFileAttachments({
+    capabilities,
+    onValueChange,
+    textareaRef,
+  });
 
   const canSendMessage = () => {
     if (isLoading) {
@@ -315,12 +139,19 @@ export function ChatInput({
 
     onSendMessage(value, pendingFiles.length > 0 ? pendingFiles : undefined);
     onValueChange("");
-    setPendingFiles([]);
+    clearPendingFiles();
     textareaRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // keyboardShortcut "enter" = Send on Enter, new line on Shift+Enter, don't send on Ctrl+Enter
+    // keyboardShortcut "ctrlEnter" = Send on Ctrl+Enter, new line on Enter, don't send on Shift+Enter
+    // keyboardShortcut "shiftEnter" = Send on Shift+Enter, new line on Enter, don't send on Ctrl+Enter
+    if (
+      ((keyboardShortcut === "enter" && e.key === "Enter" && !e.shiftKey && !e.ctrlKey)
+        || (keyboardShortcut === "ctrlEnter" && e.key === "Enter" && e.ctrlKey)
+        || (keyboardShortcut === "shiftEnter" && e.key === "Enter" && e.shiftKey))
+    ) {
       e.preventDefault();
       handleSubmit(e);
     }
@@ -349,22 +180,41 @@ export function ChatInput({
             </div>
           )}
 
-          <Textarea
-            ref={textareaRef}
-            value={value}
-            onChange={e => onValueChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            placeholder="Type your message here..."
-            disabled={hasOpenRouterKey === false}
-            className={`
-              max-h-50 min-h-13 resize-none rounded-none border-0 px-3 py-3
-              text-base
-              focus-visible:ring-0
-              disabled:opacity-50
-            `}
-            rows={2}
-          />
+          <div className="relative">
+            <Textarea
+              ref={textareaRef}
+              value={value}
+              onChange={e => onValueChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
+              placeholder="Type your message here..."
+              disabled={hasOpenRouterKey === false}
+              className={`
+                max-h-50 min-h-16 resize-none rounded-none border-0 px-3 py-3
+                pr-12 text-base
+                focus-visible:ring-0
+                disabled:opacity-50
+              `}
+              rows={2}
+            />
+
+            {keyboardShortcut !== "enter" && (
+              <Kbd
+                className={cn(
+                  `
+                    absolute right-2 bottom-2 transition-transform duration-150
+                    ease-in-out
+                  `,
+                  value.trim().length === 0
+                    ? "translate-y-1 scale-95 opacity-0"
+                    : "translate-y-0 scale-100 opacity-100",
+                )}
+              >
+                {keyboardShortcut === "ctrlEnter" && "Ctrl + Enter"}
+                {keyboardShortcut === "shiftEnter" && "Shift + Enter"}
+              </Kbd>
+            )}
+          </div>
 
           {/* Hidden file input */}
           <input

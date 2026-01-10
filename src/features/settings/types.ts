@@ -20,6 +20,7 @@ export const preferencesSchema = z.object({
     .max(255)
     .transform(v => v.trim() || "New Chat"),
   landingPageContent: z.enum(["suggestions", "greeting", "blank"]),
+  sendMessageKeyboardShortcut: z.enum(["enter", "ctrlEnter", "shiftEnter"]).default("enter"),
   autoThreadNaming: z.boolean().default(false),
 });
 
@@ -88,6 +89,7 @@ export type UserSettingsData = {
   customInstructions?: string;
   defaultThreadName: string;
   landingPageContent: LandingPageContentType;
+  sendMessageKeyboardShortcut: "enter" | "ctrlEnter" | "shiftEnter";
   autoThreadNaming: boolean;
   // Tracks which API key providers have server-side encrypted storage enabled
   // 'client' = stored in browser localStorage, 'server' = stored encrypted on server

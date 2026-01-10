@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import type { LandingPageContentType } from "~/features/settings/types";
 
 import { Input } from "~/components/ui/input";
+import { Kbd } from "~/components/ui/kbd";
 import { Label } from "~/components/ui/label";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Switch } from "~/components/ui/switch";
@@ -31,6 +32,12 @@ const landingPageOptions: { value: LandingPageContentType; label: string; descri
   { value: "blank", label: "Blank", description: "Render nothing: blank slate" },
 ];
 
+const sendMessageKeyboardShortcutOptions = [
+  { value: "enter", label: <Kbd>Enter</Kbd> },
+  { value: "ctrlEnter", label: <Kbd>Ctrl + Enter</Kbd> },
+  { value: "shiftEnter", label: <Kbd>Shift + Enter</Kbd> },
+];
+
 export function PreferencesTab() {
   const { data: settings, isLoading } = useUserSettings({ enabled: true });
   const updatePreferences = useUpdatePreferences();
@@ -51,6 +58,9 @@ export function PreferencesTab() {
   const [landingPageContent, setLandingPageContent] = useState<LandingPageContentType>(
     () => settings?.landingPageContent ?? "suggestions",
   );
+  const [sendMessageKeyboardShortcut, setSendMessageKeyboardShortcut] = useState(
+    () => settings?.sendMessageKeyboardShortcut ?? "enter",
+  );
   const [autoThreadNaming, setAutoThreadNaming] = useState(
     () => settings?.autoThreadNaming ?? false,
   );
@@ -63,6 +73,7 @@ export function PreferencesTab() {
       setCustomInstructions(settings.customInstructions ?? "");
       setDefaultThreadName(settings.defaultThreadName);
       setLandingPageContent(settings.landingPageContent);
+      setSendMessageKeyboardShortcut(settings.sendMessageKeyboardShortcut);
       setAutoThreadNaming(settings.autoThreadNaming);
     }
   }, [settings]);
@@ -73,6 +84,7 @@ export function PreferencesTab() {
     customInst: string,
     defaultName: string,
     landingPageVal: LandingPageContentType,
+    sendMessageKeyboardShortcutVal: string,
     autoThreadNamingVal: boolean,
   ) => {
     try {
@@ -82,6 +94,7 @@ export function PreferencesTab() {
         customInstructions: customInst,
         defaultThreadName: defaultName,
         landingPageContent: landingPageVal,
+        sendMessageKeyboardShortcut: sendMessageKeyboardShortcutVal,
         autoThreadNaming: autoThreadNamingVal,
       });
 
@@ -130,7 +143,7 @@ export function PreferencesTab() {
                     type="button"
                     onClick={() => {
                       setTheme(option.value);
-                      handleSave(option.value, boringMode, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming);
+                      handleSave(option.value, boringMode, customInstructions, defaultThreadName, landingPageContent, sendMessageKeyboardShortcut, autoThreadNaming);
                     }}
                     className={cn(
                       `
@@ -176,7 +189,7 @@ export function PreferencesTab() {
               checked={boringMode}
               onCheckedChange={(checked) => {
                 setBoringMode(checked);
-                handleSave(theme, checked, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming);
+                handleSave(theme, checked, customInstructions, defaultThreadName, landingPageContent, sendMessageKeyboardShortcut, autoThreadNaming);
               }}
             />
           </div>
@@ -189,7 +202,7 @@ export function PreferencesTab() {
               type="text"
               value={defaultThreadName}
               onChange={e => setDefaultThreadName(e.target.value)}
-              onBlur={() => handleSave(theme, boringMode, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming)}
+              onBlur={() => handleSave(theme, boringMode, customInstructions, defaultThreadName, landingPageContent, sendMessageKeyboardShortcut, autoThreadNaming)}
               placeholder="New Chat"
             />
             <p className="text-muted-foreground text-xs">
@@ -210,7 +223,7 @@ export function PreferencesTab() {
               checked={autoThreadNaming}
               onCheckedChange={(checked) => {
                 setAutoThreadNaming(checked);
-                handleSave(theme, boringMode, customInstructions, defaultThreadName, landingPageContent, checked);
+                handleSave(theme, boringMode, customInstructions, defaultThreadName, landingPageContent, sendMessageKeyboardShortcut, checked);
               }}
             />
           </div>
@@ -227,7 +240,7 @@ export function PreferencesTab() {
                     type="button"
                     onClick={() => {
                       setLandingPageContent(option.value);
-                      handleSave(theme, boringMode, customInstructions, defaultThreadName, option.value, autoThreadNaming);
+                      handleSave(theme, boringMode, customInstructions, defaultThreadName, option.value, sendMessageKeyboardShortcut, autoThreadNaming);
                     }}
                     className={cn(
                       `
@@ -252,6 +265,45 @@ export function PreferencesTab() {
             </div>
           </div>
 
+          {/* Send Message Keyboard Shortcut */}
+          <div className="space-y-2">
+            <Label htmlFor="sendMessageKeyboardShortcut">Send Message Keyboard Shortcut</Label>
+            <p
+              className="text-muted-foreground -mt-1 text-xs"
+            >
+              Choose which keyboard shortcut to use for sending messages.
+            </p>
+            <div className="flex gap-2">
+              {sendMessageKeyboardShortcutOptions.map((option) => {
+                const isSelected = sendMessageKeyboardShortcut === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setSendMessageKeyboardShortcut(option.value as typeof sendMessageKeyboardShortcut);
+                      handleSave(theme, boringMode, customInstructions, defaultThreadName, landingPageContent, option.value, autoThreadNaming);
+                    }}
+                    className={cn(
+                      `
+                        flex flex-1 flex-col items-start gap-1 rounded-lg border
+                        p-3 text-left transition-colors
+                      `,
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : `
+                          border-input
+                          hover:bg-muted
+                        `,
+                    )}
+                  >
+                    <span className="text-sm font-medium">{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Custom Instructions */}
           <div className="space-y-2">
             <Label htmlFor="customInstructions">Custom Instructions</Label>
@@ -259,7 +311,7 @@ export function PreferencesTab() {
               id="customInstructions"
               value={customInstructions}
               onChange={e => setCustomInstructions(e.target.value)}
-              onBlur={() => handleSave(theme, boringMode, customInstructions, defaultThreadName, landingPageContent, autoThreadNaming)}
+              onBlur={() => handleSave(theme, boringMode, customInstructions, defaultThreadName, landingPageContent, sendMessageKeyboardShortcut, autoThreadNaming)}
               placeholder="Add any custom instructions for the AI assistant..."
               className="h-full max-h-60 resize-none"
             />

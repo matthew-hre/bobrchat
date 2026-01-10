@@ -18,6 +18,7 @@ export const userSettings = pgTable(
       boringMode: false,
       defaultThreadName: "New Chat",
       landingPageContent: "suggestions",
+      sendMessageKeyboardShortcut: "enter",
       autoThreadNaming: false,
       apiKeyStorage: {},
     } as UserSettingsData),
