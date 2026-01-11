@@ -50,11 +50,11 @@ export function IntegrationsTab() {
   const removeApiKeyMutation = useRemoveApiKey();
   const loadApiKeysFromStorage = useChatUIStore(state => state.loadApiKeysFromStorage);
 
-  const initializedRef = useRef(false);
+  const openRouterInitializedRef = useRef(false);
   const parallelInitializedRef = useRef(false);
 
-  const [apiKey, setApiKeyValue] = useState("");
-  const [showApiKey, setShowApiKey] = useState(false);
+  const [openRouterApiKey, setOpenRouterApiKey] = useState("");
+  const [showOpenRouterApiKey, setShowOpenRouterApiKey] = useState(false);
   const [storageType, setStorageType] = useState<StorageType | null>(null);
 
   const [parallelApiKey, setParallelApiKeyValue] = useState("");
@@ -65,8 +65,8 @@ export function IntegrationsTab() {
   const hasExistingParallelKey = settings?.apiKeyStorage?.parallel !== undefined;
 
   useEffect(() => {
-    if (settings?.apiKeyStorage?.openrouter && !initializedRef.current) {
-      initializedRef.current = true;
+    if (settings?.apiKeyStorage?.openrouter && !openRouterInitializedRef.current) {
+      openRouterInitializedRef.current = true;
       setStorageType(settings.apiKeyStorage.openrouter);
     }
   }, [settings?.apiKeyStorage?.openrouter]);
@@ -79,12 +79,12 @@ export function IntegrationsTab() {
   }, [settings?.apiKeyStorage?.parallel]);
 
   const handleSave = async () => {
-    if (!apiKey.trim() || !storageType)
+    if (!openRouterApiKey.trim() || !storageType)
       return;
 
     try {
       const validated = apiKeyUpdateSchema.parse({
-        apiKey: apiKey.trim(),
+        apiKey: openRouterApiKey.trim(),
         storeServerSide: storageType === "server",
       });
 
@@ -101,7 +101,7 @@ export function IntegrationsTab() {
         setClientKey("openrouter", validated.apiKey);
       }
       loadApiKeysFromStorage();
-      setApiKeyValue("");
+      setOpenRouterApiKey("");
       toast.success(hasExistingKey ? "API key updated" : "API key saved");
     }
     catch (error) {
@@ -121,7 +121,7 @@ export function IntegrationsTab() {
       removeClientKey("openrouter");
       loadApiKeysFromStorage();
       setStorageType(null);
-      initializedRef.current = false;
+      openRouterInitializedRef.current = false;
       toast.success("API key removed");
     }
     catch {
@@ -237,22 +237,22 @@ export function IntegrationsTab() {
                 <div className="relative flex-1">
                   <Input
                     id="apiKey"
-                    type={showApiKey ? "text" : "password"}
-                    value={apiKey}
-                    onChange={e => setApiKeyValue(e.target.value)}
+                    type={showOpenRouterApiKey ? "text" : "password"}
+                    value={openRouterApiKey}
+                    onChange={e => setOpenRouterApiKey(e.target.value)}
                     placeholder="sk-or-v1-..."
                     className="pr-10"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowApiKey(!showApiKey)}
+                    onClick={() => setShowOpenRouterApiKey(!showOpenRouterApiKey)}
                     className={cn(`
                       text-muted-foreground absolute top-1/2 right-3
                       -translate-y-1/2 transition-colors
                       hover:text-foreground
                     `)}
                   >
-                    {showApiKey
+                    {showOpenRouterApiKey
                       ? <EyeOffIcon className="size-4" />
                       : <EyeIcon className="size-4" />}
                   </button>
@@ -378,7 +378,7 @@ export function IntegrationsTab() {
               <div className="flex space-x-2">
                 <Button
                   onClick={handleSave}
-                  disabled={!apiKey.trim() || !storageType || isSaving}
+                  disabled={!openRouterApiKey.trim() || !storageType || isSaving}
                 >
                   <SaveIcon className="size-4" />
                   {isSaving ? "Saving..." : hasExistingKey ? "Update Key" : "Save Key"}
@@ -463,7 +463,7 @@ export function IntegrationsTab() {
                 Get your API key from
                 {" "}
                 <a
-                  href="https://parallel.ai/account/api-keys"
+                  href="https://platform.parallel.ai/settings?tab=api-keys"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`
@@ -471,7 +471,7 @@ export function IntegrationsTab() {
                     hover:underline
                   `}
                 >
-                  parallel.ai/account/api-keys
+                  platform.parallel.ai/settings
                 </a>
               </p>
             </div>

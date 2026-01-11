@@ -1,4 +1,3 @@
-import { KeyIcon } from "lucide-react";
 import Link from "next/link";
 
 import type { Session } from "~/features/auth/lib/auth";
@@ -9,10 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 type UserProfileCardProps = {
   session: Session;
-  hasApiKey?: boolean;
 };
 
-export function UserProfileCard({ session, hasApiKey }: UserProfileCardProps) {
+export function UserProfileCard({ session }: UserProfileCardProps) {
   if (!session) {
     return null;
   }
@@ -39,14 +37,6 @@ export function UserProfileCard({ session, hasApiKey }: UserProfileCardProps) {
         <span className="truncate text-sm font-medium">
           {session.user.name}
         </span>
-        <div className="flex items-center gap-1">
-          <span className="text-muted-foreground">
-            <KeyIcon className="size-3" />
-          </span>
-          <span className="text-muted-foreground text-[10px]">
-            {hasApiKey ? "API key configured" : "No API key"}
-          </span>
-        </div>
       </div>
     </Link>
   );

@@ -20,7 +20,7 @@ import { createStreamHandlers, processStreamChunk } from "./stream";
  * @param messages The chat messages to send to the model.
  * @param modelId The ID of the model to use.
  * @param userId The ID of the user making the request (to get their API key).
- * @param apiKey Optional API key provided by the client (for browser-only storage).
+ * @param openRouterApiKey Optional API key provided by the client (for browser-only storage).
  * @param searchEnabled Whether web search is enabled for this request.
  * @param parallelApiKey The Parallel Web API key for web search functionality.
  * @param onFirstToken Optional callback to capture first token timing from the messageMetadata handler.
@@ -31,13 +31,13 @@ export async function streamChatResponse(
   messages: ChatUIMessage[],
   modelId: string,
   userId: string,
-  apiKey: string,
+  openRouterApiKey: string,
   searchEnabled?: boolean,
   parallelApiKey?: string,
   onFirstToken?: () => void,
   modelSupportsFiles?: boolean,
 ) {
-  if (!apiKey) {
+  if (!openRouterApiKey) {
     throw new Error("No API key configured. Please set up your OpenRouter API key in settings.");
   }
 
@@ -45,7 +45,7 @@ export async function streamChatResponse(
   let firstTokenTime: number | null = null;
   const sources: Array<{ id: string; sourceType: string; url?: string; title?: string }> = [];
 
-  const provider = getModelProvider(apiKey);
+  const provider = getModelProvider(openRouterApiKey);
   const { inputCostPerMillion, outputCostPerMillion } = await getTokenCosts(modelId);
   const systemPrompt = await generatePrompt(userId);
 

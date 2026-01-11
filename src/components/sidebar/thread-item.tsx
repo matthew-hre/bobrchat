@@ -147,8 +147,9 @@ function ThreadItemComponent({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <ThreadTooltip title={title}>
+      <ThreadTooltip title={title}>
+        <ContextMenuTrigger>
+
           <div className="group/thread relative">
             <Link
               href={`/chat/${id}`}
@@ -191,8 +192,9 @@ function ThreadItemComponent({
               <Trash2 className="size-4" />
             </Button>
           </div>
-        </ThreadTooltip>
-      </ContextMenuTrigger>
+        </ContextMenuTrigger>
+      </ThreadTooltip>
+
       <ContextMenuContent>
         <ContextMenuItem onClick={handleRenameClick} disabled={regenerateThreadNameMutation.isPending}>
           Rename
