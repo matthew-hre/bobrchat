@@ -1,9 +1,11 @@
+import { useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 
 import type { PendingFile } from "~/features/chat/components/messages/file-preview";
 import type { getModelCapabilities } from "~/features/models";
 
+import { STORAGE_QUOTA_KEY } from "~/features/attachments/hooks/use-attachments";
 import { detectLanguage, getLanguageExtension } from "~/features/chat/utils/detect-language";
 import { validateFilesForModel } from "~/features/models";
 
@@ -21,6 +23,7 @@ export function useFileAttachments({
   onValueChange,
   textareaRef,
 }: UseFileAttachmentsProps) {
+  const queryClient = useQueryClient();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [pendingFiles, setPendingFiles] = React.useState<PendingFile[]>([]);
 
@@ -64,6 +67,10 @@ export function useFileAttachments({
         });
 
         if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          if (errorData.code === "QUOTA_EXCEEDED") {
+            throw new Error(errorData.error || "Storage quota exceeded");
+          }
           throw new Error("Upload failed");
         }
 
@@ -85,21 +92,25 @@ export function useFileAttachments({
           return updated;
         });
 
+        queryClient.invalidateQueries({ queryKey: STORAGE_QUOTA_KEY });
         return result;
       };
 
       toast.promise(uploadPromise(), {
         loading: `Uploading ${fileLabel}...`,
         success: `Uploaded ${fileLabel}`,
-        error: () => {
+        error: (err) => {
           setPendingFiles(prev =>
             prev.filter(f => !tempFiles.some(tf => tf.id === f.id)),
           );
+          if (err instanceof Error && err.message.includes("quota")) {
+            return err.message;
+          }
           return `Failed to upload ${fileLabel}`;
         },
       });
     },
-    [capabilities],
+    [capabilities, queryClient],
   );
 
   const handleRemoveFile = React.useCallback((id: string) => {

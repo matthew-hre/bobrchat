@@ -1,10 +1,10 @@
 "use client";
 
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { GroupedThreads } from "~/features/chat/utils/thread-grouper";
 
-import { createNewThread, deleteThread, regenerateThreadName, renameThread } from "~/features/chat/actions";
+import { createNewThread, deleteThread, fetchThreadStats, regenerateThreadName, renameThread } from "~/features/chat/actions";
 import { groupThreadsByDate } from "~/features/chat/utils/thread-grouper";
 import { THREADS_KEY } from "~/lib/queries/query-keys";
 
@@ -106,5 +106,20 @@ export function useRegenerateThreadName() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: THREADS_KEY });
     },
+  });
+}
+
+export type ThreadStats = {
+  messageCount: number;
+  attachmentCount: number;
+  attachmentSize: number;
+};
+
+export function useThreadStats(threadId: string | null) {
+  return useQuery({
+    queryKey: ["thread-stats", threadId] as const,
+    queryFn: () => fetchThreadStats(threadId!),
+    enabled: !!threadId,
+    staleTime: 60 * 1000,
   });
 }

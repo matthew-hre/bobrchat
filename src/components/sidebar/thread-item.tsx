@@ -14,7 +14,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "~/components/ui/context-menu";
-import { useDeleteThread, useRegenerateThreadName, useRenameThread } from "~/features/chat/hooks/use-threads";
+import { useDeleteThread, useRegenerateThreadName, useRenameThread, useThreadStats } from "~/features/chat/hooks/use-threads";
 import { useChatUIStore } from "~/features/chat/store";
 import { cn } from "~/lib/utils";
 
@@ -26,6 +26,14 @@ type ThreadItemProps = {
   isActive: boolean;
   onDeleteClick?: (threadId: string, threadTitle: string) => void;
 };
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024)
+    return `${bytes} B`;
+  if (bytes < 1024 * 1024)
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 function ThreadItemComponent({
   id,
@@ -42,7 +50,10 @@ function ThreadItemComponent({
 
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
+  const [menuOpen, setMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { data: stats, isLoading: statsLoading } = useThreadStats(menuOpen ? id : null);
 
   const performDirectDelete = async () => {
     try {
@@ -146,7 +157,7 @@ function ThreadItemComponent({
   }
 
   return (
-    <ContextMenu>
+    <ContextMenu onOpenChange={setMenuOpen}>
       <ThreadTooltip title={title}>
         <ContextMenuTrigger>
 
@@ -196,6 +207,30 @@ function ThreadItemComponent({
       </ThreadTooltip>
 
       <ContextMenuContent>
+        <div className="text-muted-foreground px-2 py-1.5 text-xs">
+          {statsLoading
+            ? "Loading..."
+            : stats
+              ? (
+                  <>
+                    {stats.messageCount}
+                    {" "}
+                    messages
+                    {stats.attachmentCount > 0 && (
+                      <>
+                        {" · "}
+                        {stats.attachmentCount}
+                        {" "}
+                        files (
+                        {formatBytes(stats.attachmentSize)}
+                        )
+                      </>
+                    )}
+                  </>
+                )
+              : "—"}
+        </div>
+        <ContextMenuSeparator />
         <ContextMenuItem onClick={handleRenameClick} disabled={regenerateThreadNameMutation.isPending}>
           Rename
         </ContextMenuItem>

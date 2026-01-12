@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const ATTACHMENTS_KEY = ["attachments"] as const;
+export const STORAGE_QUOTA_KEY = ["storage-quota"] as const;
 
 export type AttachmentTypeFilter = "all" | "image" | "pdf" | "text";
 export type AttachmentOrder = "asc" | "desc";
@@ -79,6 +80,27 @@ export function useDeleteAttachments() {
     mutationFn: (ids: string[]) => deleteAttachments(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ATTACHMENTS_KEY });
+      queryClient.invalidateQueries({ queryKey: STORAGE_QUOTA_KEY });
     },
+  });
+}
+
+export type StorageQuota = {
+  used: number;
+  quota: number;
+};
+
+async function fetchStorageQuota(): Promise<StorageQuota> {
+  const response = await fetch("/api/attachments/quota");
+  if (!response.ok)
+    throw new Error("Failed to fetch storage quota");
+  return response.json();
+}
+
+export function useStorageQuota() {
+  return useQuery({
+    queryKey: STORAGE_QUOTA_KEY,
+    queryFn: fetchStorageQuota,
+    staleTime: 30 * 1000,
   });
 }

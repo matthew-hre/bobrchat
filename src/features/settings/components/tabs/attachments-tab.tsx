@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import { Progress } from "~/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -33,7 +34,69 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { useAttachmentsPage, useDeleteAttachments } from "~/features/attachments/hooks/use-attachments";
+import { useAttachmentsPage, useDeleteAttachments, useStorageQuota } from "~/features/attachments/hooks/use-attachments";
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024)
+    return `${bytes} B`;
+  if (bytes < 1024 * 1024)
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function StorageBar() {
+  const { data, isLoading } = useStorageQuota();
+
+  if (isLoading || !data) {
+    return (
+      <div className="bg-card rounded-lg border p-4">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Loading storage info...</span>
+        </div>
+      </div>
+    );
+  }
+
+  const { used, quota } = data;
+  const percentage = Math.min((used / quota) * 100, 100);
+  const isWarning = percentage >= 80 && percentage < 95;
+  const isCritical = percentage >= 95;
+
+  return (
+    <div className="bg-card rounded-lg border p-4">
+      <div className="mb-2 flex items-center justify-between text-sm">
+        <span className="font-medium">Storage</span>
+        <span className={isCritical
+          ? "text-destructive"
+          : isWarning
+            ? `*:data-[slot=progress-indicator]:bg-amber-600`
+            : `text-muted-foreground`}
+        >
+          {formatBytes(used)}
+          {" "}
+          of
+          {" "}
+          {formatBytes(quota)}
+          {" "}
+          used
+        </span>
+      </div>
+      <Progress
+        value={percentage}
+        className={isCritical
+          ? `*:data-[slot=progress-indicator]:bg-destructive`
+          : isWarning
+            ? `*:data-[slot=progress-indicator]:bg-amber-600`
+            : ""}
+      />
+      {isCritical && (
+        <p className="text-destructive mt-2 text-xs">
+          Storage almost full. Delete files to upload more.
+        </p>
+      )}
+    </div>
+  );
+}
 
 function FilePreview({ url, mediaType, filename }: { url: string; mediaType: string; filename: string }) {
   const isImage = mediaType.startsWith("image/");
@@ -180,6 +243,7 @@ export function AttachmentsTab() {
 
       <div className="flex-1 overflow-auto p-6">
         <div className="mx-auto space-y-4">
+          <StorageBar />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, inArray, like, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, like, lt, or, sql, sum } from "drizzle-orm";
 import { Buffer } from "node:buffer";
 
 import { db } from "~/lib/db";
@@ -6,6 +6,43 @@ import { attachments, messages } from "~/lib/db/schema/chat";
 import { serverEnv } from "~/lib/env";
 
 import type { AttachmentListItem, AttachmentOrder, AttachmentTypeFilter, Cursor } from "./types";
+
+export const STORAGE_QUOTA_BYTES = 104_857_600; // 100MB
+
+export async function getUserStorageUsage(userId: string): Promise<number> {
+  const result = await db
+    .select({ total: sum(attachments.size) })
+    .from(attachments)
+    .where(eq(attachments.userId, userId));
+
+  return Number(result[0]?.total ?? 0);
+}
+
+export async function getThreadStats(params: {
+  userId: string;
+  threadId: string;
+}): Promise<{ messageCount: number; attachmentCount: number; attachmentSize: number }> {
+  const [messageResult, attachmentResult] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(messages)
+      .where(eq(messages.threadId, params.threadId)),
+    db
+      .select({
+        count: sql<number>`count(*)::int`,
+        size: sql<number>`coalesce(sum(${attachments.size}), 0)::bigint`,
+      })
+      .from(attachments)
+      .innerJoin(messages, eq(attachments.messageId, messages.id))
+      .where(eq(messages.threadId, params.threadId)),
+  ]);
+
+  return {
+    messageCount: messageResult[0]?.count ?? 0,
+    attachmentCount: attachmentResult[0]?.count ?? 0,
+    attachmentSize: Number(attachmentResult[0]?.size ?? 0),
+  };
+}
 
 function encodeCursor(cursor: Cursor): string {
   return Buffer.from(JSON.stringify(cursor)).toString("base64url");

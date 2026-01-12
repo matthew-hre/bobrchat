@@ -5,10 +5,8 @@
 - User Message Editing
 - Model Message Regeneration
 - Attachment overhaul
-  - Storage limit for users (100mb)
-  - Visual indicator of storage
   - Context window limit for files (32k)
-- Thread search
+  - Orphaned attachment cleanup (cron job)
 
 ## Bugs
 
@@ -23,3 +21,8 @@
   - Edit previous message bind (up arrow in blank chat)
 - Delete all threads option
 - Account settings (delete, log out of devices)
+
+## Future (Billing)
+
+- Add `storageTier` or `quotaOverrideBytes` column to users table for custom quotas
+- Pricing info in thread stats context menu

@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
 import { deleteFile } from "~/features/attachments/lib/storage";
-import { deleteUserAttachmentsByIds, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/features/attachments/queries";
+import { deleteUserAttachmentsByIds, getThreadStats, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
 import { createThread, deleteThreadById, getMessagesByThreadId, renameThreadById, saveMessage } from "~/features/chat/queries";
 import { generateThreadTitle } from "~/features/chat/server/naming";
@@ -225,4 +225,26 @@ export async function regenerateThreadName(threadId: string, clientKey?: string)
   }
 
   return newTitle;
+}
+
+/**
+ * Fetches stats for a thread (message count, attachment count/size).
+ *
+ * @param threadId ID of the thread
+ * @returns Thread stats
+ */
+export async function fetchThreadStats(threadId: string): Promise<{
+  messageCount: number;
+  attachmentCount: number;
+  attachmentSize: number;
+}> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  return getThreadStats({ userId: session.user.id, threadId });
 }

@@ -4,6 +4,7 @@ import { Buffer } from "node:buffer";
 
 import { getPdfPageCount } from "~/features/attachments/lib/pdf";
 import { saveFile } from "~/features/attachments/lib/storage";
+import { getUserStorageUsage, STORAGE_QUOTA_BYTES } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
 import { db } from "~/lib/db";
 import { attachments } from "~/lib/db/schema/chat";
@@ -43,6 +44,35 @@ export async function POST(req: Request) {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
+    }
+
+    const currentUsage = await getUserStorageUsage(session.user.id);
+    const incomingSize = files.reduce((sum, f) => sum + f.size, 0);
+
+    if (currentUsage >= STORAGE_QUOTA_BYTES) {
+      return new Response(
+        JSON.stringify({
+          error: "Storage quota exceeded",
+          code: "QUOTA_EXCEEDED",
+          used: currentUsage,
+          quota: STORAGE_QUOTA_BYTES,
+        }),
+        { status: 413, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    if (currentUsage + incomingSize > STORAGE_QUOTA_BYTES) {
+      const remaining = STORAGE_QUOTA_BYTES - currentUsage;
+      return new Response(
+        JSON.stringify({
+          error: `Upload would exceed storage quota. You have ${Math.round(remaining / 1024 / 1024)}MB remaining.`,
+          code: "QUOTA_EXCEEDED",
+          used: currentUsage,
+          quota: STORAGE_QUOTA_BYTES,
+          incoming: incomingSize,
+        }),
+        { status: 413, headers: { "Content-Type": "application/json" } },
+      );
     }
 
     const results = [];
