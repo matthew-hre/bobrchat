@@ -51,6 +51,9 @@ export function getModelCapabilities(model: Model | undefined): ModelCapabilitie
   const supportsSearch = supportsTools && contextLength > 32000;
   const supportsReasoning = supportedParams.includes("reasoning");
 
+  console.log(`Model ${model.name} architecture:`, model.architecture);
+  console.log(`Model ${model.name} supported parameters:`, model.supportedParameters);
+
   return {
     supportsImages,
     supportsFiles,

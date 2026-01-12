@@ -78,17 +78,14 @@ export async function streamChatResponse(
 
   const getPdfPluginConfig = () => {
     if (!hasPdf) {
-      console.log("No PDF attachments detected, skipping PDF plugin configuration.");
       return undefined;
     }
 
     if (pdfEngineConfig?.supportsNativePdf) {
-      console.log("Model supports native PDF processing, skipping PDF plugin configuration.");
       return undefined;
     }
 
     const engine = pdfEngineConfig?.useOcrForPdfs ? "mistral-ocr" : "pdf-text";
-    console.log(`Configuring PDF plugin with engine: ${engine}`);
     return {
       plugins: [{
         id: "file-parser" as const,
@@ -96,11 +93,6 @@ export async function streamChatResponse(
       }],
     };
   };
-
-  console.log(
-    `PDF processing configuration: hasPdf=${hasPdf}, useOcr=${useOcr}, ocrPageCount=${
-      ocrPageCount}`,
-  );
 
   const result = streamText({
     model: provider(modelId),

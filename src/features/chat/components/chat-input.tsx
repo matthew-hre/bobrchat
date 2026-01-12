@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, PaperclipIcon, SearchIcon, SendIcon, SquareIcon } from "lucide-react";
+import { AlertCircle, BrainIcon, PaperclipIcon, SearchIcon, SendIcon, SquareIcon } from "lucide-react";
 import * as React from "react";
 
 import type { PendingFile } from "~/features/chat/components/messages/file-preview";
@@ -27,7 +27,9 @@ type ChatInputProps = {
   isLoading?: boolean;
   onStop?: () => void;
   searchEnabled?: boolean;
-  onSearchChange?: (enabled: boolean) => void;
+  onSearchChangeAction?: (enabled: boolean) => void;
+  reasoningEnabled?: boolean;
+  onReasoningChangeAction?: (enabled: boolean) => void;
 };
 
 function getAcceptedFileTypesDescription(capabilities: ReturnType<typeof getModelCapabilities>): string {
@@ -59,7 +61,9 @@ export function ChatInput({
   isLoading = false,
   onStop,
   searchEnabled = false,
-  onSearchChange,
+  onSearchChangeAction,
+  reasoningEnabled = false,
+  onReasoningChangeAction,
 }: ChatInputProps) {
   const { data: settings } = useUserSettings();
 
@@ -244,6 +248,43 @@ export function ChatInput({
 
             <div className="flex-1" />
             <div className="flex items-center gap-2">
+              {capabilities.supportsReasoning && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onReasoningChangeAction?.(!reasoningEnabled)}
+                        disabled={hasParallelApiKey === false}
+                        className={cn(`
+                          hover:text-foreground
+                          gap-2 transition-colors
+                        `, reasoningEnabled
+                          ? `
+                            text-primary
+                            hover:text-primary/80 hover:bg-primary/10
+                            dark:hover:text-primary/80 dark:hover:bg-primary/10
+                          `
+                          : `text-muted-foreground`)}
+                        title={searchEnabled ? "Reasoning enabled" : "Reasoning disabled"}
+                      >
+                        <BrainIcon size={16} />
+                        Reason
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {searchEnabled
+                        ? "Reasoning is enabled for this message"
+                        : "Reasoning is disabled for this message"}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
               {capabilities.supportsSearch && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -252,7 +293,7 @@ export function ChatInput({
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => onSearchChange?.(!searchEnabled)}
+                        onClick={() => onSearchChangeAction?.(!searchEnabled)}
                         disabled={hasParallelApiKey === false}
                         className={cn(`
                           hover:text-foreground
