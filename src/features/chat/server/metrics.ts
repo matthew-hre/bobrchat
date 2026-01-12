@@ -42,7 +42,7 @@ export function calculateResponseMetadata(options: MetadataOptions) {
   // If search isn't enabled, cost is zero.
   // If search is enabled but no sources are found, assume a default of 10 results.
   const resultCount = sources ? sources.length : 0;
-  const searchCost = searchEnabled ? calculateSearchCost(resultCount > 0 ? resultCount : 10) : 0;
+  const searchCost = searchEnabled ? calculateSearchCost(resultCount) : 0;
 
   const ocrCost = ocrPageCount ? calculateOcrCost(ocrPageCount) : 0;
 
