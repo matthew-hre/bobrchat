@@ -92,7 +92,8 @@ export function hasPdfAttachment(messages: ChatUIMessage[]): boolean {
 function extractPdfStoragePaths(messages: ChatUIMessage[]): string[] {
   const paths: string[] = [];
   for (const msg of messages) {
-    if (!msg.parts) continue;
+    if (!msg.parts)
+      continue;
     for (const part of msg.parts) {
       if (part.type === "file") {
         const filePart = part as { mediaType?: string; storagePath?: string };
@@ -113,7 +114,8 @@ function extractPdfStoragePaths(messages: ChatUIMessage[]): string[] {
  */
 export async function getTotalPdfPageCount(messages: ChatUIMessage[]): Promise<number> {
   const storagePaths = extractPdfStoragePaths(messages);
-  if (storagePaths.length === 0) return 0;
+  if (storagePaths.length === 0)
+    return 0;
 
   const pageCountMap = await getPdfPageCountsByStoragePaths(storagePaths);
 
