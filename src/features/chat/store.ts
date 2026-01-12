@@ -17,8 +17,8 @@ type ChatUIStore = {
   searchEnabled: boolean;
   setSearchEnabled: (enabled: boolean) => void;
 
-  reasoningEnabled: boolean;
-  setReasoningEnabled: (enabled: boolean) => void;
+  reasoningLevel: string;
+  setReasoningLevel: (level: string) => void;
 
   // Browser API keys (loaded from localStorage once, not persisted by zustand)
   openrouterKey: string | null;
@@ -56,8 +56,8 @@ export const useChatUIStore = create<ChatUIStore>()(
       searchEnabled: false,
       setSearchEnabled: enabled => set({ searchEnabled: enabled }),
 
-      reasoningEnabled: false,
-      setReasoningEnabled: enabled => set({ reasoningEnabled: enabled }),
+      reasoningLevel: "none",
+      setReasoningLevel: level => set({ reasoningLevel: level }),
 
       // Browser API keys (not persisted by zustand, loaded manually from localStorage)
       openrouterKey: null,
@@ -105,6 +105,7 @@ export const useChatUIStore = create<ChatUIStore>()(
       partialize: state => ({
         selectedModelId: state.selectedModelId,
         searchEnabled: state.searchEnabled,
+        reasoningLevel: state.reasoningLevel,
       }),
     },
   ),

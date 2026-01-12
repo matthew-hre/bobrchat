@@ -104,6 +104,9 @@ export async function streamChatResponse(
       openrouter: {
         usage: { include: true },
         ...getPdfPluginConfig(),
+        reasoning: {
+          effort: "xhigh",
+        },
       },
     },
     onChunk({ chunk }) {

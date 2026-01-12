@@ -1,0 +1,41 @@
+{
+  "id": "cc980f17-4d9e-459d-bc44-8ef7dc86beac",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "text": "**Questioning Strawberry's R's**\n\nI'm currently focused on the user's question about[...]",
+      "type": "reasoning",
+      "state": "done",
+      "providerMetadata": {
+        "openrouter": {
+          "reasoning_details": [
+            {
+              [...]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "text": "The word strawberry contains $3$ Rs. \n\nAre you asking because most AI models fail to count them correctly?",
+      "type": "text",
+      "state": "done"
+    }
+  ],
+  "metadata": {
+    "model": "google/gemini-3-flash-preview",
+    "costUSD": {
+      "ocr": 0,
+      "model": 0.013008,
+      "total": 0.013008,
+      "search": 0
+    },
+    "inputTokens": 1242,
+    "outputTokens": 4129,
+    "tokensPerSecond": 146.59518568486828,
+    "timeToFirstTokenMs": 28147
+  }
+}

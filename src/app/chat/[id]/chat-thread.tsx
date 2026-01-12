@@ -29,8 +29,8 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
     clearInput,
     searchEnabled,
     setSearchEnabled,
-    reasoningEnabled,
-    setReasoningEnabled,
+    reasoningLevel,
+    setReasoningLevel,
     setStreamingThreadId,
     markAssistantMessageStopped,
   } = useChatUIStore();
@@ -143,8 +143,8 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
       onStop={handleStop}
       searchEnabled={searchEnabled}
       onSearchChangeAction={setSearchEnabled}
-      reasoningEnabled={reasoningEnabled}
-      onReasoningChangeAction={setReasoningEnabled}
+      reasoningLevel={reasoningLevel}
+      onReasoningChangeAction={setReasoningLevel}
     />
   );
 }

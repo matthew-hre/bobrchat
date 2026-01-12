@@ -6,6 +6,7 @@ import * as React from "react";
 import type { PendingFile } from "~/features/chat/components/messages/file-preview";
 
 import { Button } from "~/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { Kbd } from "~/components/ui/kbd";
 import { Textarea } from "~/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
@@ -28,8 +29,8 @@ type ChatInputProps = {
   onStop?: () => void;
   searchEnabled?: boolean;
   onSearchChangeAction?: (enabled: boolean) => void;
-  reasoningEnabled?: boolean;
-  onReasoningChangeAction?: (enabled: boolean) => void;
+  reasoningLevel?: string;
+  onReasoningChangeAction?: (level: string) => void;
 };
 
 function getAcceptedFileTypesDescription(capabilities: ReturnType<typeof getModelCapabilities>): string {
@@ -62,7 +63,7 @@ export function ChatInput({
   onStop,
   searchEnabled = false,
   onSearchChangeAction,
-  reasoningEnabled = false,
+  reasoningLevel = "none",
   onReasoningChangeAction,
 }: ChatInputProps) {
   const { data: settings } = useUserSettings();
@@ -251,35 +252,52 @@ export function ChatInput({
               {capabilities.supportsReasoning && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onReasoningChangeAction?.(!reasoningEnabled)}
-                        disabled={hasParallelApiKey === false}
-                        className={cn(`
-                          hover:text-foreground
-                          gap-2 transition-colors
-                        `, reasoningEnabled
-                          ? `
-                            text-primary
-                            hover:text-primary/80 hover:bg-primary/10
-                            dark:hover:text-primary/80 dark:hover:bg-primary/10
-                          `
-                          : `text-muted-foreground`)}
-                        title={searchEnabled ? "Reasoning enabled" : "Reasoning disabled"}
-                      >
-                        <BrainIcon size={16} />
-                        Reason
-                      </Button>
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={hasParallelApiKey === false}
+                          className={cn(`
+                            hover:text-foreground
+                            gap-2 transition-colors
+                          `, reasoningLevel !== "none"
+                            ? `
+                              text-primary
+                              hover:text-primary/80 hover:bg-primary/10
+                              dark:hover:text-primary/80
+                              dark:hover:bg-primary/10
+                            `
+                            : `text-muted-foreground`)}
+                          title={`Reasoning level: ${reasoningLevel}`}
+                        >
+                          <BrainIcon size={16} />
+                          Reasoning
+                          {reasoningLevel !== "none" && (
+                            <>
+                              {" "}
+                              (
+                              {reasoningLevel}
+                              )
+                            </>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {["xhigh", "high", "medium", "low", "minimal", "none"].map(level => (
+                          <DropdownMenuItem key={level} onClick={() => onReasoningChangeAction?.(level)}>
+                            {level}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
-                      {searchEnabled
-                        ? "Reasoning is enabled for this message"
-                        : "Reasoning is disabled for this message"}
+                      {hasParallelApiKey === false && !isParallelApiLoading
+                        ? "Configure your Parallel API key in settings to use reasoning"
+                        : `Reasoning level: ${reasoningLevel}`}
                     </p>
                   </TooltipContent>
                 </Tooltip>

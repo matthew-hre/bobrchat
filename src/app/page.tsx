@@ -15,7 +15,7 @@ export default function HomePage(): React.ReactNode {
   const { data: settings, isLoading } = useUserSettings({
     enabled: !!session,
   });
-  const { input, setInput, searchEnabled, setSearchEnabled, reasoningEnabled, setReasoningEnabled } = useChatUIStore();
+  const { input, setInput, searchEnabled, setSearchEnabled, reasoningLevel, setReasoningLevel } = useChatUIStore();
   const createThread = useCreateThread();
 
   // TODO: Properly type this
@@ -40,8 +40,8 @@ export default function HomePage(): React.ReactNode {
       isLoading={createThread.isPending}
       searchEnabled={searchEnabled}
       onSearchChangeAction={setSearchEnabled}
-      reasoningEnabled={reasoningEnabled}
-      onReasoningChangeAction={setReasoningEnabled}
+      reasoningLevel={reasoningLevel}
+      onReasoningChangeAction={setReasoningLevel}
       landingPageContent={isLoading ? undefined : settings?.landingPageContent ?? "suggestions"}
       showLandingPage={!input.trim()}
     />

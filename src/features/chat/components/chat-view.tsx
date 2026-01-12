@@ -27,7 +27,7 @@ export function ChatView({
   threadId,
   searchEnabled,
   onSearchChangeAction,
-  reasoningEnabled,
+  reasoningLevel,
   onReasoningChangeAction,
   landingPageContent,
   showLandingPage,
@@ -41,8 +41,8 @@ export function ChatView({
   threadId?: string;
   searchEnabled?: boolean;
   onSearchChangeAction?: (enabled: boolean) => void;
-  reasoningEnabled?: boolean;
-  onReasoningChangeAction?: (enabled: boolean) => void;
+  reasoningLevel?: string;
+  onReasoningChangeAction?: (level: string) => void;
   landingPageContent?: LandingPageContentType;
   showLandingPage?: boolean;
 }) {
@@ -116,7 +116,7 @@ export function ChatView({
           onStop={onStop}
           searchEnabled={searchEnabled}
           onSearchChangeAction={onSearchChangeAction}
-          reasoningEnabled={reasoningEnabled}
+          reasoningLevel={reasoningLevel}
           onReasoningChangeAction={onReasoningChangeAction}
         />
       </div>
