@@ -142,7 +142,6 @@ export async function createDefaultUserSettings(userId: string): Promise<UserSet
     autoThreadNaming: false,
     landingPageContent: "suggestions",
     sendMessageKeyboardShortcut: "enter",
-    apiKeyStorage: {},
   };
 
   await updateUserSettings(userId, defaultSettings);
