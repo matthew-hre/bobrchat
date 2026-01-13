@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon, SearchIcon, XIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 
@@ -132,7 +133,14 @@ export function ChatSidebar() {
       <SidebarHeader className="p-0">
         <div className="flex h-14 items-center justify-between px-3">
           <div className="flex items-center gap-2">
-            <div className="flex flex-col">
+            <div className="flex flex-row items-center gap-2">
+              <Image
+                src="/icon.png"
+                alt="BobrChat Logo"
+                width={64}
+                height={64}
+                className="size-8"
+              />
               <span className="text-base font-semibold tracking-tight">
                 BobrChat
               </span>

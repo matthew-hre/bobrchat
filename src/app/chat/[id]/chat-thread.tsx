@@ -132,10 +132,32 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
   }, [id, initialPendingMessage, sendMessage, clearInput]);
 
   const handleStop = useCallback(() => {
-    const lastAssistantMessage = [...messages].reverse().find(m => m.role === "assistant");
-    if (lastAssistantMessage) {
+    // Find the assistant message that's currently being generated
+    // This is the first un-stopped assistant message after the most recent user message
+    const state = useChatUIStore.getState();
+    
+    // Find the most recent user message
+    let lastUserMessageIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") {
+        lastUserMessageIndex = i;
+        break;
+      }
+    }
+    
+    // Find the first un-stopped assistant message after the last user message
+    let currentAssistantMessage = null;
+    for (let i = lastUserMessageIndex + 1; i < messages.length; i++) {
+      const msg = messages[i];
+      if (msg.role === "assistant" && !state.stoppedAssistantMessageInfoById[msg.id]) {
+        currentAssistantMessage = msg;
+        break;
+      }
+    }
+
+    if (currentAssistantMessage) {
       const state = useChatUIStore.getState();
-      markAssistantMessageStopped(lastAssistantMessage.id, state.selectedModelId);
+      markAssistantMessageStopped(currentAssistantMessage.id, state.selectedModelId);
 
       // Persist the partial assistant message so the stopped state survives refresh.
       // Fire-and-forget; UI state is handled locally.
@@ -145,7 +167,7 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
         body: JSON.stringify({
           threadId: id,
           message: {
-            ...lastAssistantMessage,
+            ...currentAssistantMessage,
             stoppedByUser: true,
             stoppedModelId: state.selectedModelId,
           },

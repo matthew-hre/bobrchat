@@ -402,7 +402,7 @@ export function ChatInput({
                 type={isLoading ? "button" : "submit"}
                 size="icon"
                 onClick={isLoading ? onStop : undefined}
-                disabled={!canSendMessage()}
+                disabled={isLoading ? !onStop : !canSendMessage()}
                 className="ml-1 size-8 shrink-0"
                 title={isLoading ? "Stop generating" : "Send message"}
               >
