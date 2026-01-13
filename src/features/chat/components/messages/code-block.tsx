@@ -52,6 +52,7 @@ const highlighterPromise: Promise<any> = (globalThis as any)[__SHIKI_GLOBAL_KEY]
       "makefile",
       "plaintext",
       "nix",
+      "ocaml",
     ],
   })
 );

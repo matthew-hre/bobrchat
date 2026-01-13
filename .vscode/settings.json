@@ -50,5 +50,8 @@
   ],
   "typescript.tsdk": "node_modules/typescript/lib",
 
-  "workbench.editor.labelFormat": "medium"
+  "workbench.editor.labelFormat": "medium",
+  "search.exclude": {
+    "**/node_modules": false
+  }
 }

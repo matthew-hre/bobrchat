@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, BrainIcon, PaperclipIcon, SearchIcon, SendIcon, SquareIcon } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 
 import type { PendingFile } from "~/features/chat/components/messages/file-preview";
@@ -114,8 +115,9 @@ export function ChatInput({
   }, [value, isExpanded]);
 
   const canSendMessage = () => {
+    // disabled={isLoading ? !onStop : (!value.trim() && pendingFiles.length === 0) || isUploading}
     if (isLoading) {
-      return false;
+      return !onStop;
     }
 
     if (!value.trim()) {
@@ -429,7 +431,7 @@ function ApiWarningBadge() {
         `}
       >
         No API key configured. Set up your OpenRouter API key in
-        <a
+        <Link
           href="?settings=integrations"
           className={`
             ml-1 font-semibold underline
@@ -437,7 +439,7 @@ function ApiWarningBadge() {
           `}
         >
           settings
-        </a>
+        </Link>
         {" "}
         to send messages.
       </div>

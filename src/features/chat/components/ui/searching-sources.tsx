@@ -1,6 +1,7 @@
 "use client";
 
 import { ExternalLink, Globe, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 import type { SourceInfo } from "~/app/api/chat/route";
 
@@ -36,7 +37,7 @@ export function SearchingSources({ sources, isSearching }: { sources: SourceInfo
                     {sources.map(source => (
                       source.sourceType === "url" && source.url
                         ? (
-                            <a
+                            <Link
                               key={source.id}
                               href={source.url}
                               target="_blank"
@@ -49,7 +50,7 @@ export function SearchingSources({ sources, isSearching }: { sources: SourceInfo
                             >
                               <ExternalLink className="h-3 w-3" />
                               <span className="flex-1 truncate">{source.title || source.url}</span>
-                            </a>
+                            </Link>
                           )
                         : (
                             <span
