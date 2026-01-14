@@ -19,9 +19,8 @@ export function UserMessage({ content, attachments, className }: UserMessageProp
       {content && (
         <div
           className={cn(`
-            bg-primary text-primary-foreground prose prose-sm max-w-[80%]
-            rounded-2xl rounded-br-sm px-4 py-2.5
-            md:max-w-[70%]
+            bg-primary text-primary-foreground prose prose-sm rounded-2xl
+            rounded-br-sm px-4 py-2.5
           `)}
         >
           <p className="wrap-break-word whitespace-pre-wrap">{content}</p>
