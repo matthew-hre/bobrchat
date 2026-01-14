@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, MessageCircle, Trash2 } from "lucide-react";
+import { Loader2, MessageCircle, Timer, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo, useRef, useState } from "react";
@@ -39,6 +39,12 @@ function formatCost(cost: number): string {
   if (cost === 0)
     return "$0.00";
   return `$${cost.toFixed(6)}`;
+}
+
+function formatTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }
 
 function ThreadItemComponent({
@@ -241,6 +247,21 @@ function ThreadItemComponent({
                         spent
                       </div>
                     )}
+                    <div className={`
+                      border-muted-foreground/20 mt-2 flex items-center gap-1.5
+                      border-t pt-1.5
+                    `}
+                    >
+                      <span>
+                        {formatTime(154)}
+                        {" "}
+                        Active,
+                        {" "}
+                        {formatTime(265)}
+                        {" "}
+                        Total
+                      </span>
+                    </div>
                   </>
                 )
               : "—"}

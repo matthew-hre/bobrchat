@@ -98,20 +98,6 @@ export function ProfileTab() {
               </p>
             </CardContent>
           </Card>
-
-          <Card className="gap-2 rounded">
-            <CardHeader>
-              <CardTitle className="text-base">What's on the roadmap?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="list-disc space-y-1 pl-5 text-sm">
-                <li>Analytics dashboard for usage tracking</li>
-                <li>Forking, Handoff, and Thread Referencing</li>
-                <li>Message editing and regenerating</li>
-                <li>Public thread sharing</li>
-              </ul>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
