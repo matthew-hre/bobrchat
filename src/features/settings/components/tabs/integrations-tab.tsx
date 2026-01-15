@@ -83,13 +83,17 @@ export function IntegrationsTab() {
   const { hasKey: hasParallelKey, source: parallelSource, isLoading: isParallelLoading } = useApiKeyState("parallel");
 
   const handleSave = async () => {
-    if (!openRouterApiKey.trim() || !storageType)
+    if (!openRouterApiKey.trim())
+      return;
+
+    const finalStorageType = storageType || openRouterSource;
+    if (!finalStorageType)
       return;
 
     try {
       const validated = apiKeyUpdateSchema.parse({
         apiKey: openRouterApiKey.trim(),
-        storeServerSide: storageType === "server",
+        storeServerSide: finalStorageType === "server",
       });
 
       if (validated.storeServerSide) {
@@ -129,13 +133,17 @@ export function IntegrationsTab() {
   };
 
   const handleParallelSave = async () => {
-    if (!parallelApiKey.trim() || !parallelStorageType)
+    if (!parallelApiKey.trim())
+      return;
+
+    const finalStorageType = parallelStorageType || parallelSource;
+    if (!finalStorageType)
       return;
 
     try {
       const validated = apiKeyUpdateSchema.parse({
         apiKey: parallelApiKey.trim(),
-        storeServerSide: parallelStorageType === "server",
+        storeServerSide: finalStorageType === "server",
       });
 
       if (validated.storeServerSide) {
@@ -372,7 +380,7 @@ export function IntegrationsTab() {
               <div className="flex space-x-2">
                 <Button
                   onClick={handleSave}
-                  disabled={!openRouterApiKey.trim() || !storageType || isSaving}
+                  disabled={!openRouterApiKey.trim() || (!storageType && !hasOpenRouterKey) || isSaving}
                 >
                   <SaveIcon className="size-4" />
                   {isSaving ? "Saving..." : hasOpenRouterKey ? "Update Key" : "Save Key"}
@@ -573,7 +581,7 @@ export function IntegrationsTab() {
               <div className="flex space-x-2">
                 <Button
                   onClick={handleParallelSave}
-                  disabled={!parallelApiKey.trim() || !parallelStorageType || isParallelSaving}
+                  disabled={!parallelApiKey.trim() || (!parallelStorageType && !hasParallelKey) || isParallelSaving}
                 >
                   <SaveIcon className="size-4" />
                   {isParallelSaving ? "Saving..." : hasParallelKey ? "Update Key" : "Save Key"}
