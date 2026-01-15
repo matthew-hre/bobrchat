@@ -1,7 +1,6 @@
 "use client";
 
 import type { DragEndEvent } from "@dnd-kit/core";
-import type { Model } from "@openrouter/sdk/models";
 
 import {
   closestCenter,
@@ -12,13 +11,11 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
-import Fuse from "fuse.js";
 import {
   BrainIcon,
   FileTextIcon,
@@ -28,8 +25,10 @@ import {
   SlidersHorizontalIcon,
   SparklesIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+
+import type { CapabilityFilter, SortOrder } from "~/features/models/types";
 
 import {
   Accordion,
@@ -48,38 +47,41 @@ import {
 } from "~/components/ui/select";
 import { Skeleton } from "~/components/ui/skeleton";
 import {
-  getModelCapabilities,
   ModelCard,
   MODELS_KEY,
   SortableFavoriteModel,
   useModels,
 } from "~/features/models";
-import { useUpdateFavoriteModels, useUserSettings } from "~/features/settings/hooks/use-user-settings";
+import { useModelDirectory } from "~/features/models/hooks/use-model-directory";
+import { useFavoriteModelsDraft } from "~/features/settings/hooks/use-favorite-models-draft";
+import { useInfiniteScroll } from "~/lib/hooks/use-infinite-scroll";
 import { cn } from "~/lib/utils";
 
 import { useApiKeyStatus } from "../../hooks/use-api-status";
 
-const MODELS_PER_PAGE = 30;
-
-type CapabilityFilter = "image" | "pdf" | "search" | "reasoning";
-type SortOrder = "provider-asc" | "provider-desc" | "model-asc" | "model-desc" | "cost-asc" | "cost-desc";
-
 export function ModelsTab() {
-  const { data: settings } = useUserSettings({ enabled: true });
   const { hasKey: hasOpenRouterKey, isLoading: isKeyLoading } = useApiKeyStatus("openrouter");
   const { data: models = [], isLoading, isFetching, refetch } = useModels({ enabled: true });
-  const updateFavoriteModels = useUpdateFavoriteModels();
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedModels, setSelectedModels] = useState<string[]>([]);
-  const [favoritesOpen, setFavoritesOpen] = useState(false);
-  const [displayedCount, setDisplayedCount] = useState(MODELS_PER_PAGE);
   const [capabilityFilters, setCapabilityFilters] = useState<CapabilityFilter[]>([]);
   const [sortOrder, setSortOrder] = useState<SortOrder>("provider-asc");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const initializedRef = useRef(false);
-  const observerTargetRef = useRef<HTMLDivElement>(null);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+
+  const { draftIds, draftSet, draftModels, toggle, reorder, isSaving } = useFavoriteModelsDraft();
+  const { results: searchResults, totalCount } = useModelDirectory(models, {
+    query: searchQuery,
+    capabilityFilters,
+    sortOrder,
+  });
+
+  const availableResults = searchResults.filter(m => !draftSet.has(m.id));
+  const { displayedCount, observerRef, hasMore } = useInfiniteScroll({
+    totalCount: availableResults.length,
+    resetKeys: [searchQuery, capabilityFilters, sortOrder],
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -87,104 +89,6 @@ export function ModelsTab() {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
-
-  useEffect(() => {
-    if (settings && !initializedRef.current) {
-      initializedRef.current = true;
-      setSelectedModels(settings.favoriteModels ?? []);
-    }
-  }, [settings]);
-
-  const fuse = useMemo(() => {
-    if (!models.length)
-      return null;
-
-    return new Fuse(models, {
-      keys: ["name"],
-      threshold: 0.3,
-      minMatchCharLength: 2,
-      ignoreLocation: true,
-      useExtendedSearch: true,
-      sortFn: (a, b) => {
-        const queryNumbers = searchQuery.match(/\d+(\.\d+)?/g) || [];
-
-        const getNumericScore = (item: any) => {
-          if (!item || queryNumbers.length === 0)
-            return 0;
-          const combined = `${item.name} ${item.id}`.toLowerCase();
-
-          const exactMatches = queryNumbers.filter(n => combined.includes(n.toLowerCase()));
-          return exactMatches.length;
-        };
-
-        const scoreA = getNumericScore(a.item);
-        const scoreB = getNumericScore(b.item);
-
-        if (scoreA !== scoreB) {
-          return scoreB - scoreA;
-        }
-
-        return a.score - b.score;
-      },
-    });
-  }, [models, searchQuery]);
-
-  const searchResults = useMemo(() => {
-    let results = models;
-
-    if (searchQuery.trim() && fuse) {
-      results = fuse.search(searchQuery).map(result => result.item);
-    }
-
-    if (capabilityFilters.length > 0) {
-      results = results.filter((model) => {
-        const caps = getModelCapabilities(model);
-        return capabilityFilters.every((filter) => {
-          switch (filter) {
-            case "image":
-              return caps.supportsImages;
-            case "pdf":
-              return caps.supportsPdf || caps.supportsNativePdf;
-            case "search":
-              return caps.supportsSearch;
-            case "reasoning":
-              return caps.supportsReasoning;
-            default:
-              return true;
-          }
-        });
-      });
-    }
-
-    const sorted = [...results].sort((a, b) => {
-      const [providerA, modelA] = a.id.split("/");
-      const [providerB, modelB] = b.id.split("/");
-
-      switch (sortOrder) {
-        case "provider-asc":
-          return providerA.localeCompare(providerB) || modelA.localeCompare(modelB);
-        case "provider-desc":
-          return providerB.localeCompare(providerA) || modelB.localeCompare(modelA);
-        case "model-asc":
-          return modelA.localeCompare(modelB);
-        case "model-desc":
-          return modelB.localeCompare(modelA);
-        case "cost-asc":
-          return (a.pricing?.completion ?? 0) - (b.pricing?.completion ?? 0);
-        case "cost-desc":
-          return (b.pricing?.completion ?? 0) - (a.pricing?.completion ?? 0);
-        default:
-          return 0;
-      }
-    });
-
-    return sorted;
-  }, [searchQuery, fuse, models, capabilityFilters, sortOrder]);
-
-  // Reset displayed count when search query or filters change
-  useEffect(() => {
-    setDisplayedCount(MODELS_PER_PAGE);
-  }, [searchQuery, capabilityFilters, sortOrder]);
 
   const toggleCapabilityFilter = (filter: CapabilityFilter) => {
     setCapabilityFilters(prev =>
@@ -196,88 +100,21 @@ export function ModelsTab() {
 
   const activeFilterCount = capabilityFilters.length + (sortOrder !== "provider-asc" ? 1 : 0);
 
-  // Set up intersection observer for infinite scroll
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && displayedCount < searchResults.length) {
-          setDisplayedCount(prev => Math.min(prev + MODELS_PER_PAGE, searchResults.length));
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    if (observerTargetRef.current) {
-      observer.observe(observerTargetRef.current);
-    }
-
-    return () => {
-      if (observerTargetRef.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        observer.unobserve(observerTargetRef.current);
-      }
-    };
-  }, [displayedCount, searchResults.length]);
-
   const handleRefreshModels = async () => {
     await queryClient.invalidateQueries({ queryKey: MODELS_KEY });
     await refetch();
     toast.success("Models updated successfully");
   };
 
-  const toggleModel = (modelId: string) => {
-    setSelectedModels((prev) => {
-      if (prev.includes(modelId)) {
-        return prev.filter(id => id !== modelId);
-      }
-      if (prev.length >= 10) {
-        toast.error("Maximum 10 models allowed");
-        return prev;
-      }
-      return [...prev, modelId];
-    });
-  };
-
-  useEffect(() => {
-    if (!initializedRef.current)
-      return;
-    if (selectedModels.length === 0)
-      return;
-    if (JSON.stringify(selectedModels) === JSON.stringify(settings?.favoriteModels))
-      return;
-
-    const timeoutId = setTimeout(async () => {
-      try {
-        await updateFavoriteModels.mutateAsync(selectedModels);
-      }
-      catch (error) {
-        console.error("Failed to save favorite models:", error);
-        toast.error("Failed to save favorite models");
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [selectedModels, settings?.favoriteModels, updateFavoriteModels]);
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setSelectedModels((prev) => {
-        const oldIndex = prev.indexOf(active.id as string);
-        const newIndex = prev.indexOf(over.id as string);
-        return arrayMove(prev, oldIndex, newIndex);
-      });
+      const oldIndex = draftIds.indexOf(active.id as string);
+      const newIndex = draftIds.indexOf(over.id as string);
+      reorder(oldIndex, newIndex);
     }
   };
-
-  const selectedModelObjects = useMemo(() => {
-    if (!selectedModels.length)
-      return [];
-    return selectedModels
-      .map(modelId => models.find(m => m.id === modelId))
-      .filter((m): m is Model => m !== undefined);
-  }, [selectedModels, models]);
 
   const isRefreshing = isFetching && !isLoading;
 
@@ -285,7 +122,10 @@ export function ModelsTab() {
     <div className="flex flex-col overflow-hidden">
       {/* Header */}
       <div className="border-b p-6">
-        <h3 className="text-lg font-semibold">Models</h3>
+        <h3 className="text-lg font-semibold">
+          Models
+          {isSaving && <Loader2 className="ml-2 inline size-4 animate-spin" />}
+        </h3>
         <p className="text-muted-foreground text-sm">
           Search and manage your favorite OpenRouter models (max 10)
         </p>
@@ -388,7 +228,7 @@ export function ModelsTab() {
             </div>
           )}
           <div className="text-muted-foreground mt-2 text-xs">
-            {`${searchResults.length} of ${models.length} models. `}
+            {`${searchResults.length} of ${totalCount} models. `}
             <Button
               variant="link"
               size="sm"
@@ -408,7 +248,7 @@ export function ModelsTab() {
       )}
 
       {/* Favorites Section with Accordion and Drag & Drop */}
-      {selectedModelObjects.length > 0 && (
+      {draftModels.length > 0 && (
         <div className="border-border border-b">
           <Accordion
             type="single"
@@ -427,7 +267,7 @@ export function ModelsTab() {
                     Favorite Models
                   </span>
                   <span className="text-muted-foreground text-xs">
-                    {selectedModelObjects.length}
+                    {draftModels.length}
                     /10
                   </span>
                 </div>
@@ -439,14 +279,14 @@ export function ModelsTab() {
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext
-                    items={selectedModels}
+                    items={draftIds}
                     strategy={verticalListSortingStrategy}
                   >
-                    {selectedModelObjects.map(model => (
+                    {draftModels.map(model => (
                       <SortableFavoriteModel
                         key={model.id}
                         model={model}
-                        onRemove={() => toggleModel(model.id)}
+                        onRemove={() => toggle(model.id)}
                       />
                     ))}
                   </SortableContext>
@@ -516,16 +356,15 @@ export function ModelsTab() {
                 )
               : (
                   <div className="grid gap-3">
-                    {searchResults
-                      .filter(m => !selectedModels.includes(m.id))
+                    {availableResults
                       .slice(0, displayedCount)
                       .map((model) => {
-                        const isSelected = selectedModels.includes(model.id);
-                        return (<ModelCard key={model.id} model={model} isSelected={isSelected} toggleModel={toggleModel} />);
+                        const isSelected = draftSet.has(model.id);
+                        return (<ModelCard key={model.id} model={model} isSelected={isSelected} toggleModel={toggle} />);
                       })}
                     {/* Intersection observer target for infinite scroll */}
-                    <div ref={observerTargetRef} className="h-1" />
-                    {displayedCount < searchResults.filter(m => !selectedModels.includes(m.id)).length && (
+                    <div ref={observerRef} className="h-1" />
+                    {hasMore && (
                       <div className="flex justify-center py-4">
                         <Loader2 className={`
                           text-muted-foreground size-5 animate-spin

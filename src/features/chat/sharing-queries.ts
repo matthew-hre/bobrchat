@@ -1,10 +1,9 @@
-import crypto from "crypto";
-
 import { and, eq, isNull } from "drizzle-orm";
+import crypto from "node:crypto";
 
 import { db } from "~/lib/db";
-import { threadShares } from "~/lib/db/schema/sharing";
 import { threads } from "~/lib/db/schema/chat";
+import { threadShares } from "~/lib/db/schema/sharing";
 
 function generateShareId(): string {
   return crypto.randomBytes(9).toString("base64url");

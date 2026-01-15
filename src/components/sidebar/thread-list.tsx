@@ -111,77 +111,56 @@ export const ThreadList = memo(({
     );
   };
 
-  if (isSearching) {
-    return (
-      <div className="space-y-1 py-2">
-        {flatResults && flatResults.length > 0
-          ? (
-              flatResults.map(thread => (
-                <ThreadItem
-                  key={thread.id}
-                  id={thread.id}
-                  title={thread.title}
-                  isActive={currentChatId === thread.id}
-                  onDeleteClick={handleDeleteClick}
-                  onShareClick={handleShareClick}
-                />
-              ))
-            )
-          : (
-              <p className="text-muted-foreground px-2 py-4 text-center text-sm">
-                No threads found
-              </p>
-            )}
-
-        {threadToDelete && (
-          <DeleteThreadDialog
-            open={!!threadToDelete}
-            threadId={threadToDelete.id}
-            threadTitle={threadToDelete.title}
-            onOpenChange={(open) => {
-              if (!open)
-                setThreadToDelete(null);
-            }}
-          />
-        )}
-
-        {threadToShare && (
-          <ShareThreadDialog
-            open={!!threadToShare}
-            threadId={threadToShare.id}
-            threadTitle={threadToShare.title}
-            onOpenChange={(open) => {
-              if (!open)
-                setThreadToShare(null);
-            }}
-          />
-        )}
-      </div>
-    );
-  }
-
-  if (!groupedThreads) {
+  if (!groupedThreads && !isSearching) {
     return null;
   }
 
   return (
-    <div className="space-y-4 py-2">
-      {renderGroup("Today", groupedThreads.today)}
-      {renderGroup("Last 7 Days", groupedThreads.last7Days)}
-      {renderGroup("Last 30 Days", groupedThreads.last30Days)}
-      {renderGroup("Older", groupedThreads.older)}
-
-      {hasNextPage && (
-        <div ref={loadMoreRef} className="px-1 py-2">
-          {isFetchingNextPage && (
-            <div className="space-y-1">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
+    <>
+      {isSearching
+        ? (
+            <div className="space-y-1 py-2">
+              {flatResults && flatResults.length > 0
+                ? (
+                    flatResults.map(thread => (
+                      <ThreadItem
+                        key={thread.id}
+                        id={thread.id}
+                        title={thread.title}
+                        isActive={currentChatId === thread.id}
+                        onDeleteClick={handleDeleteClick}
+                        onShareClick={handleShareClick}
+                      />
+                    ))
+                  )
+                : (
+                    <p className={`
+                      text-muted-foreground px-2 py-4 text-center text-sm
+                    `}
+                    >
+                      No threads found
+                    </p>
+                  )}
+            </div>
+          )
+        : (
+            <div className="space-y-4 py-2">
+              {renderGroup("Today", groupedThreads!.today)}
+              {renderGroup("Last 7 Days", groupedThreads!.last7Days)}
+              {renderGroup("Last 30 Days", groupedThreads!.last30Days)}
+              {renderGroup("Older", groupedThreads!.older)}
+              {hasNextPage && (
+                <div ref={loadMoreRef} className="px-1 py-2">
+                  {isFetchingNextPage && (
+                    <div className="space-y-1">
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
-
       {threadToDelete && (
         <DeleteThreadDialog
           open={!!threadToDelete}
@@ -193,7 +172,6 @@ export const ThreadList = memo(({
           }}
         />
       )}
-
       {threadToShare && (
         <ShareThreadDialog
           open={!!threadToShare}
@@ -205,7 +183,7 @@ export const ThreadList = memo(({
           }}
         />
       )}
-    </div>
+    </>
   );
 });
 

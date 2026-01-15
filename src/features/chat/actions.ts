@@ -8,8 +8,8 @@ import { deleteFile } from "~/features/attachments/lib/storage";
 import { deleteUserAttachmentsByIds, getThreadStats, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
 import { createThread, deleteMessagesAfterCount, deleteThreadById, getMessagesByThreadId, isThreadOwnedByUser, renameThreadById, saveMessage } from "~/features/chat/queries";
-import { getShareByThreadId, revokeThreadShare, upsertThreadShare } from "~/features/chat/sharing-queries";
 import { generateThreadTitle } from "~/features/chat/server/naming";
+import { getShareByThreadId, revokeThreadShare, upsertThreadShare } from "~/features/chat/sharing-queries";
 import { resolveKey } from "~/lib/api-keys/server";
 import { serverEnv } from "~/lib/env";
 

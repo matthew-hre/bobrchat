@@ -1,11 +1,11 @@
 /* eslint-disable react/no-array-index-key */
 "use client";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
-
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
+import type { ChatUIMessage } from "~/app/api/chat/route";
 
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
@@ -86,13 +86,20 @@ type SharedChatMessagesProps = {
 export function SharedChatMessages({ messages, showAttachments }: SharedChatMessagesProps) {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 p-4 py-8">
-      {messages.map((message, messageIndex) => {
+      {messages.map((message) => {
         if (message.role === "user") {
           const { textContent, attachments } = extractTextAndAttachments(message);
 
           return (
-            <div key={message.id} className="flex w-full flex-col items-end gap-2">
-              <div className="relative w-full max-w-[80%] md:max-w-[70%]">
+            <div
+              key={message.id}
+              className="flex w-full flex-col items-end gap-2"
+            >
+              <div className={`
+                relative w-full max-w-[80%]
+                md:max-w-[70%]
+              `}
+              >
                 <div className="flex flex-col items-end">
                   <div className="group flex w-full flex-col items-end gap-2">
                     {textContent && (
@@ -117,7 +124,10 @@ export function SharedChatMessages({ messages, showAttachments }: SharedChatMess
                           text-muted-foreground flex items-center gap-2 text-xs
                           transition-opacity duration-200
                         `,
-                        "opacity-0 group-hover:opacity-100",
+                        `
+                          opacity-0
+                          group-hover:opacity-100
+                        `,
                       )}
                     >
                       <SharedCopyButton content={textContent} />
@@ -237,7 +247,10 @@ export function SharedChatMessages({ messages, showAttachments }: SharedChatMess
                   text-muted-foreground mt-2 flex items-center gap-2 text-xs
                   transition-opacity duration-200
                 `,
-                "opacity-0 group-hover:opacity-100",
+                `
+                  opacity-0
+                  group-hover:opacity-100
+                `,
               )}
             >
               <SharedCopyButton content={assistantTextContent} />

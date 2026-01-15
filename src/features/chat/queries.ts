@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, lt } from "drizzle-orm";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 

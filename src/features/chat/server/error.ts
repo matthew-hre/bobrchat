@@ -55,7 +55,8 @@ export function formatProviderError(error: unknown): string {
       const message = parsed.error.message;
       return ERROR_HINTS[message] ?? message;
     }
-  } catch {
+  }
+  catch {
     // JSON parsing failed, fall through to default
   }
 

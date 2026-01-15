@@ -57,20 +57,23 @@ export function ShareThreadDialog({
       toast.success("Share link copied to clipboard");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
+    }
+    catch (error) {
       console.error("Failed to create share:", error);
       toast.error("Failed to create share link");
     }
   };
 
   const handleCopyLink = async () => {
-    if (!shareUrl) return;
+    if (!shareUrl)
+      return;
     try {
       await navigator.clipboard.writeText(shareUrl);
       toast.success("Link copied to clipboard");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
+    }
+    catch {
       toast.error("Failed to copy link");
     }
   };
@@ -79,18 +82,21 @@ export function ShareThreadDialog({
     try {
       await stopSharingMutation.mutateAsync(threadId);
       toast.success("Share link revoked");
-    } catch (error) {
+    }
+    catch (error) {
       console.error("Failed to stop sharing:", error);
       toast.error("Failed to revoke share link");
     }
   };
 
   const handleUpdateSettings = async () => {
-    if (!isShared) return;
+    if (!isShared)
+      return;
     try {
       await createOrUpdateMutation.mutateAsync({ threadId, showAttachments });
       toast.success("Share settings updated");
-    } catch (error) {
+    }
+    catch (error) {
       console.error("Failed to update share:", error);
       toast.error("Failed to update share settings");
     }
@@ -104,93 +110,122 @@ export function ShareThreadDialog({
         <DialogHeader>
           <DialogTitle>Share Thread</DialogTitle>
           <DialogDescription>
-            Share "{threadTitle}" via a public link. Anyone with the link can view this conversation.
+            Share "
+            {threadTitle}
+            " via a public link. Anyone with the link can view this conversation.
           </DialogDescription>
         </DialogHeader>
 
-        {isLoadingStatus ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
-        ) : (
-          <div className="space-y-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="show-attachments">Show attachments</Label>
-                <p className="text-muted-foreground text-sm">
-                  When off, only file names are visible
-                </p>
+        {isLoadingStatus
+          ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="size-6 animate-spin" />
               </div>
-              <Switch
-                id="show-attachments"
-                checked={showAttachments}
-                onCheckedChange={setShowAttachments}
-                disabled={isPending}
-              />
-            </div>
+            )
+          : (
+              <div className="space-y-4 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="show-attachments">Show attachments</Label>
+                    <p className="text-muted-foreground text-sm">
+                      When off, only file names are visible
+                    </p>
+                  </div>
+                  <Switch
+                    id="show-attachments"
+                    checked={showAttachments}
+                    onCheckedChange={setShowAttachments}
+                    disabled={isPending}
+                  />
+                </div>
 
-            {isShared && shareUrl && (
-              <div className="bg-muted flex items-center gap-2 rounded-md p-3">
-                <code className="flex-1 truncate text-sm">{shareUrl}</code>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={handleCopyLink}
-                  disabled={isPending}
-                >
-                  {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-                </Button>
+                {isShared && shareUrl && (
+                  <div className={`
+                    bg-muted flex items-center gap-2 rounded-md p-3
+                  `}
+                  >
+                    <code className="flex-1 truncate text-sm">{shareUrl}</code>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={handleCopyLink}
+                      disabled={isPending}
+                    >
+                      {copied
+                        ? <Check className="size-4" />
+                        : (
+                            <Copy className="size-4" />
+                          )}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        <DialogFooter className="flex-col gap-2 sm:flex-row">
-          {isShared ? (
-            <>
-              <Button
-                variant="destructive"
-                onClick={handleStopSharing}
-                disabled={isPending}
-                className="w-full sm:w-auto"
-              >
-                {stopSharingMutation.isPending ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : (
-                  <StopCircle className="mr-2 size-4" />
-                )}
-                Stop Sharing
-              </Button>
-              <Button
-                onClick={handleUpdateSettings}
-                disabled={isPending || shareStatus?.showAttachments === showAttachments}
-                className="w-full sm:w-auto"
-              >
-                {createOrUpdateMutation.isPending ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : null}
-                Update Settings
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isPending}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleShare} disabled={isPending}>
-                {createOrUpdateMutation.isPending ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : (
-                  <Copy className="mr-2 size-4" />
-                )}
-                Create & Copy Link
-              </Button>
-            </>
-          )}
+        <DialogFooter className={`
+          flex-col gap-2
+          sm:flex-row
+        `}
+        >
+          {isShared
+            ? (
+                <>
+                  <Button
+                    variant="destructive"
+                    onClick={handleStopSharing}
+                    disabled={isPending}
+                    className={`
+                      w-full
+                      sm:w-auto
+                    `}
+                  >
+                    {stopSharingMutation.isPending
+                      ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        )
+                      : (
+                          <StopCircle className="mr-2 size-4" />
+                        )}
+                    Stop Sharing
+                  </Button>
+                  <Button
+                    onClick={handleUpdateSettings}
+                    disabled={isPending || shareStatus?.showAttachments === showAttachments}
+                    className={`
+                      w-full
+                      sm:w-auto
+                    `}
+                  >
+                    {createOrUpdateMutation.isPending
+                      ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        )
+                      : null}
+                    Update Settings
+                  </Button>
+                </>
+              )
+            : (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => onOpenChange(false)}
+                    disabled={isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleShare} disabled={isPending}>
+                    {createOrUpdateMutation.isPending
+                      ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        )
+                      : (
+                          <Copy className="mr-2 size-4" />
+                        )}
+                    Create & Copy Link
+                  </Button>
+                </>
+              )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -4,9 +4,9 @@ import type { ToolSet } from "ai";
 import { createParallelClient, extractTool, searchTool } from "@parallel-web/ai-sdk-tools";
 
 const SEARCH_ERROR_HINTS: Record<string, string> = {
-  "401": "Your Parallel API key is invalid. Please check your API key in settings.",
-  "403": "Your Parallel API key does not have permission for this operation.",
-  "429": "Search rate limit exceeded. Please try again later.",
+  401: "Your Parallel API key is invalid. Please check your API key in settings.",
+  403: "Your Parallel API key does not have permission for this operation.",
+  429: "Search rate limit exceeded. Please try again later.",
 };
 
 function formatSearchError(error: unknown): string {

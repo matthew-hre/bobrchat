@@ -19,9 +19,9 @@ type SanitizedFilePart = {
 
 function isFilePart(part: unknown): part is FilePart {
   return (
-    typeof part === "object" &&
-    part !== null &&
-    (part as { type?: unknown }).type === "file"
+    typeof part === "object"
+    && part !== null
+    && (part as { type?: unknown }).type === "file"
   );
 }
 

@@ -13,8 +13,6 @@ type SharePageProps = {
   params: Promise<{ shareId: string }>;
 };
 
-
-
 export default async function SharePage({ params }: SharePageProps) {
   const { shareId } = await params;
 
@@ -26,14 +24,20 @@ export default async function SharePage({ params }: SharePageProps) {
 
   if (!share) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
+      <div className={`
+        flex min-h-screen flex-col items-center justify-center gap-4 p-4
+      `}
+      >
         <h1 className="text-2xl font-semibold">Thread Unavailable</h1>
         <p className="text-muted-foreground text-center">
           This shared thread is no longer available or has been removed.
         </p>
         <Link
           href="/"
-          className="text-primary hover:underline"
+          className={`
+            text-primary
+            hover:underline
+          `}
         >
           Go to BobrChat
         </Link>
@@ -48,14 +52,20 @@ export default async function SharePage({ params }: SharePageProps) {
 
   if (!thread) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
+      <div className={`
+        flex min-h-screen flex-col items-center justify-center gap-4 p-4
+      `}
+      >
         <h1 className="text-2xl font-semibold">Thread Unavailable</h1>
         <p className="text-muted-foreground text-center">
           This shared thread is no longer available or has been removed.
         </p>
         <Link
           href="/"
-          className="text-primary hover:underline"
+          className={`
+            text-primary
+            hover:underline
+          `}
         >
           Go to BobrChat
         </Link>
@@ -69,7 +79,10 @@ export default async function SharePage({ params }: SharePageProps) {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-background/80 sticky top-0 z-10 border-b backdrop-blur">
+      <header className={`
+        bg-background/80 sticky top-0 z-10 border-b backdrop-blur
+      `}
+      >
         <div className="mx-auto flex max-w-3xl items-center justify-between p-4">
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-lg font-semibold">{thread.title}</h1>
@@ -81,8 +94,9 @@ export default async function SharePage({ params }: SharePageProps) {
             <Link
               href="/"
               className={`
-                bg-primary text-primary-foreground hover:bg-primary/90
-                rounded-md px-4 py-2 text-sm font-medium transition-colors
+                bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm
+                font-medium transition-colors
+                hover:bg-primary/90
               `}
             >
               Try BobrChat
@@ -103,7 +117,13 @@ export default async function SharePage({ params }: SharePageProps) {
           <p className="text-muted-foreground text-sm">
             This is a shared conversation from
             {" "}
-            <Link href="/" className="text-primary hover:underline">
+            <Link
+              href="/"
+              className={`
+                text-primary
+                hover:underline
+              `}
+            >
               BobrChat
             </Link>
           </p>

@@ -14,5 +14,5 @@ export const threadShares = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     revokedAt: timestamp("revoked_at"),
   },
-  (table) => [index("thread_shares_threadId_idx").on(table.threadId)],
+  table => [index("thread_shares_threadId_idx").on(table.threadId)],
 );
