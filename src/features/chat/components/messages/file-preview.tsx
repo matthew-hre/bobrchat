@@ -158,9 +158,11 @@ function FilePreviewItem({
 export function MessageAttachments({
   attachments,
   className,
+  showContent = true,
 }: {
   attachments: Array<{ url: string; filename?: string; mediaType?: string }>;
   className?: string;
+  showContent?: boolean;
 }) {
   if (attachments.length === 0) {
     return null;
@@ -169,12 +171,50 @@ export function MessageAttachments({
   const images = attachments.filter(a => a.mediaType?.startsWith("image/"));
   const files = attachments.filter(a => !a.mediaType?.startsWith("image/"));
 
+  const getFileTypeLabel = (mediaType?: string) => {
+    if (!mediaType) return "File";
+    if (mediaType.startsWith("image/")) {
+      return mediaType.split("/")[1]?.toUpperCase() || "Image";
+    }
+    return mediaType.split("/")[1]?.toUpperCase() || "File";
+  };
+
   const getLanguageLabel = (filename?: string) => {
     if (!filename)
       return null;
     const match = filename.match(/\.([a-z]+)$/i);
     return match ? match[1].toUpperCase() : null;
   };
+
+  if (!showContent) {
+    return (
+      <div className={cn("mt-2 space-y-2 pb-2", className)}>
+        <div className="flex flex-wrap gap-2">
+          {attachments.map((attachment, idx) => {
+            const isImage = attachment.mediaType?.startsWith("image/");
+            return (
+              <div
+                key={idx}
+                className={`
+                  border-card bg-muted/50 flex items-center gap-2 rounded-md
+                  border p-2 shadow
+                `}
+              >
+                <FileIcon className="text-muted-foreground size-4" />
+                <span className="text-sm">{attachment.filename || (isImage ? "Image" : "File")}</span>
+                <span className={`
+                  bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-xs
+                `}
+                >
+                  {getFileTypeLabel(attachment.mediaType)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("mt-2 space-y-2 pb-2", className)}>
