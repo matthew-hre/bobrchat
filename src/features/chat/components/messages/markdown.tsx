@@ -1,5 +1,6 @@
 /* eslint-disable react/no-array-index-key */
 import { marked } from "marked";
+import Link from "next/link";
 import { memo, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeMathjax from "rehype-mathjax";
@@ -45,8 +46,8 @@ const MemoizedMarkdownBlock = memo(
           },
           pre: ({ children }) => <>{children}</>,
           a: ({ href, children }) => (
-            <a
-              href={href}
+            <Link
+              href={href || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className={`
@@ -55,7 +56,7 @@ const MemoizedMarkdownBlock = memo(
               `}
             >
               {children}
-            </a>
+            </Link>
           ),
           table: ({ children }) => (
             <div className="mb-3 overflow-x-auto">

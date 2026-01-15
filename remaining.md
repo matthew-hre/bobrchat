@@ -4,10 +4,6 @@
 
 - Orphaned attachment cleanup (cron job)
 
-## Bugs
-
-- Better error handling for invalid API key
-
 - ## Nice to Haves
 
 - Disable auto file creation option in settings

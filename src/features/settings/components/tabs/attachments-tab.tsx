@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowDownIcon, ArrowUpIcon, FileTypeCornerIcon, TrashIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon, FileTextIcon, FileTypeCornerIcon, TrashIcon } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -101,6 +102,7 @@ function StorageBar() {
 function FilePreview({ url, mediaType, filename }: { url: string; mediaType: string; filename: string }) {
   const isImage = mediaType.startsWith("image/");
   const isPdf = mediaType === "application/pdf";
+  const isText = mediaType === "text/plain";
 
   if (isImage) {
     return (
@@ -122,7 +124,15 @@ function FilePreview({ url, mediaType, filename }: { url: string; mediaType: str
     );
   }
 
-  // Plain text and other files don't need an icon - they're always supported
+  if (isText) {
+    return (
+      <div className="bg-muted flex size-8 items-center justify-center rounded">
+        <FileTextIcon className="text-primary size-5" />
+      </div>
+    );
+  }
+
+  // Other files don't need an icon - they're always supported
   return null;
 }
 
@@ -303,10 +313,16 @@ export function AttachmentsTab() {
                       Created
                       {order === "desc"
                         ? (
-                            <ArrowDownIcon className="size-4" aria-hidden="true" />
+                            <ArrowDownIcon
+                              className="size-4"
+                              aria-hidden="true"
+                            />
                           )
                         : (
-                            <ArrowUpIcon className="size-4" aria-hidden="true" />
+                            <ArrowUpIcon
+                              className="size-4"
+                              aria-hidden="true"
+                            />
                           )}
                     </button>
                   </TableHead>
@@ -332,7 +348,9 @@ export function AttachmentsTab() {
                   <TableRow>
                     <TableCell colSpan={5}>
                       <div className="p-2 text-sm">
-                        <div className="text-destructive font-medium">Failed to load attachments</div>
+                        <div className="text-destructive font-medium">
+                          Failed to load attachments
+                        </div>
                         <div className="text-muted-foreground mt-1">
                           {error instanceof Error ? error.message : "Unknown error"}
                         </div>
@@ -345,7 +363,9 @@ export function AttachmentsTab() {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="text-muted-foreground py-6 text-center text-sm"
+                      className={`
+                        text-muted-foreground py-6 text-center text-sm
+                      `}
                     >
                       No attachments found.
                     </TableCell>
@@ -367,9 +387,23 @@ export function AttachmentsTab() {
                       <div className="flex items-center gap-3">
                         <FilePreview url={item.url} mediaType={item.mediaType} filename={item.filename} />
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm" title={item.filename}>
+                          <Link
+                            href={item.url}
+                            download={item.filename}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                            className={`
+                              flex flex-row items-center truncate text-sm
+                              hover:underline
+                            `}
+                            title={item.filename}
+                          >
                             {item.filename}
-                          </div>
+                            <ExternalLinkIcon className={`
+                              text-muted-foreground ml-1 inline-block size-3
+                            `}
+                            />
+                          </Link>
                           <div className="text-muted-foreground text-xs">
                             {item.mediaType}
                           </div>
@@ -378,8 +412,16 @@ export function AttachmentsTab() {
                     </TableCell>
                     <TableCell className="text-muted-foreground w-24 text-xs">
                       {item.isLinked
-                        ? <span className="text-amber-600">Yes</span>
-                        : <span className="text-muted-foreground">No</span>}
+                        ? (
+                            <span className="text-amber-600">
+                              Yes
+                            </span>
+                          )
+                        : (
+                            <span className="text-muted-foreground">
+                              No
+                            </span>
+                          )}
                     </TableCell>
                     <TableCell className="text-muted-foreground w-32 text-xs">
                       {item.createdAt.toLocaleString()}

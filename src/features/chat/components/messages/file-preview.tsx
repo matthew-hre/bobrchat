@@ -3,6 +3,7 @@
 
 import { FileIcon, XIcon } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
@@ -181,7 +182,7 @@ export function MessageAttachments({
         ? (
             <div className="flex flex-wrap gap-2">
               {images.map((img, idx) => (
-                <a
+                <Link
                   key={idx}
                   href={img.url}
                   target="_blank"
@@ -200,7 +201,7 @@ export function MessageAttachments({
                     className="aspect-square max-h-8 max-w-xs object-cover"
                   />
                   <span className="text-sm">{img.filename || "Attached image"}</span>
-                </a>
+                </Link>
               ))}
             </div>
           )
@@ -208,7 +209,7 @@ export function MessageAttachments({
           ? (
               <div className="flex flex-wrap gap-2">
                 {images.map((img, idx) => (
-                  <a
+                  <Link
                     key={idx}
                     href={img.url}
                     target="_blank"
@@ -222,7 +223,7 @@ export function MessageAttachments({
                       height={256}
                       className="w-full max-w-xs object-contain"
                     />
-                  </a>
+                  </Link>
                 ))}
               </div>
             )
@@ -233,7 +234,7 @@ export function MessageAttachments({
           {files.map((file, idx) => {
             const langLabel = getLanguageLabel(file.filename);
             return (
-              <a
+              <Link
                 key={idx}
                 href={file.url}
                 target="_blank"
@@ -254,7 +255,7 @@ export function MessageAttachments({
                     {langLabel}
                   </span>
                 )}
-              </a>
+              </Link>
             );
           })}
         </div>
