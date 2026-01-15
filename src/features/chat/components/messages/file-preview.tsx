@@ -192,22 +192,34 @@ export function MessageAttachments({
         <div className="flex flex-wrap gap-2">
           {attachments.map((attachment, idx) => {
             const isImage = attachment.mediaType?.startsWith("image/");
+            const langLabel = getLanguageLabel(attachment.filename);
             return (
               <div
                 key={idx}
                 className={`
-                  border-card bg-muted/50 flex items-center gap-2 rounded-md
-                  border p-2 shadow
+                  border-card flex items-center gap-2 rounded-md border p-2
+                  shadow
                 `}
               >
-                <FileIcon className="text-muted-foreground size-4" />
+                <FileIcon className="size-4" />
                 <span className="text-sm">{attachment.filename || (isImage ? "Image" : "File")}</span>
-                <span className={`
-                  bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-xs
-                `}
-                >
-                  {getFileTypeLabel(attachment.mediaType)}
-                </span>
+                {langLabel
+                  ? (
+                      <span className={`
+                        bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs
+                      `}
+                      >
+                        {langLabel}
+                      </span>
+                    )
+                  : (
+                      <span className={`
+                        bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-xs
+                      `}
+                      >
+                        {getFileTypeLabel(attachment.mediaType)}
+                      </span>
+                    )}
               </div>
             );
           })}

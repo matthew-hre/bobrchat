@@ -2,6 +2,7 @@
 
 import { PanelLeftIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { Button } from "~/components/ui/button";
 import { useSidebar } from "~/components/ui/sidebar";
@@ -9,8 +10,10 @@ import { cn } from "~/lib/utils";
 
 export function FloatingSidebarToggle() {
   const { state, toggleSidebar, isMobile } = useSidebar();
+  const pathname = usePathname();
+  const isSharePage = pathname?.startsWith("/share");
 
-  const isVisible = state === "collapsed" && !isMobile;
+  const isVisible = state === "collapsed" && !isMobile && !isSharePage;
 
   return (
     <div

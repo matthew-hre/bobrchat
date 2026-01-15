@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 
+import { headers } from "next/headers";
 import Link from "next/link";
 
-import { getMessagesByThreadId, getThreadById } from "~/features/chat/queries";
+import { auth } from "~/features/auth/lib/auth";
 import { SharedChatMessages } from "~/features/chat/components/shared-chat-messages";
-import { getShareByShareId } from "~/features/chat/sharing-queries";
 import { sanitizeMessagesForSharing } from "~/features/chat/lib/sanitize-shared-messages";
+import { getMessagesByThreadId, getThreadById } from "~/features/chat/queries";
+import { getShareByShareId } from "~/features/chat/sharing-queries";
 
 type SharePageProps = {
   params: Promise<{ shareId: string }>;
@@ -16,7 +18,11 @@ type SharePageProps = {
 export default async function SharePage({ params }: SharePageProps) {
   const { shareId } = await params;
 
-  const share = await getShareByShareId(shareId);
+  const [share, session] = await Promise.all([
+    getShareByShareId(shareId),
+    auth.api.getSession({ headers: await headers() }),
+  ]);
+  const isLoggedIn = !!session;
 
   if (!share) {
     return (
@@ -71,15 +77,17 @@ export default async function SharePage({ params }: SharePageProps) {
               Shared conversation
             </p>
           </div>
-          <Link
-            href="/"
-            className={`
-              bg-primary text-primary-foreground hover:bg-primary/90 rounded-md
-              px-4 py-2 text-sm font-medium transition-colors
-            `}
-          >
-            Try BobrChat
-          </Link>
+          {!isLoggedIn && (
+            <Link
+              href="/"
+              className={`
+                bg-primary text-primary-foreground hover:bg-primary/90
+                rounded-md px-4 py-2 text-sm font-medium transition-colors
+              `}
+            >
+              Try BobrChat
+            </Link>
+          )}
         </div>
       </header>
 
@@ -90,15 +98,17 @@ export default async function SharePage({ params }: SharePageProps) {
         />
       </main>
 
-      <footer className="border-t py-8 text-center">
-        <p className="text-muted-foreground text-sm">
-          This is a shared conversation from
-          {" "}
-          <Link href="/" className="text-primary hover:underline">
-            BobrChat
-          </Link>
-        </p>
-      </footer>
+      {!isLoggedIn && (
+        <footer className="border-t py-8 text-center">
+          <p className="text-muted-foreground text-sm">
+            This is a shared conversation from
+            {" "}
+            <Link href="/" className="text-primary hover:underline">
+              BobrChat
+            </Link>
+          </p>
+        </footer>
+      )}
     </div>
   );
 }

@@ -3,10 +3,47 @@
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
+import { CheckIcon, CopyIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+
+import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
+
 import { MessageAttachments } from "./messages/file-preview";
 import { MemoizedMarkdown } from "./messages/markdown";
 import { ReasoningContent } from "./ui/reasoning-content";
 import { SearchingSources } from "./ui/searching-sources";
+
+function SharedCopyButton({ content }: { content: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+    catch (error) {
+      console.error("Failed to copy:", error);
+      toast.error("Failed to copy message content");
+    }
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleCopy}
+      title="Copy message content"
+      className="h-6 w-6 p-0"
+    >
+      {copied
+        ? <CheckIcon className="h-3.5 w-3.5" />
+        : <CopyIcon className="h-3.5 w-3.5" />}
+    </Button>
+  );
+}
 
 type FilePart = {
   type: "file";
@@ -74,12 +111,29 @@ export function SharedChatMessages({ messages, showAttachments }: SharedChatMess
                         )}
                       </div>
                     )}
+                    <div
+                      className={cn(
+                        `
+                          text-muted-foreground flex items-center gap-2 text-xs
+                          transition-opacity duration-200
+                        `,
+                        "opacity-0 group-hover:opacity-100",
+                      )}
+                    >
+                      <SharedCopyButton content={textContent} />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           );
         }
+
+        const assistantTextContent = message.parts
+          .filter(part => part.type === "text")
+          .map(part => part.text)
+          .join("");
+        const modelName = message.metadata?.model;
 
         return (
           <div key={message.id} className="group markdown text-base">
@@ -177,6 +231,18 @@ export function SharedChatMessages({ messages, showAttachments }: SharedChatMess
 
               return null;
             })}
+            <div
+              className={cn(
+                `
+                  text-muted-foreground mt-2 flex items-center gap-2 text-xs
+                  transition-opacity duration-200
+                `,
+                "opacity-0 group-hover:opacity-100",
+              )}
+            >
+              <SharedCopyButton content={assistantTextContent} />
+              {modelName && <span className="font-medium">{modelName}</span>}
+            </div>
           </div>
         );
       })}
