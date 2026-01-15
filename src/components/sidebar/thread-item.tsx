@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, MessageCircle, Trash2 } from "lucide-react";
+import { Loader2, MessageCircle, Share2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { memo, useRef, useState } from "react";
@@ -25,6 +25,7 @@ type ThreadItemProps = {
   title: string;
   isActive: boolean;
   onDeleteClick?: (threadId: string, threadTitle: string) => void;
+  onShareClick?: (threadId: string, threadTitle: string) => void;
 };
 
 function formatBytes(bytes: number): string {
@@ -46,6 +47,7 @@ function ThreadItemComponent({
   title,
   isActive,
   onDeleteClick,
+  onShareClick,
 }: ThreadItemProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -258,6 +260,11 @@ function ThreadItemComponent({
         </ContextMenuItem>
         <ContextMenuItem onClick={handleRegenerateNameClick} disabled={regenerateThreadNameMutation.isPending}>
           Regenerate Name
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem onClick={() => onShareClick?.(id, title)}>
+          <Share2 className="mr-2 size-4" />
+          Share
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem

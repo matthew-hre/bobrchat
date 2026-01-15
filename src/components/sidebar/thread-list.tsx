@@ -8,6 +8,7 @@ import type { GroupedThreads } from "~/features/chat/utils/thread-grouper";
 import { Skeleton } from "~/components/ui/skeleton";
 
 import { DeleteThreadDialog } from "./delete-thread-dialog";
+import { ShareThreadDialog } from "./share-thread-dialog";
 import { ThreadItem } from "./thread-item";
 
 type ThreadListProps = {
@@ -37,8 +38,17 @@ export const ThreadList = memo(({
     title: string;
   } | null>(null);
 
+  const [threadToShare, setThreadToShare] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+
   const handleDeleteClick = useCallback((threadId: string, threadTitle: string) => {
     setThreadToDelete({ id: threadId, title: threadTitle });
+  }, []);
+
+  const handleShareClick = useCallback((threadId: string, threadTitle: string) => {
+    setThreadToShare({ id: threadId, title: threadTitle });
   }, []);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -92,6 +102,7 @@ export const ThreadList = memo(({
               title={thread.title}
               isActive={currentChatId === thread.id}
               onDeleteClick={handleDeleteClick}
+              onShareClick={handleShareClick}
             />
           ))}
         </div>
@@ -111,6 +122,7 @@ export const ThreadList = memo(({
                   title={thread.title}
                   isActive={currentChatId === thread.id}
                   onDeleteClick={handleDeleteClick}
+                  onShareClick={handleShareClick}
                 />
               ))
             )
@@ -128,6 +140,18 @@ export const ThreadList = memo(({
             onOpenChange={(open) => {
               if (!open)
                 setThreadToDelete(null);
+            }}
+          />
+        )}
+
+        {threadToShare && (
+          <ShareThreadDialog
+            open={!!threadToShare}
+            threadId={threadToShare.id}
+            threadTitle={threadToShare.title}
+            onOpenChange={(open) => {
+              if (!open)
+                setThreadToShare(null);
             }}
           />
         )}
@@ -165,6 +189,18 @@ export const ThreadList = memo(({
           onOpenChange={(open) => {
             if (!open)
               setThreadToDelete(null);
+          }}
+        />
+      )}
+
+      {threadToShare && (
+        <ShareThreadDialog
+          open={!!threadToShare}
+          threadId={threadToShare.id}
+          threadTitle={threadToShare.title}
+          onOpenChange={(open) => {
+            if (!open)
+              setThreadToShare(null);
           }}
         />
       )}

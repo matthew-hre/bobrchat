@@ -8,6 +8,7 @@ import { deleteFile } from "~/features/attachments/lib/storage";
 import { deleteUserAttachmentsByIds, getThreadStats, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
 import { createThread, deleteMessagesAfterCount, deleteThreadById, getMessagesByThreadId, isThreadOwnedByUser, renameThreadById, saveMessage } from "~/features/chat/queries";
+import { getShareByThreadId, revokeThreadShare, upsertThreadShare } from "~/features/chat/sharing-queries";
 import { generateThreadTitle } from "~/features/chat/server/naming";
 import { resolveKey } from "~/lib/api-keys/server";
 import { serverEnv } from "~/lib/env";
@@ -300,4 +301,84 @@ export async function deleteMessageAttachmentsByIds(attachmentIds: string[]): Pr
   // Delete from database; any returned rows from deleteUserAttachmentsByIds are ignored here.
   // The API endpoint already handles R2 deletion, so we just need to delete from DB.
   await deleteUserAttachmentsByIds({ userId, ids: attachmentIds });
+}
+
+/**
+ * Creates or updates a share link for a thread.
+ * If already shared (even if revoked), updates settings and un-revokes.
+ *
+ * @param threadId ID of the thread to share
+ * @param showAttachments Whether to show attachment content
+ * @returns The share ID and share URL
+ */
+export async function createOrUpdateThreadShare(
+  threadId: string,
+  showAttachments: boolean,
+): Promise<{ shareId: string; shareUrl: string }> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  const { shareId } = await upsertThreadShare(threadId, session.user.id, showAttachments);
+
+  return {
+    shareId,
+    shareUrl: `/share/${shareId}`,
+  };
+}
+
+/**
+ * Gets the current share status for a thread.
+ *
+ * @param threadId ID of the thread
+ * @returns Share info or null if not shared
+ */
+export async function getThreadShareStatus(threadId: string): Promise<{
+  shareId: string;
+  shareUrl: string;
+  showAttachments: boolean;
+  isRevoked: boolean;
+} | null> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  const share = await getShareByThreadId(threadId, session.user.id);
+
+  if (!share) {
+    return null;
+  }
+
+  return {
+    shareId: share.shareId,
+    shareUrl: `/share/${share.shareId}`,
+    showAttachments: share.showAttachments,
+    isRevoked: share.isRevoked,
+  };
+}
+
+/**
+ * Revokes sharing for a thread.
+ *
+ * @param threadId ID of the thread
+ * @returns True if revoked, false if not found or already revoked
+ */
+export async function stopSharingThread(threadId: string): Promise<boolean> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  return revokeThreadShare(threadId, session.user.id);
 }
