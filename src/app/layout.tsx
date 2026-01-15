@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "BobrChat",
-  description: "Chat interface powered by Vercel AI SDK V6 and OpenRouter",
+  description: "A fast, minimal AI chat interface with support for multiple models",
   robots: "noindex, nofollow",
 };
 

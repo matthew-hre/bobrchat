@@ -113,9 +113,9 @@ export async function POST(req: Request) {
             continue;
           }
 
-          const contentDisposition =
-            (preferredMime.startsWith("image/") && preferredMime !== "image/svg+xml")
-            || preferredMime === "application/pdf"
+          const contentDisposition
+            = (preferredMime.startsWith("image/") && preferredMime !== "image/svg+xml")
+              || preferredMime === "application/pdf"
               ? "inline"
               : "attachment";
 

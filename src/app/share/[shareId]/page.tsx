@@ -152,8 +152,23 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
     };
   }
 
+  const title = `${thread.title} - Shared from BobrChat`;
+  const description = "A shared conversation from BobrChat";
+
   return {
-    title: `${thread.title} - Shared from BobrChat`,
+    title,
+    description,
     robots: { index: false, follow: false },
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      siteName: "BobrChat",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
