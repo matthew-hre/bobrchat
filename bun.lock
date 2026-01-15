@@ -36,6 +36,7 @@
         "better-auth": "^1.4.9",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "dompurify": "^3.3.1",
         "drizzle-orm": "^1.0.0-beta.9-e89174b",
         "file-type": "^21.3.0",
         "fuse.js": "^7.1.0",
@@ -63,6 +64,7 @@
         "@antfu/eslint-config": "^6.7.3",
         "@eslint-react/eslint-plugin": "^2.4.0",
         "@tailwindcss/postcss": "^4",
+        "@types/dompurify": "^3.2.0",
         "@types/node": "^20",
         "@types/react": "^19",
         "@types/react-dom": "^19",
@@ -795,6 +797,8 @@
 
     "@types/debug": ["@types/debug@4.1.12", "", { "dependencies": { "@types/ms": "*" } }, "sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ=="],
 
+    "@types/dompurify": ["@types/dompurify@3.2.0", "", { "dependencies": { "dompurify": "*" } }, "sha512-Fgg31wv9QbLDA0SpTOXO3MaxySc4DKGLi8sna4/Utjo4r3ZRPdCt4UQee8BWr+Q5z21yifghREPJGYaEOEIACg=="],
+
     "@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
 
     "@types/estree-jsx": ["@types/estree-jsx@1.0.5", "", { "dependencies": { "@types/estree": "*" } }, "sha512-52CcUVNFyfb1A2ALocQw/Dd1BQFNmSdkuC3BkZ6iqhdMfQz7JWOFRuJFloOzjk+6WijU56m9oKXFAXc7o3Towg=="],
@@ -824,6 +828,8 @@
     "@types/react-dom": ["@types/react-dom@19.2.3", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ=="],
 
     "@types/readable-stream": ["@types/readable-stream@4.0.23", "", { "dependencies": { "@types/node": "*" } }, "sha512-wwXrtQvbMHxCbBgjHaMGEmImFTQxxpfMOR/ZoQnXxB1woqkUbdLGFDgauo00Py9IudiaqSeiBiulSV9i6XIPig=="],
+
+    "@types/trusted-types": ["@types/trusted-types@2.0.7", "", {}, "sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw=="],
 
     "@types/unist": ["@types/unist@3.0.3", "", {}, "sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q=="],
 
@@ -1096,6 +1102,8 @@
     "diff-sequences": ["diff-sequences@27.5.1", "", {}, "sha512-k1gCAXAsNgLwEL+Y8Wvl+M6oEFj5bgazfZULpS5CneoPPXRaCCW7dm+q21Ky2VEE5X+VeRDBVg1Pcvvsr4TtNQ=="],
 
     "doctrine": ["doctrine@2.1.0", "", { "dependencies": { "esutils": "^2.0.2" } }, "sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw=="],
+
+    "dompurify": ["dompurify@3.3.1", "", { "optionalDependencies": { "@types/trusted-types": "^2.0.7" } }, "sha512-qkdCKzLNtrgPFP1Vo+98FRzJnBRGe4ffyCea9IwHB1fyxPOeNTHpLKYGd4Uk9xvNoH0ZoOjwZxNptyMwqrId1Q=="],
 
     "drizzle-kit": ["drizzle-kit@1.0.0-beta.9-e89174b", "", { "dependencies": { "@drizzle-team/brocli": "^0.11.0", "@js-temporal/polyfill": "^0.5.1", "esbuild": "^0.25.10", "tsx": "^4.20.6" }, "bin": { "drizzle-kit": "bin.cjs" } }, "sha512-Xrw3k8E2CbSZr+kqe3k5W4oxd2fbEyczjKtyGIkAq0x9Wqpa/VtAT6Mkh83sIzqG4OSN7lOoUafsDxSE/AR7RA=="],
 

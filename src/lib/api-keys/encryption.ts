@@ -7,13 +7,12 @@ const ALGORITHM = "aes-256-gcm";
 const KEY_LENGTH = 32;
 const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
-const SALT = "bobrchat"; // Static salt for consistent key derivation
 
 /**
  * Derive encryption key from the master secret
  */
 function getEncryptionKey(): Buffer {
-  return scryptSync(serverEnv.ENCRYPTION_SECRET, SALT, KEY_LENGTH);
+  return scryptSync(serverEnv.ENCRYPTION_SECRET, serverEnv.ENCRYPTION_SALT, KEY_LENGTH);
 }
 
 /**

@@ -106,9 +106,12 @@ export async function POST(req: Request) {
       }
 
       // Downgrade disposition for non-visual types to reduce inline execution risk
-      const contentDisposition = preferredMime.startsWith("image/") || preferredMime === "application/pdf"
-        ? "inline"
-        : "attachment";
+      // SVGs are excluded from inline due to XSS risk (can execute JavaScript)
+      const contentDisposition =
+        (preferredMime.startsWith("image/") && preferredMime !== "image/svg+xml")
+        || preferredMime === "application/pdf"
+          ? "inline"
+          : "attachment";
 
       const uploaded = await saveFile(file, {
         buffer,

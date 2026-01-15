@@ -14,6 +14,7 @@ export const auth = betterAuth({
   secret: serverEnv.BETTER_AUTH_SECRET,
   baseURL: serverEnv.BETTER_AUTH_URL,
   baseAuthPath: "/api/auth",
+  trustedOrigins: [serverEnv.BETTER_AUTH_URL],
   emailAndPassword: {
     enabled: false,
   },
@@ -36,6 +37,15 @@ export const auth = betterAuth({
     cookieCache: {
       enabled: true,
       maxAge: 5 * 60, // 5 minutes - session is cached in cookie
+    },
+  },
+  rateLimit: {
+    storage: "database",
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/*": { window: 10, max: 5 },
+      "/sign-up/*": { window: 10, max: 5 },
     },
   },
   databaseHooks: {

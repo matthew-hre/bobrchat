@@ -3,6 +3,7 @@
 
 import type { FC } from "react";
 
+import DOMPurify from "dompurify";
 import { Check, Copy, Download, WrapText } from "lucide-react";
 import { useTheme } from "next-themes";
 import { memo, useEffect, useState } from "react";
@@ -78,18 +79,18 @@ export const CodeBlock: FC<CodeBlockProps> = memo(({ language: propLanguage, val
         const theme = resolvedTheme === "dark" ? "github-dark-dimmed" : "github-light";
 
         try {
-          const html = highlighter.codeToHtml(value, {
+          const html = DOMPurify.sanitize(highlighter.codeToHtml(value, {
             lang: language,
             theme,
-          });
+          }));
           setHighlightedCode(html);
         }
         catch {
           // Fallback to text if language specific highlighter fails (e.g. language not loaded)
-          const html = highlighter.codeToHtml(value, {
+          const html = DOMPurify.sanitize(highlighter.codeToHtml(value, {
             lang: "text",
             theme,
-          });
+          }));
           setHighlightedCode(html);
         }
       }

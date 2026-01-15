@@ -3,5 +3,5 @@ export default function ShareLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <main className="w-full">{children}</main>;
 }

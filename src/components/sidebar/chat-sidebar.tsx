@@ -3,7 +3,6 @@
 import { PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import {
@@ -124,14 +123,6 @@ function UserProfileContent() {
 
 export function ChatSidebar() {
   const [searchQuery, setSearchQuery] = useState("");
-  const pathname = usePathname();
-  const hydrated = useHydrated();
-  const { data: session } = useSession();
-  const isSharePage = pathname?.startsWith("/share");
-
-  if (isSharePage && hydrated && !session) {
-    return null;
-  }
 
   return (
     <Sidebar collapsible="offcanvas">

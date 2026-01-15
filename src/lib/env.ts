@@ -10,6 +10,7 @@ const schema = {
     GITHUB_CLIENT_ID: z.string(),
     GITHUB_CLIENT_SECRET: z.string(),
     ENCRYPTION_SECRET: z.string().min(32),
+    ENCRYPTION_SALT: z.string().min(8),
     R2_ACCOUNT_ID: z.string(),
     R2_ACCESS_KEY_ID: z.string(),
     R2_SECRET_ACCESS_KEY: z.string(),
