@@ -10,6 +10,7 @@ import type { ChatUIMessage } from "~/app/api/chat/route";
 import type { EditedMessagePayload } from "~/features/chat/components/messages/inline-message-editor";
 
 import { deleteMessageAttachmentsByIds, truncateThreadMessages } from "~/features/chat/actions";
+import { ChatMessages } from "~/features/chat/components/chat-messages";
 import { ChatView } from "~/features/chat/components/chat-view";
 import { THREADS_KEY } from "~/features/chat/hooks/use-threads";
 import { useChatUIStore } from "~/features/chat/store";
@@ -25,12 +26,8 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
   const { id } = use(params);
   const queryClient = useQueryClient();
   const {
-    input,
-    setInput,
     clearInput,
-    searchEnabled,
     setSearchEnabled,
-    reasoningLevel,
     setReasoningLevel,
     setSelectedModelId,
     setStreamingThreadId,
@@ -303,23 +300,25 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
     });
   }, [id, messages, sendMessage, setMessages, setSearchEnabled, setReasoningLevel, setSelectedModelId]);
 
+  const isLoading = status === "submitted" || status === "streaming";
+
   return (
     <ChatView
       messages={messages}
-      input={input}
-      setInput={setInput}
       sendMessage={sendMessage}
-      isLoading={status === "submitted" || status === "streaming"}
+      isLoading={isLoading}
       onStop={handleStop}
-      searchEnabled={searchEnabled}
-      onSearchChangeAction={setSearchEnabled}
-      reasoningLevel={reasoningLevel}
-      onReasoningChangeAction={setReasoningLevel}
-      onRegenerate={handleRegenerate}
-      isRegenerating={isRegenerating}
-      onEditMessage={handleEditMessage}
-      isEditSubmitting={isEditSubmitting}
-    />
+      threadId={id}
+    >
+      <ChatMessages
+        messages={messages}
+        isLoading={isLoading}
+        onRegenerate={handleRegenerate}
+        isRegenerating={isRegenerating}
+        onEditMessage={handleEditMessage}
+        isEditSubmitting={isEditSubmitting}
+      />
+    </ChatView>
   );
 }
 

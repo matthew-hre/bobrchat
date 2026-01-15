@@ -23,15 +23,9 @@ import { ModelSelector } from "./ui/model-selector";
 
 type ChatInputProps = {
   className?: string;
-  value: string;
-  onValueChange: (value: string) => void;
   onSendMessage: (content: string, files?: PendingFile[]) => void;
   isLoading?: boolean;
   onStop?: () => void;
-  searchEnabled?: boolean;
-  onSearchChangeAction?: (enabled: boolean) => void;
-  reasoningLevel?: string;
-  onReasoningChangeAction?: (level: string) => void;
 };
 
 function getAcceptedFileTypesDescription(capabilities: ReturnType<typeof getModelCapabilities>): string {
@@ -57,15 +51,9 @@ function getAcceptedFileTypesDescription(capabilities: ReturnType<typeof getMode
 
 export function ChatInput({
   className,
-  value,
-  onValueChange,
   onSendMessage,
   isLoading = false,
   onStop,
-  searchEnabled = false,
-  onSearchChangeAction,
-  reasoningLevel = "none",
-  onReasoningChangeAction,
 }: ChatInputProps) {
   const { data: settings } = useUserSettings();
 
@@ -77,7 +65,16 @@ export function ChatInput({
 
   const favoriteModels = useFavoriteModels();
   const { isLoading: isModelsLoading } = useModels({ enabled: hasOpenRouterKey });
-  const { selectedModelId, setSelectedModelId } = useChatUIStore();
+  const {
+    input: value,
+    setInput: onValueChange,
+    selectedModelId,
+    setSelectedModelId,
+    searchEnabled,
+    setSearchEnabled,
+    reasoningLevel,
+    setReasoningLevel,
+  } = useChatUIStore();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const selectedModel = favoriteModels.find(m => m.id === selectedModelId);
@@ -315,7 +312,7 @@ export function ChatInput({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         {["xhigh", "high", "medium", "low", "minimal", "none"].map(level => (
-                          <DropdownMenuItem key={level} onClick={() => onReasoningChangeAction?.(level)}>
+                          <DropdownMenuItem key={level} onClick={() => setReasoningLevel(level)}>
                             {level}
                           </DropdownMenuItem>
                         ))}
@@ -340,7 +337,7 @@ export function ChatInput({
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => onSearchChangeAction?.(!searchEnabled)}
+                        onClick={() => setSearchEnabled(!searchEnabled)}
                         disabled={hasParallelApiKey === false}
                         className={cn(`
                           hover:text-foreground

@@ -19,7 +19,6 @@ import { SearchingSources } from "./ui/searching-sources";
 export const ChatMessages = memo(({
   messages,
   isLoading,
-  searchEnabled,
   onRegenerate,
   isRegenerating,
   onEditMessage,
@@ -27,13 +26,13 @@ export const ChatMessages = memo(({
 }: {
   messages: ChatUIMessage[];
   isLoading?: boolean;
-  searchEnabled?: boolean;
   onRegenerate?: (messageId: string) => void;
   isRegenerating?: boolean;
   onEditMessage?: (messageId: string, payload: EditedMessagePayload) => Promise<void>;
   isEditSubmitting?: boolean;
 }) => {
   const stoppedAssistantMessageInfoById = useChatUIStore(state => state.stoppedAssistantMessageInfoById);
+  const searchEnabled = useChatUIStore(state => state.searchEnabled);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
   const canEditMessages = !isLoading && !isRegenerating && !isEditSubmitting;

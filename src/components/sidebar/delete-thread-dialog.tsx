@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
@@ -28,13 +28,20 @@ export function DeleteThreadDialog({
   onOpenChange,
 }: DeleteThreadDialogProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const deleteThreadMutation = useDeleteThread();
 
   const handleDelete = async () => {
     try {
       await deleteThreadMutation.mutateAsync(threadId);
       onOpenChange(false);
-      router.push("/");
+      // Only redirect to home if deleting the current thread
+      const currentChatId = pathname.startsWith("/chat/")
+        ? pathname.split("/chat/")[1]
+        : null;
+      if (currentChatId === threadId) {
+        router.push("/");
+      }
     }
     catch (error) {
       console.error("Failed to delete thread:", error);

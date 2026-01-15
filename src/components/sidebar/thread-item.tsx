@@ -2,7 +2,7 @@
 
 import { Loader2, MessageCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -48,6 +48,7 @@ function ThreadItemComponent({
   onDeleteClick,
 }: ThreadItemProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const openrouterKey = useChatUIStore(state => state.openrouterKey);
   const isStreaming = useChatUIStore(state => state.streamingThreadId === id);
   const deleteThreadMutation = useDeleteThread();
@@ -65,7 +66,13 @@ function ThreadItemComponent({
     try {
       await deleteThreadMutation.mutateAsync(id);
       toast.success("Thread deleted");
-      router.push("/");
+      // Only redirect to home if deleting the current thread
+      const currentChatId = pathname.startsWith("/chat/")
+        ? pathname.split("/chat/")[1]
+        : null;
+      if (currentChatId === id) {
+        router.push("/");
+      }
     }
     catch (error) {
       console.error("Failed to delete thread:", error);
