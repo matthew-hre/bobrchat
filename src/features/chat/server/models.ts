@@ -9,7 +9,7 @@ export function getModelProvider(apiKey: string) {
   return createOpenRouter({
     apiKey,
     headers: {
-      "HTTP-Referer": "https://chat.matthew-hre.com",
+      "HTTP-Referer": "https://bobrchat.com",
       "X-Title": "BobrChat",
     },
   });

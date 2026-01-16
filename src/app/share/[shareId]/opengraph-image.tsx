@@ -128,7 +128,7 @@ export default async function Image({ params }: Props) {
     : modelId;
 
   // Combine all text for font loading
-  const allText = `${thread.title}${truncatedMessage}${modelName}chat.matthew-hre.comThread Unavailable`;
+  const allText = `${thread.title}${truncatedMessage}${modelName}bobrchat.comThread Unavailable`;
 
   let fontData: ArrayBuffer;
   try {
@@ -242,7 +242,7 @@ export default async function Image({ params }: Props) {
             }}
           >
             <div style={{ fontSize: 18, color: colors.mutedForeground, display: "flex" }}>
-              chat.matthew-hre.com
+              bobrchat.com
             </div>
           </div>
         </div>
@@ -382,7 +382,7 @@ export default async function Image({ params }: Props) {
               display: "flex",
             }}
           >
-            chat.matthew-hre.com
+            bobrchat.com
           </div>
         </div>
       </div>
