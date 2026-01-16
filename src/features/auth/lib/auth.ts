@@ -5,6 +5,7 @@ import { nextCookies } from "better-auth/next-js";
 import { createDefaultUserSettings } from "~/features/settings/actions";
 import { db } from "~/lib/db";
 import * as schema from "~/lib/db/schema";
+import { sendEmail } from "~/lib/email";
 import { serverEnv } from "~/lib/env";
 
 export const auth = betterAuth({
@@ -18,7 +19,41 @@ export const auth = betterAuth({
   baseAuthPath: "/api/auth",
   trustedOrigins: [serverEnv.BETTER_AUTH_URL],
   emailAndPassword: {
-    enabled: false,
+    enabled: true,
+    requireEmailVerification: true,
+    sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
+      sendEmail({
+        to: user.email,
+        subject: "Reset your bobrchat password",
+        html: `
+          <h1>Reset your password</h1>
+          <p>Click the link below to reset your password:</p>
+          <a href="${url}">Reset Password</a>
+          <p>If you didn't request a password reset, you can ignore this email.</p>
+        `,
+      });
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
+      sendEmail({
+        to: user.email,
+        subject: "Verify your email for bobrchat",
+        html: `
+          <h1>Welcome to bobrchat!</h1>
+          <p>Click the link below to verify your email address:</p>
+          <a href="${url}">Verify Email</a>
+          <p>If you didn't create an account, you can ignore this email.</p>
+        `,
+      });
+    },
+  },
+  user: {
+    deleteUser: {
+      enabled: true,
+    },
   },
   socialProviders: {
     github: {

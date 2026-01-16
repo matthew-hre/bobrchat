@@ -16,20 +16,29 @@ import { signInSchema, signUpSchema } from "~/features/auth/types";
 
 export function LoginForm({
   isLogin,
+  onForgotPassword,
 }: {
   isLogin: boolean;
+  onForgotPassword?: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [loading, setLoading] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(false);
 
   const getFieldError = (field: string): string | undefined => {
     return validationErrors.find(e => e.field === field)?.message;
   };
 
-  const handleAuthError = (error: { message?: string; status?: number; statusText?: string }) => {
+  const handleAuthError = (error: { code?: string; message?: string; status?: number; statusText?: string }) => {
+    if (error.code === "EMAIL_NOT_VERIFIED") {
+      setPendingVerification(true);
+      toast.info("Please check your email to verify your account.");
+      return;
+    }
+
     const errorMessage = error.message || error.statusText || "Authentication failed";
     const lowerErrorMessage = errorMessage.toLowerCase();
 
@@ -77,7 +86,6 @@ export function LoginForm({
         }
 
         if (data) {
-          // Force a hard navigation to ensure all client-side state is reset
           window.location.href = "/";
         }
       }
@@ -93,7 +101,7 @@ export function LoginForm({
           return;
         }
 
-        const { data, error: authError } = await authClient.signUp.email({
+        const { error: authError } = await authClient.signUp.email({
           email,
           password,
           name,
@@ -105,10 +113,9 @@ export function LoginForm({
           return;
         }
 
-        if (data) {
-          // Force a hard navigation to ensure all client-side state is reset
-          window.location.href = "/";
-        }
+        setPendingVerification(true);
+        toast.success("Account created! Please check your email to verify.");
+        setLoading(false);
       }
     }
     catch (err) {
@@ -117,6 +124,43 @@ export function LoginForm({
       setLoading(false);
     }
   };
+
+  const handleResendVerification = async () => {
+    setLoading(true);
+    const { error } = await authClient.sendVerificationEmail({
+      email,
+      callbackURL: "/",
+    });
+    setLoading(false);
+
+    if (error) {
+      toast.error("Failed to resend verification email.");
+      return;
+    }
+    toast.success("Verification email sent!");
+  };
+
+  if (pendingVerification) {
+    return (
+      <div className="space-y-3 text-center">
+        <p className="text-sm">
+          We sent a verification link to <strong>{email}</strong>
+        </p>
+        <p className="text-muted-foreground text-xs">
+          Please check your inbox and click the link to verify your account.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={handleResendVerification}
+          disabled={loading}
+        >
+          {loading ? "Sending..." : "Resend verification email"}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleEmailAuth} className="space-y-3">
@@ -161,7 +205,20 @@ export function LoginForm({
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="password">Password</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Password</Label>
+          {isLogin && onForgotPassword && (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="text-muted-foreground h-auto p-0 text-xs"
+              onClick={onForgotPassword}
+            >
+              Forgot password?
+            </Button>
+          )}
+        </div>
         <Input
           id="password"
           type="password"

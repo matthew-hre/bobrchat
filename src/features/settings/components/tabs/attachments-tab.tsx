@@ -70,8 +70,8 @@ function StorageBar() {
         <span className={isCritical
           ? "text-destructive"
           : isWarning
-            ? `*:data-[slot=progress-indicator]:bg-amber-600`
-            : `text-muted-foreground`}
+            ? "text-warning"
+            : "text-muted-foreground"}
         >
           {formatBytes(used)}
           {" "}
@@ -85,9 +85,9 @@ function StorageBar() {
       <Progress
         value={percentage}
         className={isCritical
-          ? `*:data-[slot=progress-indicator]:bg-destructive`
+          ? "*:data-[slot=progress-indicator]:bg-destructive"
           : isWarning
-            ? `*:data-[slot=progress-indicator]:bg-amber-600`
+            ? "*:data-[slot=progress-indicator]:bg-warning"
             : ""}
       />
       {isCritical && (
@@ -413,7 +413,7 @@ export function AttachmentsTab() {
                     <TableCell className="text-muted-foreground w-24 text-xs">
                       {item.isLinked
                         ? (
-                            <span className="text-amber-600">
+                            <span className="text-warning">
                               Yes
                             </span>
                           )

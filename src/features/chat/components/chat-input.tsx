@@ -432,15 +432,10 @@ export function ChatInput({
 function ApiWarningBadge() {
   return (
     <div
-      className="flex gap-3 border border-amber-500/50 bg-amber-500/5 p-3"
+      className="flex gap-3 border border-warning/50 bg-warning/10 p-3"
     >
-      <AlertCircle className="mt-0.5 size-5 shrink-0 text-amber-600" />
-      <div
-        className={`
-          text-sm text-amber-800
-          dark:text-amber-200
-        `}
-      >
+      <AlertCircle className="mt-0.5 size-5 shrink-0 text-warning" />
+      <div className="text-warning-foreground text-sm">
         No API key configured. Set up your OpenRouter API key in
         <Link
           href="?settings=integrations"

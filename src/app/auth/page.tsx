@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { AuthDialog } from "~/features/auth/components/auth-dialog";
 import { auth } from "~/features/auth/lib/auth";
@@ -15,7 +16,9 @@ export default async function AuthPage() {
 
   return (
     <div className="h-full w-full">
-      <AuthDialog />
+      <Suspense>
+        <AuthDialog />
+      </Suspense>
     </div>
   );
 }
