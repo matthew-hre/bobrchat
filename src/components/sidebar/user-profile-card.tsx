@@ -1,5 +1,6 @@
 "use client";
 
+import BoringAvatar from "boring-avatars";
 import { KeyIcon, LoaderIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -48,11 +49,17 @@ export function UserProfileCard({ session }: UserProfileCardProps) {
     >
       <Avatar className="size-9 shrink-0">
         <AvatarImage src={session.user.image || undefined} alt={session.user.name} />
-        <AvatarFallback className={cn(`
-          from-primary/20 to-primary/5 ring-primary/20 bg-linear-to-br ring-2
-        `)}
-        >
-          {session.user.name?.slice(0, 2).toUpperCase()}
+        <AvatarFallback className="bg-transparent p-0">
+          {session.user.image
+            ? null
+            : (
+                <BoringAvatar
+                  size={36}
+                  name={session.user.name || "user"}
+                  variant="beam"
+                  colors={["#F92672", "#A1EFE4", "#FD971F", "#E6DB74", "#66D9EF"]}
+                />
+              )}
         </AvatarFallback>
       </Avatar>
       <div className="flex min-w-0 flex-1 flex-col">

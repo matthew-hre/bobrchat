@@ -24,7 +24,7 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
       await sendEmail({
         to: user.email,
-        subject: "Reset your bobrchat password",
+        subject: "Reset your BobrChat password",
         html: `
           <h1>Reset your password</h1>
           <p>Click the link below to reset your password:</p>
@@ -37,12 +37,11 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
+    sendVerificationEmail: async ({ user, url }: { user: { email: string; createdAt: Date }; url: string }) => {
       await sendEmail({
         to: user.email,
-        subject: "Verify your email for bobrchat",
+        subject: "Verify your email for BobrChat",
         html: `
-          <h1>Welcome to bobrchat!</h1>
           <p>Click the link below to verify your email address:</p>
           <a href="${url}">Verify Email</a>
           <p>If you didn't create an account, you can ignore this email.</p>
@@ -52,6 +51,9 @@ export const auth = betterAuth({
   },
   user: {
     deleteUser: {
+      enabled: true,
+    },
+    changeEmail: {
       enabled: true,
     },
   },

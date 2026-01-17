@@ -14,7 +14,7 @@ export async function sendEmail({
   html: string;
 }) {
   const { error } = await resend.emails.send({
-    from: "bobrchat <noreply@bobrchat.com>",
+    from: "BobrChat <noreply@bobrchat.com>",
     to,
     subject,
     html,

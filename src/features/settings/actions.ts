@@ -1,9 +1,12 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
 import { auth } from "~/features/auth/lib/auth";
 import { hasEncryptedKey } from "~/lib/api-keys/server";
+import { db } from "~/lib/db";
+import { threads } from "~/lib/db/schema";
 
 import type { ApiKeyProvider, FavoriteModelsInput, PreferencesUpdate, ProfileUpdate, UserSettingsData } from "./types";
 
@@ -206,4 +209,29 @@ export async function updateFavoriteModels(updates: FavoriteModelsInput): Promis
 
   // Update settings in database
   return updateUserSettingsPartial(session.user.id, validated);
+}
+
+/**
+ * Delete all threads for the authenticated user
+ * Messages and attachments are cascade-deleted via foreign key constraints
+ * Requires authentication
+ *
+ * @return {Promise<{ deletedCount: number }>} Number of threads deleted
+ * @throws {Error} If not authenticated
+ */
+export async function deleteAllThreads(): Promise<{ deletedCount: number }> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  const result = await db
+    .delete(threads)
+    .where(eq(threads.userId, session.user.id))
+    .returning();
+
+  return { deletedCount: result.length };
 }
