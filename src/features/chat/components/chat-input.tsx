@@ -298,7 +298,7 @@ export function ChatInput({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          disabled={hasParallelApiKey === false}
+                          disabled={hasOpenRouterKey === false}
                           className={cn(`
                             hover:text-foreground
                             gap-2 transition-colors
@@ -432,9 +432,9 @@ export function ChatInput({
 function ApiWarningBadge() {
   return (
     <div
-      className="flex gap-3 border border-warning/50 bg-warning/10 p-3"
+      className="border-warning/50 bg-warning/10 flex gap-3 border p-3"
     >
-      <AlertCircle className="mt-0.5 size-5 shrink-0 text-warning" />
+      <AlertCircle className="text-warning mt-0.5 size-5 shrink-0" />
       <div className="text-warning-foreground text-sm">
         No API key configured. Set up your OpenRouter API key in
         <Link

@@ -62,10 +62,16 @@ export async function streamChatResponse(
       const sources: Array<{ id: string; sourceType: string; url?: string; title?: string }> = [];
 
       const provider = getModelProvider(openRouterApiKey);
-      const { inputCostPerMillion, outputCostPerMillion } = await getTokenCosts(modelId);
-      const systemPrompt = await generatePrompt(userId);
 
-      const processedMessages = await processMessageFiles(messages, modelSupportsFiles);
+      const hasPdf = hasPdfAttachment(messages);
+      const useOcr = hasPdf && pdfEngineConfig?.useOcrForPdfs && !pdfEngineConfig?.supportsNativePdf;
+      const ocrPageCountPromise = useOcr ? getTotalPdfPageCount(messages) : Promise.resolve(0);
+
+      const [{ inputCostPerMillion, outputCostPerMillion }, systemPrompt, processedMessages] = await Promise.all([
+        getTokenCosts(modelId),
+        generatePrompt(userId),
+        processMessageFiles(messages, modelSupportsFiles),
+      ]);
       const convertedMessages = await convertToModelMessages(processedMessages);
 
       const streamHandlers = createStreamHandlers(
@@ -80,10 +86,6 @@ export async function streamChatResponse(
       );
 
       const tools = searchEnabled ? createSearchTools(parallelApiKey) : undefined;
-
-      const hasPdf = hasPdfAttachment(messages);
-      const useOcr = hasPdf && pdfEngineConfig?.useOcrForPdfs && !pdfEngineConfig?.supportsNativePdf;
-      const ocrPageCount = useOcr ? await getTotalPdfPageCount(messages) : 0;
 
       const getPdfPluginConfig = () => {
         if (!hasPdf) {
@@ -132,6 +134,11 @@ export async function streamChatResponse(
         },
       });
 
+      let resolvedOcrPageCount: number | null = null;
+      ocrPageCountPromise.then((count) => {
+        resolvedOcrPageCount = count;
+      });
+
       return {
         stream: result,
         createMetadata: (part: TextStreamPart<ToolSet>) => {
@@ -162,7 +169,7 @@ export async function streamChatResponse(
               outputCostPerMillion,
               searchEnabled,
               sources,
-              ocrPageCount,
+              ocrPageCount: resolvedOcrPageCount ?? 0,
             });
           }
         },

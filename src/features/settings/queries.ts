@@ -6,6 +6,9 @@ import { encryptValue } from "~/lib/api-keys/encryption";
 import { db } from "~/lib/db";
 import { userSettings } from "~/lib/db/schema/settings";
 
+const userSettingsCache = new Map<string, { data: UserSettingsData; expires: number }>();
+const USER_SETTINGS_TTL = 1000 * 30;
+
 /**
  * Get user settings by user ID (does not include actual API keys)
  *
@@ -24,6 +27,9 @@ const DEFAULT_SETTINGS: UserSettingsData = {
 };
 
 export async function getUserSettings(userId: string): Promise<UserSettingsData> {
+  const cached = userSettingsCache.get(userId);
+  if (cached && cached.expires > Date.now()) return cached.data;
+
   const result = await db
     .select({ settings: userSettings.settings })
     .from(userSettings)
@@ -34,8 +40,9 @@ export async function getUserSettings(userId: string): Promise<UserSettingsData>
     return { ...DEFAULT_SETTINGS };
   }
 
-  // Merge with defaults to ensure new fields are populated for existing users
-  return { ...DEFAULT_SETTINGS, ...(result[0].settings as Partial<UserSettingsData>) };
+  const settings = { ...DEFAULT_SETTINGS, ...(result[0].settings as Partial<UserSettingsData>) };
+  userSettingsCache.set(userId, { data: settings, expires: Date.now() + USER_SETTINGS_TTL });
+  return settings;
 }
 
 /**
@@ -65,6 +72,8 @@ export async function updateUserSettings(
   userId: string,
   newSettings: UserSettingsData,
 ): Promise<UserSettingsData> {
+  userSettingsCache.delete(userId);
+
   const result = await db
     .update(userSettings)
     .set({

@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
-import { use, useCallback, useEffect, useRef, useTransition } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useTransition } from "react";
 import { toast } from "sonner";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
@@ -47,36 +47,39 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
   const [isRegenerating, startRegenerateTransition] = useTransition();
   const [isEditSubmitting, startEditTransition] = useTransition();
 
+  // Memoize transport to avoid recreating on every render
+  const transport = useMemo(() => new DefaultChatTransport({
+    api: "/api/chat",
+    prepareSendMessagesRequest: ({ messages: allMessages, body: requestBody, trigger }) => {
+      // Access Zustand state directly - always current, no refs needed
+      const state = useChatUIStore.getState();
+
+      // Determine file support
+      const selectedModelInfo = modelsRef.current?.find(m => m.id === state.selectedModelId);
+      const capabilities = getModelCapabilities(selectedModelInfo);
+
+      const body = {
+        messages: allMessages,
+        threadId: id,
+        searchEnabled: state.searchEnabled,
+        reasoningLevel: state.reasoningLevel,
+        ...(state.openrouterKey && { openrouterClientKey: state.openrouterKey }),
+        ...(state.parallelKey && { parallelClientKey: state.parallelKey }),
+        ...(state.selectedModelId && { modelId: state.selectedModelId }),
+        modelSupportsFiles: capabilities.supportsFiles,
+        supportsNativePdf: capabilities.supportsNativePdf,
+        // Mark as regeneration if triggered by regenerate function
+        isRegeneration: trigger === "regenerate-message",
+        // Merge any additional body properties from the request
+        ...requestBody,
+      };
+      return { body };
+    },
+  }), [id]);
+
   const { messages, sendMessage: baseSendMessage, status, stop, regenerate, setMessages } = useChat<ChatUIMessage>({
     id,
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      prepareSendMessagesRequest: ({ messages: allMessages, body: requestBody, trigger }) => {
-        // Access Zustand state directly - always current, no refs needed
-        const state = useChatUIStore.getState();
-
-        // Determine file support
-        const selectedModelInfo = modelsRef.current?.find(m => m.id === state.selectedModelId);
-        const capabilities = getModelCapabilities(selectedModelInfo);
-
-        const body = {
-          messages: allMessages,
-          threadId: id,
-          searchEnabled: state.searchEnabled,
-          reasoningLevel: state.reasoningLevel,
-          ...(state.openrouterKey && { openrouterClientKey: state.openrouterKey }),
-          ...(state.parallelKey && { parallelClientKey: state.parallelKey }),
-          ...(state.selectedModelId && { modelId: state.selectedModelId }),
-          modelSupportsFiles: capabilities.supportsFiles,
-          supportsNativePdf: capabilities.supportsNativePdf,
-          // Mark as regeneration if triggered by regenerate function
-          isRegeneration: trigger === "regenerate-message",
-          // Merge any additional body properties from the request
-          ...requestBody,
-        };
-        return { body };
-      },
-    }),
+    transport,
     messages: initialMessages,
     onError: (error) => {
       const friendlyMessage = parseAIError(error);

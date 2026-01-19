@@ -46,9 +46,13 @@ export async function POST(req: Request) {
   return Sentry.startSpan(
     { op: "http.server", name: "POST /api/chat" },
     async (span) => {
+      const routeStart = performance.now();
+
+      const authStart = performance.now();
       const session = await auth.api.getSession({
         headers: await headers(),
       });
+      const authTime = performance.now() - authStart;
 
       if (!session?.user) {
         return new Response(JSON.stringify({ error: "Not authenticated" }), {
@@ -57,8 +61,13 @@ export async function POST(req: Request) {
         });
       }
 
+      const parseStart = performance.now();
       const { messages, threadId, openrouterClientKey, parallelClientKey, searchEnabled, reasoningLevel, modelId, modelSupportsFiles, supportsNativePdf, isRegeneration }: { messages: ChatUIMessage[]; threadId?: string; openrouterClientKey?: string; parallelClientKey?: string; searchEnabled?: boolean; reasoningLevel?: string; modelId?: string; modelSupportsFiles?: boolean; supportsNativePdf?: boolean; isRegeneration?: boolean }
         = await req.json();
+      const parseTime = performance.now() - parseStart;
+
+      const flow = threadId ? "existing-thread" : "new-thread";
+      console.log(`[chat/${flow}] auth: ${authTime.toFixed(1)}ms, parse: ${parseTime.toFixed(1)}ms`);
 
       const baseModelId = modelId || "google/gemini-3-flash-preview";
 
@@ -68,26 +77,21 @@ export async function POST(req: Request) {
       span.setAttribute("chat.reasoningLevel", reasoningLevel ?? "none");
       span.setAttribute("chat.isRegeneration", isRegeneration ?? false);
 
-      if (threadId) {
-        const isOwned = await isThreadOwnedByUser(threadId, session.user.id);
-        if (!isOwned) {
-          return new Response(JSON.stringify({ error: "Thread not found or unauthorized" }), {
-            status: 403,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
-
-        const lastMessage = messages[messages.length - 1];
-
-        if (lastMessage?.role === "user" && !isRegeneration) {
-          await saveMessage(threadId, session.user.id, lastMessage, { searchEnabled, reasoningLevel });
-        }
-      }
-
-      const [openrouterKey, parallelKey] = await Promise.all([
+      const resolveStart = performance.now();
+      const [isOwned, openrouterKey, parallelKey, settings] = await Promise.all([
+        threadId ? isThreadOwnedByUser(threadId, session.user.id) : Promise.resolve(true),
         resolveKey(session.user.id, "openrouter", openrouterClientKey),
         searchEnabled ? resolveKey(session.user.id, "parallel", parallelClientKey) : Promise.resolve(undefined),
+        getUserSettings(session.user.id),
       ]);
+      console.log(`[chat/${flow}] resolve (ownership+keys+settings): ${(performance.now() - resolveStart).toFixed(1)}ms`);
+
+      if (threadId && !isOwned) {
+        return new Response(JSON.stringify({ error: "Thread not found or unauthorized" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
 
       if (!openrouterKey) {
         return new Response(JSON.stringify({ error: "No API key configured. Provide a browser key or store one on the server." }), {
@@ -103,8 +107,22 @@ export async function POST(req: Request) {
         });
       }
 
-      const settings = await getUserSettings(session.user.id);
+      if (threadId && !isRegeneration) {
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage?.role === "user") {
+          const saveStart = performance.now();
+          saveMessage(threadId, session.user.id, lastMessage, { searchEnabled, reasoningLevel })
+            .then(() => {
+              console.log(`[chat/${flow}] saveUserMessage (fire-and-forget): ${(performance.now() - saveStart).toFixed(1)}ms`);
+            })
+            .catch((error) => {
+              console.log(`[chat/${flow}] saveUserMessage failed after ${(performance.now() - saveStart).toFixed(1)}ms`);
+              Sentry.captureException(error, { tags: { operation: "save-user-message" } });
+            });
+        }
+      }
 
+      const streamStart = performance.now();
       const { stream, createMetadata } = await streamChatResponse(
         messages,
         baseModelId,
@@ -120,6 +138,8 @@ export async function POST(req: Request) {
         },
         reasoningLevel,
       );
+      console.log(`[chat/${flow}] streamChatResponse setup: ${(performance.now() - streamStart).toFixed(1)}ms`);
+      console.log(`[chat/${flow}] total pre-stream: ${(performance.now() - routeStart).toFixed(1)}ms`);
 
       if (threadId && messages.length === 1 && messages[0].role === "user") {
         const firstMessage = messages[0];

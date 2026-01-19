@@ -209,10 +209,11 @@ export async function saveMessage(
     }
 
     // Update thread's lastMessageAt (conversation engagement time)
+    // Includes userId in WHERE clause to enforce ownership at the DB layer
     await tx
       .update(threads)
       .set({ lastMessageAt: dateNow, updatedAt: dateNow })
-      .where(eq(threads.id, threadId));
+      .where(and(eq(threads.id, threadId), eq(threads.userId, userId)));
   });
 }
 

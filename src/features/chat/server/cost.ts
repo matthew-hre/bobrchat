@@ -1,5 +1,10 @@
 import { getModelData } from "tokenlens";
 
+type TokenCosts = { inputCostPerMillion: number; outputCostPerMillion: number };
+
+const tokenCostsCache = new Map<string, { data: TokenCosts; expires: number }>();
+const TOKEN_COSTS_TTL = 1000 * 60 * 60;
+
 /**
  * Calculates the cost of OCR processing via Mistral OCR.
  *
@@ -62,21 +67,27 @@ export function calculateChatCost(
  * @param modelId The ID of the model to get pricing for.
  * @returns An object containing input and output cost per million tokens.
  */
-export async function getTokenCosts(modelId: string) {
+export async function getTokenCosts(modelId: string): Promise<TokenCosts> {
+  const cached = tokenCostsCache.get(modelId);
+  if (cached && cached.expires > Date.now()) return cached.data;
+
   try {
-    // Parse model suffix if present (e.g., "openrouter/meta-llama/llama-2-70b:free")
     const [baseModelId, modelSuffix] = modelId.split(":");
 
     if (modelSuffix === "free") {
-      return { inputCostPerMillion: 0, outputCostPerMillion: 0 };
+      const freeCosts = { inputCostPerMillion: 0, outputCostPerMillion: 0 };
+      tokenCostsCache.set(modelId, { data: freeCosts, expires: Date.now() + TOKEN_COSTS_TTL });
+      return freeCosts;
     }
 
     const modelData = await getModelData({ modelId: baseModelId, provider: "openrouter" });
 
-    return {
+    const costs = {
       inputCostPerMillion: modelData?.cost?.input ?? 0,
       outputCostPerMillion: modelData?.cost?.output ?? 0,
     };
+    tokenCostsCache.set(modelId, { data: costs, expires: Date.now() + TOKEN_COSTS_TTL });
+    return costs;
   }
   catch (error) {
     console.error(`Failed to get pricing for model ${modelId}:`, error);
