@@ -39,7 +39,11 @@ export function FloatingSidebarToggle() {
         data-sidebar="floating-toggle-button"
         variant="ghost"
         size="icon-sm"
-        className="pointer-events-auto size-7 border"
+        className={`
+          bg-background pointer-events-auto size-7 border
+          hover:bg-muted
+          dark:hover:bg-muted
+        `}
         title="New Thread"
         aria-label="New Thread"
         asChild
@@ -53,7 +57,11 @@ export function FloatingSidebarToggle() {
         data-sidebar="floating-toggle-button"
         variant="ghost"
         size="icon-sm"
-        className="pointer-events-auto size-7 border"
+        className={`
+          bg-background pointer-events-auto size-7 border
+          hover:bg-muted
+          dark:hover:bg-muted
+        `}
         onClick={toggleSidebar}
         title="Toggle Sidebar"
         aria-label="Toggle Sidebar"
