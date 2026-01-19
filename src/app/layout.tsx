@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
 
-import { JetBrains_Mono, Rethink_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
+import { JetBrains_Mono, Rethink_Sans } from "next/font/google";
+
 import { ThemeInitializer } from "~/components/theme/theme-initializer";
 import { ThemeProvider } from "~/components/theme/theme-provider";
 import { Toaster } from "~/components/ui/sonner";
@@ -46,6 +49,8 @@ export default function RootLayout({
           min-h-screen w-full antialiased
         `}
       >
+        <Analytics />
+        <SpeedInsights />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
