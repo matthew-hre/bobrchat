@@ -61,7 +61,7 @@ export function SettingsTabs() {
   const handleSignOut = useCallback(async () => {
     await signOut();
     queryClient.removeQueries();
-    router.push("/");
+    router.push("/auth");
   }, [router, queryClient]);
 
   return (
