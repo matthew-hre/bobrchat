@@ -3,16 +3,11 @@
 import {
   LoaderIcon,
 } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-
-import type { ValidationError } from "~/features/auth/types";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { authClient } from "~/features/auth/lib/auth-client";
-import { signInSchema, signUpSchema } from "~/features/auth/types";
+import { useAuthForm } from "~/features/auth/hooks/use-auth-form";
 
 export function LoginForm({
   isLogin,
@@ -21,123 +16,29 @@ export function LoginForm({
   isLogin: boolean;
   onForgotPassword?: () => void;
 }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [pendingVerification, setPendingVerification] = useState(false);
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    name,
+    setName,
+    loading,
+    pendingVerification,
+    getFieldError,
+    handleSignIn,
+    handleSignUp,
+    handleResendVerification,
+  } = useAuthForm();
 
-  const getFieldError = (field: string): string | undefined => {
-    return validationErrors.find(e => e.field === field)?.message;
-  };
-
-  const handleAuthError = (error: { code?: string; message?: string; status?: number; statusText?: string }) => {
-    if (error.code === "EMAIL_NOT_VERIFIED") {
-      setPendingVerification(true);
-      toast.info("Please check your email to verify your account.");
-      return;
-    }
-
-    const errorMessage = error.message || error.statusText || "Authentication failed";
-    const lowerErrorMessage = errorMessage.toLowerCase();
-
-    let userMessage = errorMessage;
-    if (lowerErrorMessage.includes("user not found")) {
-      userMessage = "No account found. Please sign up.";
-    }
-    else if (lowerErrorMessage.includes("invalid")) {
-      userMessage = "Invalid email or password.";
-    }
-    else if (lowerErrorMessage.includes("already exists")) {
-      userMessage = "An account with this email already exists.";
-    }
-
-    toast.error(userMessage);
-  };
-
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setValidationErrors([]);
-    setLoading(true);
-
-    try {
-      if (isLogin) {
-        const result = signInSchema.safeParse({ email, password });
-        if (!result.success) {
-          const errors = result.error.issues.map(issue => ({
-            field: issue.path[0] as string,
-            message: issue.message,
-          }));
-          setValidationErrors(errors);
-          setLoading(false);
-          return;
-        }
-
-        const { data, error: authError } = await authClient.signIn.email({
-          email,
-          password,
-        });
-
-        if (authError) {
-          handleAuthError(authError);
-          setLoading(false);
-          return;
-        }
-
-        if (data) {
-          window.location.href = "/";
-        }
-      }
-      else {
-        const result = signUpSchema.safeParse({ name, email, password });
-        if (!result.success) {
-          const errors = result.error.issues.map(issue => ({
-            field: issue.path[0] as string,
-            message: issue.message,
-          }));
-          setValidationErrors(errors);
-          setLoading(false);
-          return;
-        }
-
-        const { error: authError } = await authClient.signUp.email({
-          email,
-          password,
-          name,
-        });
-
-        if (authError) {
-          handleAuthError(authError);
-          setLoading(false);
-          return;
-        }
-
-        setPendingVerification(true);
-        toast.success("Account created! Please check your email to verify.");
-        setLoading(false);
-      }
+    if (isLogin) {
+      await handleSignIn();
     }
-    catch (err) {
-      console.error("Auth error:", err);
-      toast.error("Authentication failed. Please try again.");
-      setLoading(false);
+    else {
+      await handleSignUp();
     }
-  };
-
-  const handleResendVerification = async () => {
-    setLoading(true);
-    const { error } = await authClient.sendVerificationEmail({
-      email,
-      callbackURL: "/",
-    });
-    setLoading(false);
-
-    if (error) {
-      toast.error("Failed to resend verification email.");
-      return;
-    }
-    toast.success("Verification email sent!");
   };
 
   if (pendingVerification) {
@@ -163,7 +64,7 @@ export function LoginForm({
   }
 
   return (
-    <form onSubmit={handleEmailAuth} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {!isLogin && (
         <div className="space-y-1">
           <Label htmlFor="name">Name</Label>

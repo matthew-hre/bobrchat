@@ -1,14 +1,14 @@
 "use client";
 
-import { CheckIcon, TextSelectIcon, CopyIcon, RefreshCwIcon } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-import { CostBreakdown } from "~/app/api/chat/route";
+import { CheckIcon, CopyIcon, RefreshCwIcon, TextSelectIcon } from "lucide-react";
+
+import type { CostBreakdown } from "~/app/api/chat/route";
 
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useChatUIStore } from "~/features/chat/store";
+import { useCopyToClipboard } from "~/lib/hooks";
 import { cn } from "~/lib/utils";
 
 export type MessageMetricsData = {
@@ -39,21 +39,13 @@ export function MessageMetrics({
   variant = "full",
   stopped = false,
 }: MessageMetricsProps) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard({
+    errorMessage: "Failed to copy message content",
+  });
   const showRaw = useChatUIStore(state => state.rawMessageIds.has(metrics.id));
   const toggleRawMessage = useChatUIStore(state => state.toggleRawMessage);
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(metrics.content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    }
-    catch (error) {
-      console.error("Failed to copy:", error);
-      toast.error("Failed to copy message content");
-    }
-  };
+  const handleCopy = () => copy(metrics.content);
 
   const formatCost = (cost: string) => {
     const num = Number.parseFloat(cost);

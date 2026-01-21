@@ -1,10 +1,9 @@
 "use client";
 
 import { CheckIcon, CopyIcon, EditIcon } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
+import { useCopyToClipboard } from "~/lib/hooks";
 import { cn } from "~/lib/utils";
 
 type UserMessageMetricsProps = {
@@ -13,19 +12,11 @@ type UserMessageMetricsProps = {
 };
 
 export function UserMessageMetrics({ content, onEdit }: UserMessageMetricsProps) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard({
+    errorMessage: "Failed to copy message content",
+  });
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    }
-    catch (error) {
-      console.error("Failed to copy:", error);
-      toast.error("Failed to copy message content");
-    }
-  };
+  const handleCopy = () => copy(content);
 
   return (
     <div

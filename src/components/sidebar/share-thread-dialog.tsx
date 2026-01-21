@@ -16,6 +16,7 @@ import {
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
 import { useCreateOrUpdateShare, useStopSharing, useThreadShareStatus } from "~/features/chat/hooks/use-thread-sharing";
+import { useCopyToClipboard } from "~/lib/hooks";
 
 type ShareThreadDialogProps = {
   open: boolean;
@@ -35,7 +36,7 @@ export function ShareThreadDialog({
   const stopSharingMutation = useStopSharing();
 
   const [showAttachments, setShowAttachments] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard({ resetDelay: 2000 });
 
   // Sync toggle state with server state when loaded
   useEffect(() => {
@@ -53,10 +54,8 @@ export function ShareThreadDialog({
     try {
       const result = await createOrUpdateMutation.mutateAsync({ threadId, showAttachments });
       const fullUrl = `${window.location.origin}${result.shareUrl}`;
-      await navigator.clipboard.writeText(fullUrl);
+      await copy(fullUrl);
       toast.success("Share link copied to clipboard");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     }
     catch (error) {
       console.error("Failed to create share:", error);
@@ -67,14 +66,9 @@ export function ShareThreadDialog({
   const handleCopyLink = async () => {
     if (!shareUrl)
       return;
-    try {
-      await navigator.clipboard.writeText(shareUrl);
+    const success = await copy(shareUrl);
+    if (success) {
       toast.success("Link copied to clipboard");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-    catch {
-      toast.error("Failed to copy link");
     }
   };
 

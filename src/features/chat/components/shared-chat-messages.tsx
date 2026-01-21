@@ -1,8 +1,6 @@
 "use client";
 
 import { CheckIcon, CopyIcon } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 import type { FileUIPart } from "~/features/chat/types";
@@ -10,30 +8,21 @@ import type { FileUIPart } from "~/features/chat/types";
 import { Button } from "~/components/ui/button";
 import { isFilePart } from "~/features/chat/types";
 import { extractMessageText, MessageParts } from "~/features/chat/ui/parts";
+import { useCopyToClipboard } from "~/lib/hooks";
 import { cn } from "~/lib/utils";
 
 import { MessageAttachments } from "./messages/file-preview";
 
 function SharedCopyButton({ content }: { content: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    }
-    catch (error) {
-      console.error("Failed to copy:", error);
-      toast.error("Failed to copy message content");
-    }
-  };
+  const { copied, copy } = useCopyToClipboard({
+    errorMessage: "Failed to copy message content",
+  });
 
   return (
     <Button
       variant="ghost"
       size="sm"
-      onClick={handleCopy}
+      onClick={() => copy(content)}
       title="Copy message content"
       className="h-6 w-6 p-0"
     >

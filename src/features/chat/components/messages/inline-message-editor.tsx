@@ -11,7 +11,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { FilePreview } from "~/features/chat/components/messages/file-preview";
 import { ModelSelector } from "~/features/chat/components/ui/model-selector";
-import { useFileAttachments } from "~/features/chat/hooks/use-file-attachments";
+import { useFileAttachments } from "~/features/attachments/hooks/use-file-attachments";
 import { canUploadFiles, getAcceptedFileTypes, getModelCapabilities, useFavoriteModels } from "~/features/models";
 import { useApiKeyStatus } from "~/features/settings/hooks/use-api-status";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";

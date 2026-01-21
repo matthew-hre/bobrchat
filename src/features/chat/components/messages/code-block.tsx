@@ -10,6 +10,7 @@ import { memo, useEffect, useState } from "react";
 import { createHighlighter } from "shiki";
 
 import { Button } from "~/components/ui/button";
+import { useCopyToClipboard } from "~/lib/hooks";
 import { cn } from "~/lib/utils";
 
 type CodeBlockProps = {
@@ -59,7 +60,7 @@ const highlighterPromise: Promise<any> = (globalThis as any)[__SHIKI_GLOBAL_KEY]
 );
 
 export const CodeBlock: FC<CodeBlockProps> = memo(({ language: propLanguage, value }) => {
-  const [isCopied, setIsCopied] = useState(false);
+  const { copied: isCopied, copy } = useCopyToClipboard({ resetDelay: 2000 });
   const [wrap, setWrap] = useState(false);
   const [highlightedCode, setHighlightedCode] = useState<string | null>(null);
   const { resolvedTheme } = useTheme();
@@ -106,12 +107,10 @@ export const CodeBlock: FC<CodeBlockProps> = memo(({ language: propLanguage, val
     };
   }, [value, language, resolvedTheme]);
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = () => {
     if (!value)
       return;
-    await navigator.clipboard.writeText(value);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+    copy(value);
   };
 
   const downloadFile = async () => {

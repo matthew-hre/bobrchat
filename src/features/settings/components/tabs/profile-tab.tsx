@@ -24,6 +24,7 @@ import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { authClient, useSession } from "~/features/auth/lib/auth-client";
 import { deleteAllThreads } from "~/features/settings/actions";
+import { usePasswordChangeForm } from "~/features/settings/hooks/use-password-change-form";
 
 export function ProfileTab() {
   const { data: session, isPending } = useSession();
@@ -144,58 +145,21 @@ function ChangeNameSection({ currentName }: { currentName: string }) {
 }
 
 function ChangePasswordSection() {
-  const [open, setOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [hasCredentialAccount, setHasCredentialAccount] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    authClient.listAccounts().then(({ data }) => {
-      const hasCredential = data?.some(account => account.providerId === "credential") ?? false;
-      setHasCredentialAccount(hasCredential);
-    });
-  }, []);
-
-  const resetForm = () => {
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-  };
-
-  const canSubmit
-    = currentPassword.trim() !== ""
-      && newPassword.trim() !== ""
-      && confirmPassword.trim() !== ""
-      && newPassword === confirmPassword;
-
-  const handleChangePassword = async () => {
-    if (!canSubmit)
-      return;
-
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    setLoading(true);
-    const { error } = await authClient.changePassword({
-      currentPassword,
-      newPassword,
-      revokeOtherSessions: true,
-    });
-    setLoading(false);
-
-    if (error) {
-      toast.error(error.message || "Failed to change password");
-      return;
-    }
-
-    toast.success("Password changed successfully");
-    resetForm();
-    setOpen(false);
-  };
+  const {
+    open,
+    setOpen,
+    currentPassword,
+    setCurrentPassword,
+    newPassword,
+    setNewPassword,
+    confirmPassword,
+    setConfirmPassword,
+    loading,
+    hasCredentialAccount,
+    canSubmit,
+    passwordsMatch,
+    handleChangePassword,
+  } = usePasswordChangeForm();
 
   if (hasCredentialAccount === null) {
     return (
@@ -219,14 +183,7 @@ function ChangePasswordSection() {
       <Separator />
       <div className="space-y-2">
         <Label>Password</Label>
-        <Dialog
-          open={open}
-          onOpenChange={(isOpen) => {
-            setOpen(isOpen);
-            if (!isOpen)
-              resetForm();
-          }}
-        >
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" className="w-full">
               <KeyIcon className="size-4" />
@@ -279,7 +236,7 @@ function ChangePasswordSection() {
                   placeholder="Confirm new password"
                   autoComplete="new-password"
                 />
-                {confirmPassword && newPassword !== confirmPassword && (
+                {!passwordsMatch && (
                   <p className="text-destructive text-xs">
                     Passwords do not match
                   </p>
