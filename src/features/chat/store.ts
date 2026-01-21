@@ -38,6 +38,10 @@ type ChatUIStore = {
   // Messages stopped by the user (not persisted)
   stoppedAssistantMessageInfoById: Record<string, { modelId: string | null }>;
   markAssistantMessageStopped: (messageId: string, modelId: string | null) => void;
+
+  // Raw markdown toggle (not persisted)
+  rawMessageIds: Set<string>;
+  toggleRawMessage: (messageId: string) => void;
 };
 
 export const useChatUIStore = create<ChatUIStore>()(
@@ -99,6 +103,18 @@ export const useChatUIStore = create<ChatUIStore>()(
           [messageId]: { modelId },
         },
       })),
+
+      rawMessageIds: new Set(),
+      toggleRawMessage: messageId => set((state) => {
+        const next = new Set(state.rawMessageIds);
+        if (next.has(messageId)) {
+          next.delete(messageId);
+        }
+        else {
+          next.add(messageId);
+        }
+        return { rawMessageIds: next };
+      }),
     }),
     {
       name: "bobrchat-ui",

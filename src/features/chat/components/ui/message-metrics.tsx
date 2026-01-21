@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, CopyIcon, RefreshCwIcon } from "lucide-react";
+import { CheckIcon, TextSelectIcon, CopyIcon, RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CostBreakdown } from "~/app/api/chat/route";
@@ -8,6 +8,7 @@ import { CostBreakdown } from "~/app/api/chat/route";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
+import { useChatUIStore } from "~/features/chat/store";
 import { cn } from "~/lib/utils";
 
 export type MessageMetricsData = {
@@ -39,6 +40,8 @@ export function MessageMetrics({
   stopped = false,
 }: MessageMetricsProps) {
   const [copied, setCopied] = useState(false);
+  const showRaw = useChatUIStore(state => state.rawMessageIds.has(metrics.id));
+  const toggleRawMessage = useChatUIStore(state => state.toggleRawMessage);
 
   const handleCopy = async () => {
     try {
@@ -114,6 +117,24 @@ export function MessageMetrics({
               : <CopyIcon className="h-3.5 w-3.5" />}
           </Button>
 
+          {/* Raw Markdown Toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleRawMessage(metrics.id)}
+                title={showRaw ? "Show formatted" : "Show raw markdown"}
+                className={cn("h-6 w-6 p-0", showRaw && "text-primary")}
+              >
+                <TextSelectIcon className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {showRaw ? "Show formatted" : "Show raw markdown"}
+            </TooltipContent>
+          </Tooltip>
+
           {/* Retry Button */}
           <Button
             variant="ghost"
@@ -177,6 +198,24 @@ export function MessageMetrics({
               <CopyIcon className="h-3.5 w-3.5" />
             )}
       </Button>
+
+      {/* Raw Markdown Toggle */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => toggleRawMessage(metrics.id)}
+            title={showRaw ? "Show formatted" : "Show raw markdown"}
+            className={cn("h-6 w-6 p-0", showRaw && "text-primary")}
+          >
+            <TextSelectIcon className="h-3.5 w-3.5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {showRaw ? "Show formatted" : "Show raw markdown"}
+        </TooltipContent>
+      </Tooltip>
 
       {/* Retry Button */}
       <Button

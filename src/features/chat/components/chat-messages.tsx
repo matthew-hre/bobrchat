@@ -17,6 +17,7 @@ import {
   isToolPart,
   isToolSearching,
 } from "~/features/chat/types";
+import { cn } from "~/lib/utils";
 
 import type { EditedMessagePayload } from "./messages/inline-message-editor";
 
@@ -44,6 +45,7 @@ export const ChatMessages = memo(({
 }) => {
   const stoppedAssistantMessageInfoById = useChatUIStore(state => state.stoppedAssistantMessageInfoById);
   const searchEnabled = useChatUIStore(state => state.searchEnabled);
+  const rawMessageIds = useChatUIStore(state => state.rawMessageIds);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
   const canEditMessages = !isLoading && !isRegenerating && !isEditSubmitting;
@@ -160,6 +162,7 @@ export const ChatMessages = memo(({
     }
   };
 
+
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 p-4 py-8">
       {filteredMessages.map((message, messageIndex) => {
@@ -195,104 +198,126 @@ export const ChatMessages = memo(({
         const persistedStopped = message.stoppedByUser === true;
         const stoppedModelId = message.stoppedModelId as string | null | undefined;
         const isStopped = persistedStopped || !!stoppedInfo;
+        const showRaw = rawMessageIds.has(message.id);
 
         return (
           <div key={message.id} className="group markdown text-base">
-            {message.parts.map((part, index) => {
-              if (isReasoningPart(part)) {
-                const reasoningPart = part as ReasoningUIPart;
+            <div
+              className={cn(
+                showRaw && `
+                  border-muted-foreground/30 rounded-md border-2 border-dashed
+                  p-4
+                `,
+              )}
+            >
+              {message.parts.map((part, index) => {
+                if (isReasoningPart(part)) {
+                  const reasoningPart = part as ReasoningUIPart;
 
-                // Strip [REDACTED] (including leading newlines before it) and skip if empty
-                const cleanedText = (reasoningPart.text || "")
-                  .replace(/\n\s*\[REDACTED\]/g, "") // Remove newlines before [REDACTED]
-                  .replace(/\[REDACTED\]/g, "") // Remove any remaining [REDACTED]
-                  .replace(/\\n/g, "\n") // Unescape literal \n to actual newlines
-                  .replace(/\n\s*\n/g, "\n") // Collapse multiple newlines to single
-                  .trim();
-                if (!cleanedText) {
-                  return null;
+                  // Strip [REDACTED] (including leading newlines before it) and skip if empty
+                  const cleanedText = (reasoningPart.text || "")
+                    .replace(/\n\s*\[REDACTED\]/g, "") // Remove newlines before [REDACTED]
+                    .replace(/\[REDACTED\]/g, "") // Remove any remaining [REDACTED]
+                    .replace(/\\n/g, "\n") // Unescape literal \n to actual newlines
+                    .replace(/\n\s*\n/g, "\n") // Collapse multiple newlines to single
+                    .trim();
+                  if (!cleanedText) {
+                    return null;
+                  }
+
+                  const isComplete = isContentComplete(reasoningPart.state);
+                  const isThinking = !isComplete;
+                  // Only show active thinking if we're currently loading
+                  // Otherwise, incomplete reasoning should show as stopped
+                  const isActivelyThinking = isThinking && isLoading && isLastMessage;
+                  // Only mark as stopped if the message was stopped AND reasoning wasn't complete
+                  const reasoningStopped = isStopped && !isComplete;
+
+                  return (
+                    <ReasoningContent
+                      key={`part-${index}`}
+                      id={`${message.id}-reasoning-${index}`}
+                      content={cleanedText}
+                      isThinking={isActivelyThinking}
+                      stopped={reasoningStopped}
+                    />
+                  );
                 }
 
-                const isComplete = isContentComplete(reasoningPart.state);
-                const isThinking = !isComplete;
-                // Only show active thinking if we're currently loading
-                // Otherwise, incomplete reasoning should show as stopped
-                const isActivelyThinking = isThinking && isLoading && isLastMessage;
-                // Only mark as stopped if the message was stopped AND reasoning wasn't complete
-                const reasoningStopped = isStopped && !isComplete;
-
-                return (
-                  <ReasoningContent
-                    key={`part-${index}`}
-                    id={`${message.id}-reasoning-${index}`}
-                    content={cleanedText}
-                    isThinking={isActivelyThinking}
-                    stopped={reasoningStopped}
-                  />
-                );
-              }
-
-              if (isTextPart(part)) {
-                return (
-                  <MemoizedMarkdown
-                    key={`part-${index}`}
-                    id={`${message.id}-${index}`}
-                    content={part.text}
-                  />
-                );
-              }
-
-              // SDK v6: tool parts use `tool-${toolName}` pattern
-              // Our search tool is typed as `tool-search`
-              if (isSearchToolPart(part)) {
-                const searchPart = part as SearchToolUIPart;
-                let sources: Array<{ id: string; sourceType: string; url: string; title: string }> = [];
-                let searchError: string | undefined;
-
-                // Handle error state
-                if (isToolError(searchPart.state)) {
-                  searchError = searchPart.errorText || "Search failed";
-                }
-                // Handle output error in result
-                else if (searchPart.output?.error) {
-                  searchError = searchPart.output.message || "Search failed";
-                }
-                // Handle successful results
-                else if (searchPart.output?.results && Array.isArray(searchPart.output.results)) {
-                  sources = searchPart.output.results.map(r => ({
-                    id: r.url || Math.random().toString(),
-                    sourceType: "url",
-                    url: r.url,
-                    title: r.title,
-                  }));
+                if (isTextPart(part)) {
+                  if (showRaw) {
+                    return (
+                      <pre
+                        key={`part-${index}`}
+                        className={`
+                          font-mono text-sm wrap-break-word whitespace-pre-wrap
+                        `}
+                      >
+                        {part.text}
+                      </pre>
+                    );
+                  }
+                  return (
+                    <MemoizedMarkdown
+                      key={`part-${index}`}
+                      id={`${message.id}-${index}`}
+                      content={part.text}
+                    />
+                  );
                 }
 
-                // Determine searching state based on SDK v6 tool states
-                const searchComplete = isToolComplete(searchPart.state);
-                const isSearching = !searchComplete && isToolSearching(searchPart.state) && isLoading && isLastMessage;
+                // SDK v6: tool parts use `tool-${toolName}` pattern
+                // Our search tool is typed as `tool-search`
+                if (isSearchToolPart(part)) {
+                  const searchPart = part as SearchToolUIPart;
+                  let sources: Array<{ id: string; sourceType: string; url: string; title: string }> = [];
+                  let searchError: string | undefined;
 
-                // Only mark as stopped if the message was stopped AND search wasn't complete
-                const searchStopped = isStopped && !searchComplete;
+                  // Handle error state
+                  if (isToolError(searchPart.state)) {
+                    searchError = searchPart.errorText || "Search failed";
+                  }
+                  // Handle output error in result
+                  else if (searchPart.output?.error) {
+                    searchError = searchPart.output.message || "Search failed";
+                  }
+                  // Handle successful results
+                  else if (searchPart.output?.results && Array.isArray(searchPart.output.results)) {
+                    sources = searchPart.output.results.map(r => ({
+                      id: r.url || Math.random().toString(),
+                      sourceType: "url",
+                      url: r.url,
+                      title: r.title,
+                    }));
+                  }
 
-                return (
-                  <SearchingSources
-                    key={`part-${index}`}
-                    id={`${message.id}-search-${index}`}
-                    sources={sources}
-                    isSearching={isSearching}
-                    error={searchError}
-                    stopped={searchStopped}
-                  />
-                );
-              }
+                  // Determine searching state based on SDK v6 tool states
+                  const searchComplete = isToolComplete(searchPart.state);
+                  const isSearching = !searchComplete && isToolSearching(searchPart.state) && isLoading && isLastMessage;
 
-              return null;
-            })}
+                  // Only mark as stopped if the message was stopped AND search wasn't complete
+                  const searchStopped = isStopped && !searchComplete;
 
-            {/* Fallback for initial searching state before any parts or tool calls exist */}
-            {isLoading && isLastMessage && searchEnabled && message.parts.length === 0 && (
-              <SearchingSources id={`${message.id}-search-fallback`} sources={[]} isSearching={true} />
-            )}
+                  return (
+                    <SearchingSources
+                      key={`part-${index}`}
+                      id={`${message.id}-search-${index}`}
+                      sources={sources}
+                      isSearching={isSearching}
+                      error={searchError}
+                      stopped={searchStopped}
+                    />
+                  );
+                }
+
+                return null;
+              })}
+
+              {/* Fallback for initial searching state before any parts or tool calls exist */}
+              {isLoading && isLastMessage && searchEnabled && message.parts.length === 0 && (
+                <SearchingSources id={`${message.id}-search-fallback`} sources={[]} isSearching={true} />
+              )}
+            </div>
 
             {(message.metadata || isStopped) && (
               <MessageMetrics
