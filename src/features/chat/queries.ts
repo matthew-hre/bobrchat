@@ -1,4 +1,5 @@
 import { and, desc, eq, inArray, isNotNull, lt } from "drizzle-orm";
+import { cache } from "react";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
@@ -106,10 +107,11 @@ function extractAttachmentRefs(message: ChatUIMessage): { ids: string[]; storage
 
 /**
  * Get all messages for a thread, ordered by creation time
+ * Cached per-request using React cache() for deduplication.
  *
  * @return {Promise<ChatUIMessage[]>} Array of chat messages
  */
-export async function getMessagesByThreadId(threadId: string): Promise<ChatUIMessage[]> {
+export const getMessagesByThreadId = cache(async (threadId: string): Promise<ChatUIMessage[]> => {
   const rows = await db
     .select({
       id: messages.id,
@@ -129,9 +131,9 @@ export async function getMessagesByThreadId(threadId: string): Promise<ChatUIMes
       id: row.id,
       searchEnabled: row.searchEnabled,
       reasoningLevel: row.reasoningLevel,
-    };
-  });
-}
+      };
+      });
+      });
 
 /**
  * Save a single message to a thread
@@ -304,18 +306,19 @@ export async function ensureThreadExists(
 
 /**
  * Get a thread by ID with basic info
+ * Cached per-request using React cache() for deduplication.
  *
  * @param threadId ID of the thread
  * @return {Promise<any>} Thread info or undefined if not found
  */
-export async function getThreadById(threadId: string) {
+export const getThreadById = cache(async (threadId: string) => {
   const result = await db
     .select()
     .from(threads)
     .where(eq(threads.id, threadId))
     .limit(1);
   return result[0];
-}
+});
 
 /**
  * Get paginated threads for a user, sorted by last message (most recent first)

@@ -1,13 +1,11 @@
 import { eq } from "drizzle-orm";
+import { cache } from "react";
 
 import type { ApiKeyProvider, EncryptedApiKeysData, UserSettingsData } from "~/features/settings/types";
 
 import { decryptValue, encryptValue } from "~/lib/api-keys/encryption";
 import { db } from "~/lib/db";
 import { userSettings } from "~/lib/db/schema/settings";
-
-const userSettingsCache = new Map<string, { data: UserSettingsData; expires: number }>();
-const USER_SETTINGS_TTL = 1000 * 30;
 
 const DEFAULT_SETTINGS: UserSettingsData = {
   theme: "dark",
@@ -28,6 +26,26 @@ export type ResolvedUserData = {
   };
 };
 
+const getUserSettingsRow = cache(async (userId: string) => {
+  const result = await db
+    .select({
+      settings: userSettings.settings,
+      encryptedApiKeys: userSettings.encryptedApiKeys,
+    })
+    .from(userSettings)
+    .where(eq(userSettings.userId, userId))
+    .limit(1);
+
+  if (!result.length) {
+    return { settings: { ...DEFAULT_SETTINGS }, encryptedApiKeys: {} as EncryptedApiKeysData };
+  }
+
+  return {
+    settings: { ...DEFAULT_SETTINGS, ...(result[0].settings as Partial<UserSettingsData>) },
+    encryptedApiKeys: (result[0].encryptedApiKeys ?? {}) as EncryptedApiKeysData,
+  };
+});
+
 /**
  * Fetch user settings and resolve API keys in a single DB query.
  * Client-provided keys take precedence over server-stored keys.
@@ -42,40 +60,7 @@ export async function getUserSettingsAndKeys(
   userId: string,
   clientKeys?: { openrouter?: string; parallel?: string },
 ): Promise<ResolvedUserData> {
-  const cached = userSettingsCache.get(userId);
-  let settings: UserSettingsData;
-  let encryptedApiKeys: EncryptedApiKeysData = {};
-
-  if (cached && cached.expires > Date.now()) {
-    settings = cached.data;
-    if (!clientKeys?.openrouter || !clientKeys?.parallel) {
-      const result = await db
-        .select({ encryptedApiKeys: userSettings.encryptedApiKeys })
-        .from(userSettings)
-        .where(eq(userSettings.userId, userId))
-        .limit(1);
-      encryptedApiKeys = (result[0]?.encryptedApiKeys ?? {}) as EncryptedApiKeysData;
-    }
-  }
-  else {
-    const result = await db
-      .select({
-        settings: userSettings.settings,
-        encryptedApiKeys: userSettings.encryptedApiKeys,
-      })
-      .from(userSettings)
-      .where(eq(userSettings.userId, userId))
-      .limit(1);
-
-    if (!result.length) {
-      settings = { ...DEFAULT_SETTINGS };
-    }
-    else {
-      settings = { ...DEFAULT_SETTINGS, ...(result[0].settings as Partial<UserSettingsData>) };
-      encryptedApiKeys = (result[0].encryptedApiKeys ?? {}) as EncryptedApiKeysData;
-      userSettingsCache.set(userId, { data: settings, expires: Date.now() + USER_SETTINGS_TTL });
-    }
-  }
+  const { settings, encryptedApiKeys } = await getUserSettingsRow(userId);
 
   const resolvedKeys: ResolvedUserData["resolvedKeys"] = {};
 
@@ -113,22 +98,7 @@ export async function getUserSettingsAndKeys(
  * @return {Promise<UserSettingsData>} User settings or default settings if not found
  */
 export async function getUserSettings(userId: string): Promise<UserSettingsData> {
-  const cached = userSettingsCache.get(userId);
-  if (cached && cached.expires > Date.now())
-    return cached.data;
-
-  const result = await db
-    .select({ settings: userSettings.settings })
-    .from(userSettings)
-    .where(eq(userSettings.userId, userId))
-    .limit(1);
-
-  if (!result.length) {
-    return { ...DEFAULT_SETTINGS };
-  }
-
-  const settings = { ...DEFAULT_SETTINGS, ...(result[0].settings as Partial<UserSettingsData>) };
-  userSettingsCache.set(userId, { data: settings, expires: Date.now() + USER_SETTINGS_TTL });
+  const { settings } = await getUserSettingsRow(userId);
   return settings;
 }
 
@@ -159,8 +129,6 @@ export async function updateUserSettings(
   userId: string,
   newSettings: UserSettingsData,
 ): Promise<UserSettingsData> {
-  userSettingsCache.delete(userId);
-
   const result = await db
     .update(userSettings)
     .set({
