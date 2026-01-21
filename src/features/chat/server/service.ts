@@ -77,9 +77,7 @@ export async function streamChatResponse(
 
       const streamHandlers = createStreamHandlers(
         () => {
-          if (firstTokenTime === null) {
-            firstTokenTime = Date.now();
-          }
+          // First token timing is now captured in createMetadata at text-start
         },
         (source) => {
           sources.push(source);
@@ -143,7 +141,8 @@ export async function streamChatResponse(
       return {
         stream: result,
         createMetadata: (part: TextStreamPart<ToolSet>) => {
-          if (part.type === "text-start" && firstTokenTime === null) {
+          // Capture TTFT at first actual output token (reasoning or text-start)
+          if (firstTokenTime === null && (part.type === "reasoning-start" || part.type === "text-start")) {
             firstTokenTime = Date.now();
             onFirstToken?.();
           }
