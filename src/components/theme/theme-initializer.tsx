@@ -8,7 +8,7 @@ import { useEffect, useRef } from "react";
  * Must be a child of ThemeProvider
  */
 export function ThemeInitializer() {
-  const { setTheme, theme } = useTheme();
+  const { setTheme } = useTheme();
   const hasInitialized = useRef(false);
 
   useEffect(() => {

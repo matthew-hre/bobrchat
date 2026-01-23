@@ -27,7 +27,8 @@ export async function processMessageFiles(
     const textFileParts = msg.parts
       .map((part, index) => ({ part, index }))
       .filter(({ part }) => {
-        if (part.type !== "file") return false;
+        if (part.type !== "file")
+          return false;
         const filePart = part as { mediaType?: string; storagePath?: string };
         const isText = filePart.mediaType?.startsWith("text/")
           || filePart.mediaType === "application/json"

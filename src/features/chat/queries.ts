@@ -131,9 +131,9 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
       id: row.id,
       searchEnabled: row.searchEnabled,
       reasoningLevel: row.reasoningLevel,
-      };
-      });
-      });
+    };
+  });
+});
 
 /**
  * Save a single message to a thread

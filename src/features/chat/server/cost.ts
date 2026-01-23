@@ -69,7 +69,8 @@ export function calculateChatCost(
  */
 export async function getTokenCosts(modelId: string): Promise<TokenCosts> {
   const cached = tokenCostsCache.get(modelId);
-  if (cached && cached.expires > Date.now()) return cached.data;
+  if (cached && cached.expires > Date.now())
+    return cached.data;
 
   try {
     const [baseModelId, modelSuffix] = modelId.split(":");

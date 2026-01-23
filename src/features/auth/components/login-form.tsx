@@ -45,7 +45,9 @@ export function LoginForm({
     return (
       <div className="space-y-3 text-center">
         <p className="text-sm">
-          We sent a verification link to <strong>{email}</strong>
+          We sent a verification link to
+          {" "}
+          <strong>{email}</strong>
         </p>
         <p className="text-muted-foreground text-xs">
           Please check your inbox and click the link to verify your account.

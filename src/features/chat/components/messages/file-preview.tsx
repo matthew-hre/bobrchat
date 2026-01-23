@@ -111,7 +111,9 @@ function FilePreviewItem({
           )}
           {willBeProcessedByOpenRouter && (
             <span
-              className="rounded bg-warning/10 px-1.5 py-0.5 text-xs text-warning"
+              className={`
+                bg-warning/10 text-warning rounded px-1.5 py-0.5 text-xs
+              `}
               title="PDF will be processed by OpenRouter"
             >
               via OpenRouter

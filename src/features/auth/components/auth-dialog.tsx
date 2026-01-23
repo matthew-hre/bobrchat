@@ -53,7 +53,13 @@ export function AuthDialog({ open = true, showCloseButton = false }: AuthDialogP
         <div className="space-y-4">
           <div className="text-center">
             <div className="mb-2 flex items-center justify-center gap-2">
-              <Image src="/icon.png" alt="BobrChat" width={24} height={24} className="rounded-full" />
+              <Image
+                src="/icon.png"
+                alt="BobrChat"
+                width={24}
+                height={24}
+                className="rounded-full"
+              />
               <span className="text-sm font-semibold">BobrChat</span>
             </div>
             <h1 className="text-lg font-semibold">{getTitle()}</h1>

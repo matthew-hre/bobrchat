@@ -15,11 +15,11 @@ function isTransientError(error: unknown): boolean {
     // SQLSTATE 08006: connection_failure
     // SQLSTATE 08003: connection_does_not_exist
     return (
-      msg.includes("57p01") ||
-      msg.includes("admin") ||
-      msg.includes("connection") ||
-      msg.includes("terminated") ||
-      msg.includes("client has encountered")
+      msg.includes("57p01")
+      || msg.includes("admin")
+      || msg.includes("connection")
+      || msg.includes("terminated")
+      || msg.includes("client has encountered")
     );
   }
   return false;
@@ -48,7 +48,8 @@ function createDb() {
   pool.on("error", (error: Error) => {
     if (isTransientError(error)) {
       console.warn("[DB] Transient connection error (will retry):", error.message);
-    } else {
+    }
+    else {
       console.error("[DB] Unexpected pool error:", error);
     }
   });

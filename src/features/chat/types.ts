@@ -4,11 +4,11 @@
  */
 
 // SDK v6 tool states
-export type ToolState =
-  | "input-streaming"
-  | "input-available"
-  | "output-available"
-  | "output-error";
+export type ToolState
+  = | "input-streaming"
+    | "input-available"
+    | "output-available"
+    | "output-error";
 
 // SDK v6 reasoning/text states
 export type ContentState = "streaming" | "done";
@@ -78,13 +78,13 @@ export type StepStartUIPart = {
 };
 
 // Union of all UI message parts
-export type UIMessagePart =
-  | TextUIPart
-  | ReasoningUIPart
-  | ToolUIPart
-  | FileUIPart
-  | SourceUrlUIPart
-  | StepStartUIPart;
+export type UIMessagePart
+  = | TextUIPart
+    | ReasoningUIPart
+    | ToolUIPart
+    | FileUIPart
+    | SourceUrlUIPart
+    | StepStartUIPart;
 
 // ============================================
 // Server-side stream types (TextStreamPart)
