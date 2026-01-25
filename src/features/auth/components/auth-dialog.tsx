@@ -23,6 +23,7 @@ export function AuthDialog({ open = true, showCloseButton = false }: AuthDialogP
   const searchParams = useSearchParams();
   const initialView = searchParams.get("view") === "login" ? "login" : "signup";
   const [view, setView] = useState<AuthView>(initialView);
+  const [pending2FA, setPending2FA] = useState(false);
 
   const getTitle = () => {
     switch (view) {
@@ -51,22 +52,24 @@ export function AuthDialog({ open = true, showCloseButton = false }: AuthDialogP
       <DialogContent className="max-w-sm p-4" showCloseButton={showCloseButton}>
         <DialogTitle className="sr-only">BobrChat Auth</DialogTitle>
         <div className="space-y-4">
-          <div className="text-center">
-            <div className="mb-2 flex items-center justify-center gap-2">
-              <Image
-                src="/icon.png"
-                alt="BobrChat"
-                width={24}
-                height={24}
-                className="rounded-full"
-              />
-              <span className="text-sm font-semibold">BobrChat</span>
+          {!pending2FA && (
+            <div className="text-center">
+              <div className="mb-2 flex items-center justify-center gap-2">
+                <Image
+                  src="/icon.png"
+                  alt="BobrChat"
+                  width={24}
+                  height={24}
+                  className="rounded-full"
+                />
+                <span className="text-sm font-semibold">BobrChat</span>
+              </div>
+              <h1 className="text-lg font-semibold">{getTitle()}</h1>
+              <p className="text-muted-foreground px-8 pt-2 text-sm">
+                {getDescription()}
+              </p>
             </div>
-            <h1 className="text-lg font-semibold">{getTitle()}</h1>
-            <p className="text-muted-foreground px-8 pt-2 text-sm">
-              {getDescription()}
-            </p>
-          </div>
+          )}
 
           {view === "forgot-password"
             ? (
@@ -77,22 +80,29 @@ export function AuthDialog({ open = true, showCloseButton = false }: AuthDialogP
                   <LoginForm
                     isLogin={view === "login"}
                     onForgotPassword={() => setView("forgot-password")}
+                    onPending2FAChange={setPending2FA}
                   />
-                  <AuthOptionsSeparator />
-                  <GitHubAuth />
-                  <p className="text-muted-foreground text-center text-sm">
-                    {view === "login" ? "Don't have an account? " : "Already have an account? "}
-                    <AuthToggleButton
-                      isLogin={view === "login"}
-                      onClickAction={() => setView(view === "login" ? "signup" : "login")}
-                    />
-                  </p>
+                  {!pending2FA && (
+                    <>
+                      <AuthOptionsSeparator />
+                      <GitHubAuth />
+                      <p className="text-muted-foreground text-center text-sm">
+                        {view === "login" ? "Don't have an account? " : "Already have an account? "}
+                        <AuthToggleButton
+                          isLogin={view === "login"}
+                          onClickAction={() => setView(view === "login" ? "signup" : "login")}
+                        />
+                      </p>
+                    </>
+                  )}
                 </>
               )}
 
-          <p className="text-muted-foreground text-center text-xs">
-            This app is an experiment. We don't bill you for AI usage. We may introduce billing for storage in the future. You bring your own API key and pay providers directly for the tokens you actually use.
-          </p>
+          {!pending2FA && (
+            <p className="text-muted-foreground text-center text-xs">
+              This app is an experiment. We don't bill you for AI usage. We may introduce billing for storage in the future. You bring your own API key and pay providers directly for the tokens you actually use.
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

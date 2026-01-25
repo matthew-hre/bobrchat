@@ -1,5 +1,6 @@
 /* eslint-disable node/no-process-env */
 import { createAuthClient } from "better-auth/react";
+import { twoFactorClient } from "better-auth/client/plugins";
 
 import { clientEnv } from "~/lib/env";
 
@@ -8,6 +9,7 @@ const baseURL = clientEnv.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.NEXT_PUBLIC
 
 export const authClient = createAuthClient({
   baseURL,
+  plugins: [twoFactorClient()],
 });
 
-export const { signIn, signUp, signOut, useSession } = authClient;
+export const { signIn, signUp, signOut, useSession, twoFactor } = authClient;

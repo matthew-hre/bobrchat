@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import type { ValidationError } from "~/features/auth/types";
 
-import { authClient } from "~/features/auth/lib/auth-client";
+import { authClient, twoFactor } from "~/features/auth/lib/auth-client";
 import { signInSchema, signUpSchema } from "~/features/auth/types";
 
 export function useAuthForm() {
@@ -15,16 +15,23 @@ export function useAuthForm() {
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [loading, setLoading] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
+  const [pending2FA, setPending2FA] = useState(false);
+  const [totpCode, setTotpCode] = useState("");
 
   const getFieldError = (field: string): string | undefined => {
     return validationErrors.find(e => e.field === field)?.message;
   };
 
-  const handleAuthError = (error: { code?: string; message?: string; status?: number; statusText?: string }) => {
+  const handleAuthError = (error: { code?: string; message?: string; status?: number; statusText?: string }): boolean => {
     if (error.code === "EMAIL_NOT_VERIFIED") {
       setPendingVerification(true);
       toast.info("Please check your email to verify your account.");
-      return;
+      return true;
+    }
+
+    if (error.code === "TWO_FACTOR_REQUIRED") {
+      setPending2FA(true);
+      return true;
     }
 
     const errorMessage = error.message || error.statusText || "Authentication failed";
@@ -42,6 +49,7 @@ export function useAuthForm() {
     }
 
     toast.error(userMessage);
+    return false;
   };
 
   const handleSignIn = async () => {
@@ -72,6 +80,13 @@ export function useAuthForm() {
       }
 
       if (data) {
+        // Check if 2FA is required (better-auth returns twoFactorRedirect: true)
+        if ("twoFactorRedirect" in data && data.twoFactorRedirect) {
+          setPending2FA(true);
+          setLoading(false);
+          return true;
+        }
+
         window.location.href = "/";
         return true;
       }
@@ -141,6 +156,48 @@ export function useAuthForm() {
     return true;
   };
 
+  const handleVerify2FA = async () => {
+    if (totpCode.length !== 6) {
+      toast.error("Please enter a 6-digit code");
+      return false;
+    }
+
+    setLoading(true);
+    const result = await twoFactor.verifyTotp({
+      code: totpCode,
+    });
+    setLoading(false);
+
+    if (result.error) {
+      toast.error(result.error.message || "Invalid verification code");
+      return false;
+    }
+
+    window.location.href = "/";
+    return true;
+  };
+
+  const handleVerifyBackupCode = async (code: string) => {
+    setLoading(true);
+    const result = await twoFactor.verifyBackupCode({
+      code,
+    });
+    setLoading(false);
+
+    if (result.error) {
+      toast.error(result.error.message || "Invalid backup code");
+      return false;
+    }
+
+    window.location.href = "/";
+    return true;
+  };
+
+  const reset2FA = () => {
+    setPending2FA(false);
+    setTotpCode("");
+  };
+
   return {
     email,
     setEmail,
@@ -151,9 +208,15 @@ export function useAuthForm() {
     validationErrors,
     loading,
     pendingVerification,
+    pending2FA,
+    totpCode,
+    setTotpCode,
     getFieldError,
     handleSignIn,
     handleSignUp,
     handleResendVerification,
+    handleVerify2FA,
+    handleVerifyBackupCode,
+    reset2FA,
   };
 }

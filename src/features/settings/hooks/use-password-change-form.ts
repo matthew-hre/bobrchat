@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "~/features/auth/lib/auth-client";
@@ -11,14 +11,6 @@ export function usePasswordChangeForm() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [hasCredentialAccount, setHasCredentialAccount] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    authClient.listAccounts().then(({ data }) => {
-      const hasCredential = data?.some(account => account.providerId === "credential") ?? false;
-      setHasCredentialAccount(hasCredential);
-    });
-  }, []);
 
   const resetForm = () => {
     setCurrentPassword("");
@@ -78,7 +70,6 @@ export function usePasswordChangeForm() {
     confirmPassword,
     setConfirmPassword,
     loading,
-    hasCredentialAccount,
     canSubmit,
     passwordsMatch,
     handleChangePassword,

@@ -1,18 +1,32 @@
 "use client";
 
-import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { LoaderIcon, MonitorIcon, MoonIcon, SunIcon, Trash2Icon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import type { PreferencesUpdate } from "~/features/settings/types";
 
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
 import { Kbd } from "~/components/ui/kbd";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Slider } from "~/components/ui/slider";
+import { deleteAllThreads } from "~/features/settings/actions";
 import { useUpdatePreferences, useUserSettings } from "~/features/settings/hooks/use-user-settings";
+import { THREADS_KEY } from "~/lib/queries/query-keys";
 
 import { SelectionCardItem } from "../ui/selection-card-item";
 import { TextInputItem } from "../ui/text-input-item";
@@ -221,7 +235,88 @@ export function PreferencesTab() {
               onToggle={enabled => save({ useOcrForPdfs: enabled })}
             />
           </div>
+
+          <Separator />
+
+          {/* Data Management */}
+          <DeleteAllThreadsSection />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteAllThreadsSection() {
+  const queryClient = useQueryClient();
+  const [deleteThreadsOpen, setDeleteThreadsOpen] = useState(false);
+  const [deleteThreadsLoading, setDeleteThreadsLoading] = useState(false);
+
+  const handleDeleteAllThreads = async () => {
+    setDeleteThreadsLoading(true);
+    try {
+      const { deletedCount } = await deleteAllThreads();
+      await queryClient.invalidateQueries({ queryKey: THREADS_KEY });
+      toast.success(`Deleted ${deletedCount} thread${deletedCount === 1 ? "" : "s"}`);
+      setDeleteThreadsOpen(false);
+    }
+    catch {
+      toast.error("Failed to delete threads");
+    }
+    finally {
+      setDeleteThreadsLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <h4 className="text-foreground text-sm font-semibold">Data Management</h4>
+        <p className="text-muted-foreground text-xs">Manage your chat data and history.</p>
+      </div>
+
+      <div className="space-y-2">
+        <Dialog open={deleteThreadsOpen} onOpenChange={setDeleteThreadsOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full">
+              <Trash2Icon className="size-4" />
+              Delete All Threads
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Trash2Icon className="size-5" />
+                Delete All Threads
+              </DialogTitle>
+              <DialogDescription>
+                This will permanently delete all your chat threads and messages. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteAllThreads}
+                disabled={deleteThreadsLoading}
+              >
+                {deleteThreadsLoading
+                  ? (
+                      <>
+                        <LoaderIcon className="size-4 animate-spin" />
+                        Deleting...
+                      </>
+                    )
+                  : "Delete All Threads"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <p className="text-muted-foreground text-xs">
+          Permanently delete all your chat history.
+        </p>
       </div>
     </div>
   );

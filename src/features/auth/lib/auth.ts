@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { twoFactor } from "better-auth/plugins";
 
 import { createDefaultUserSettings } from "~/features/settings/actions";
 import { db } from "~/lib/db";
@@ -101,7 +102,12 @@ export const auth = betterAuth({
       generateId: () => crypto.randomUUID(),
     },
   },
-  plugins: [nextCookies()],
+  plugins: [
+    nextCookies(),
+    twoFactor({
+      issuer: "BobrChat",
+    }),
+  ],
 });
 
 // i really hate that this is how the docs want me to do this
