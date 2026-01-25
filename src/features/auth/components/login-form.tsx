@@ -79,7 +79,11 @@ export function LoginForm({
             setUseBackupCode(false);
             setBackupCode("");
           }}
-          className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
+          className={`
+            text-muted-foreground flex items-center gap-1 text-sm
+            transition-colors
+            hover:text-foreground
+          `}
         >
           <ArrowLeftIcon className="size-4" />
           Back to login
@@ -110,7 +114,7 @@ export function LoginForm({
             )
           : (
               <div className="space-y-2">
-                <Label className="text-center block">Verification Code</Label>
+                <Label className="block text-center">Verification Code</Label>
                 <div className="flex justify-center">
                   <InputOTP
                     maxLength={6}

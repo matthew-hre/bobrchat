@@ -1,6 +1,6 @@
 /* eslint-disable node/no-process-env */
-import { createAuthClient } from "better-auth/react";
 import { twoFactorClient } from "better-auth/client/plugins";
+import { createAuthClient } from "better-auth/react";
 
 import { clientEnv } from "~/lib/env";
 

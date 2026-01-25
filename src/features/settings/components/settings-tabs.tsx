@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   KeyIcon,
   LogOutIcon,
+  PaletteIcon,
   PaperclipIcon,
   SettingsIcon,
   SparklesIcon,
@@ -21,11 +22,12 @@ import { DialogClose } from "../../../components/ui/dialog";
 import { Separator } from "../../../components/ui/separator";
 import { AttachmentsTab } from "./tabs/attachments-tab";
 import { IntegrationsTab } from "./tabs/integrations-tab";
+import { InterfaceTab } from "./tabs/interface-tab";
 import { ModelsTab } from "./tabs/models-tab";
 import { PreferencesTab } from "./tabs/preferences-tab";
 import { ProfileTab } from "./tabs/profile-tab";
 
-type TabId = "profile" | "preferences" | "integrations" | "models" | "attachments";
+type TabId = "profile" | "interface" | "preferences" | "integrations" | "models" | "attachments";
 
 type TabConfig = {
   id: TabId;
@@ -35,7 +37,8 @@ type TabConfig = {
 
 const tabs: TabConfig[] = [
   { id: "profile", label: "Profile", icon: UserIcon },
-  { id: "preferences", label: "Preferences", icon: SettingsIcon },
+  { id: "interface", label: "Interface", icon: PaletteIcon },
+  { id: "preferences", label: "Chat & AI", icon: SettingsIcon },
   { id: "integrations", label: "Integrations", icon: KeyIcon },
   { id: "models", label: "Models", icon: SparklesIcon },
   { id: "attachments", label: "Attachments", icon: PaperclipIcon },
@@ -146,6 +149,8 @@ function TabContent({ activeTab }: { activeTab: TabId }) {
   switch (activeTab) {
     case "profile":
       return <ProfileTab />;
+    case "interface":
+      return <InterfaceTab />;
     case "preferences":
       return <PreferencesTab />;
     case "integrations":
