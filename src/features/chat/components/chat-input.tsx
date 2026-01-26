@@ -283,6 +283,7 @@ export function ChatInput({
               models={favoriteModels}
               selectedModelId={selectedModelId || undefined}
               onSelectModelAction={setSelectedModelId}
+              popoverWidth="w-full"
               isLoading={isModelsLoading || isOpenRouterLoading}
             />
 

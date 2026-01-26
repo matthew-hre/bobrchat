@@ -203,3 +203,9 @@ mjx-container[jax="SVG"] > svg {
 mjx-container[jax="SVG"][display="true"] > svg {
   @apply mx-auto;
 }
+
+@media (hover: none) {
+  .touch-device-hidden {
+    display: none;
+  }
+}

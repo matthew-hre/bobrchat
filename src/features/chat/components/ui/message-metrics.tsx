@@ -301,7 +301,7 @@ export function MessageMetrics({
                           <span className="font-mono">{formatCost(metrics.costUsd.search.toFixed(6))}</span>
                         </div>
                       )}
-                      {metrics.costUsd.extract && Number.parseFloat(metrics.costUsd.extract.toFixed(4)) > 0 && (
+                      {Number.parseFloat(metrics.costUsd.extract.toFixed(4)) > 0 && (
                         <div className="flex justify-between gap-4">
                           <span>Extract:</span>
                           <span className="font-mono">{formatCost(metrics.costUsd.extract.toFixed(6))}</span>

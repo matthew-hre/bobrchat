@@ -203,27 +203,30 @@ export const ChatMessages = memo(({
               />
             </MessagePartsContainer>
 
+            {/* TODO: Add mobile support for message metrics - hidden on touch devices */}
             {(message.metadata || isStopped) && (
-              <MessageMetrics
-                metrics={{
-                  id: message.id,
-                  model: message.metadata?.model || stoppedModelId || stoppedInfo?.modelId || (isStopped ? "unknown" : null),
-                  tokensPerSecond: message.metadata ? message.metadata.tokensPerSecond.toFixed(2) : null,
-                  totalTokens: message.metadata ? message.metadata.inputTokens + message.metadata.outputTokens : null,
-                  inputTokens: message.metadata ? message.metadata.inputTokens : null,
-                  outputTokens: message.metadata ? message.metadata.outputTokens : null,
-                  ttft: message.metadata ? message.metadata.timeToFirstTokenMs : null,
-                  costUsd: message.metadata
-                    ? message.metadata.costUSD
-                    : null,
-                  content: textContent,
-                  sourceCount: message.metadata?.sources ? message.metadata.sources.length : null,
-                }}
-                onRetry={() => onRegenerate?.(message.id)}
-                isRetrying={isRegenerating}
-                variant={isStopped ? "minimal" : "full"}
-                stopped={isStopped}
-              />
+              <div className="touch-device-hidden">
+                <MessageMetrics
+                  metrics={{
+                    id: message.id,
+                    model: message.metadata?.model || stoppedModelId || stoppedInfo?.modelId || (isStopped ? "unknown" : null),
+                    tokensPerSecond: message.metadata ? message.metadata.tokensPerSecond.toFixed(2) : null,
+                    totalTokens: message.metadata ? message.metadata.inputTokens + message.metadata.outputTokens : null,
+                    inputTokens: message.metadata ? message.metadata.inputTokens : null,
+                    outputTokens: message.metadata ? message.metadata.outputTokens : null,
+                    ttft: message.metadata ? message.metadata.timeToFirstTokenMs : null,
+                    costUsd: message.metadata
+                      ? message.metadata.costUSD
+                      : null,
+                    content: textContent,
+                    sourceCount: message.metadata?.sources ? message.metadata.sources.length : null,
+                  }}
+                  onRetry={() => onRegenerate?.(message.id)}
+                  isRetrying={isRegenerating}
+                  variant={isStopped ? "minimal" : "full"}
+                  stopped={isStopped}
+                />
+              </div>
             )}
           </div>
         );

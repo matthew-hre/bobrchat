@@ -241,8 +241,14 @@ function ReasoningButton({
               title={`Reasoning level: ${reasoningLevel}`}
             >
               <BrainIcon size={16} />
-              Reasoning
-              {reasoningLevel !== "none" && ` (${reasoningLevel})`}
+              <span className={`
+                hidden
+                lg:inline
+              `}
+              >
+                Reasoning
+                {reasoningLevel !== "none" && ` (${reasoningLevel})`}
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -302,7 +308,13 @@ function SearchButton({
             title={searchEnabled ? "Search enabled" : "Search disabled"}
           >
             <SearchIcon size={16} />
-            Search
+            <span className={`
+              hidden
+              lg:inline
+            `}
+            >
+              Search
+            </span>
           </Button>
         </div>
       </TooltipTrigger>
@@ -348,7 +360,13 @@ function AttachButton({
           )}
         >
           <PaperclipIcon size={16} />
-          Attach
+          <span className={`
+            hidden
+            lg:inline
+          `}
+          >
+            Attach
+          </span>
         </Button>
       </TooltipTrigger>
       <TooltipContent>

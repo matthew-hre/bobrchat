@@ -28,6 +28,7 @@ type ModelSelectorProps = {
   selectedModelId?: string;
   onSelectModelAction: (modelId: string) => void;
   className?: string;
+  popoverWidth?: string;
   sideOffset?: number;
   isLoading?: boolean;
 };
@@ -66,17 +67,43 @@ export function ModelSelector({
   selectedModelId,
   onSelectModelAction,
   className,
+  popoverWidth = "w-lg",
   sideOffset = 81,
   isLoading = false,
 }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [containerWidth, setContainerWidth] = React.useState<number | null>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+
+    const updateWidth = () => {
+      // Find the form element (toolbar container)
+      const form = containerRef.current?.closest("form");
+      if (form) {
+        setContainerWidth(form.clientWidth);
+      }
+    };
+
+    updateWidth();
+    const resizeObserver = new ResizeObserver(updateWidth);
+    
+    // Observe the window for resize events as backup
+    window.addEventListener("resize", updateWidth);
+    
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateWidth);
+    };
+  }, []);
 
   const selectedModel = models.find(m => m.id === selectedModelId);
   const displayName = selectedModel?.name || (isLoading ? "Loading..." : "Select Model");
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <div className="relative">
+      <div className="relative" ref={containerRef}>
         <NoModelsToolip models={models} isLoading={isLoading}>
           <PopoverTrigger asChild>
             <Button
@@ -86,15 +113,20 @@ export function ModelSelector({
               disabled={isLoading || (models && models.length === 0)}
               className={cn(`
             hover:text-foreground relative
-            gap-2 transition-colors
+            group/model gap-1 overflow-hidden transition-all
           `, `text-muted-foreground`, className)}
             >
-              <div className="text-sm font-medium">
+              <div className={`
+                max-w-32 overflow-hidden whitespace-nowrap truncate
+                transition-all duration-200 text-sm font-medium
+                group-hover/model:ml-1
+                lg:max-w-none lg:group-hover/model:ml-0 lg:ml-0
+              `}>
                 {displayName}
               </div>
               <ChevronDownIcon
                 size={14}
-                className={cn(`transition-transform`, isOpen && !isLoading
+                className={cn(`transition-transform shrink-0`, isOpen && !isLoading
                   ? `rotate-180`
                   : "")}
               />
@@ -108,7 +140,8 @@ export function ModelSelector({
         align="start"
         alignOffset={-9}
         sideOffset={sideOffset}
-        className="w-lg rounded-none p-2 shadow-none"
+        style={containerWidth ? { width: `${containerWidth}px` } : undefined}
+        className={cn("rounded-none p-2 shadow-none", popoverWidth === "w-full" ? "" : popoverWidth)}
       >
         <div className="space-y-1">
           {isLoading || !models || models.length === 0
