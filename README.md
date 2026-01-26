@@ -54,3 +54,7 @@ bun db:push
 - **Chat flow:** `src/features/chat/` — store, actions, queries, components.
 - **Auth:** `src/features/auth/` (client config) + `src/app/api/auth/` (backend routes).
 - **UI primitives:** `src/components/ui/` for shared building blocks.
+
+## License
+
+This project is licensed under the Business Source License 1.1. See the [LICENSE](LICENSE) file for details.

@@ -40,13 +40,9 @@ export async function POST(req: Request) {
   return Sentry.startSpan(
     { op: "http.server", name: "POST /api/chat" },
     async (span) => {
-      const routeStart = performance.now();
-
-      const authStart = performance.now();
       const session = await auth.api.getSession({
         headers: await headers(),
       });
-      const authTime = performance.now() - authStart;
 
       if (!session?.user) {
         return new Response(JSON.stringify({ error: "Not authenticated" }), {
@@ -55,13 +51,8 @@ export async function POST(req: Request) {
         });
       }
 
-      const parseStart = performance.now();
       const { messages, threadId, openrouterClientKey, parallelClientKey, searchEnabled, reasoningLevel, modelId, modelSupportsFiles, supportsNativePdf, isRegeneration }: { messages: ChatUIMessage[]; threadId?: string; openrouterClientKey?: string; parallelClientKey?: string; searchEnabled?: boolean; reasoningLevel?: string; modelId?: string; modelSupportsFiles?: boolean; supportsNativePdf?: boolean; isRegeneration?: boolean }
         = await req.json();
-      const parseTime = performance.now() - parseStart;
-
-      const flow = threadId ? "existing-thread" : "new-thread";
-      console.log(`[chat/${flow}] auth: ${authTime.toFixed(1)}ms, parse: ${parseTime.toFixed(1)}ms`);
 
       const baseModelId = modelId || "google/gemini-3-flash-preview";
 
@@ -71,7 +62,6 @@ export async function POST(req: Request) {
       span.setAttribute("chat.reasoningLevel", reasoningLevel ?? "none");
       span.setAttribute("chat.isRegeneration", isRegeneration ?? false);
 
-      const resolveStart = performance.now();
       const [threadStatus, { settings, resolvedKeys }] = await Promise.all([
         threadId ? ensureThreadExists(threadId, session.user.id) : Promise.resolve(null),
         getUserSettingsAndKeys(session.user.id, {
@@ -79,9 +69,9 @@ export async function POST(req: Request) {
           parallel: parallelClientKey,
         }),
       ]);
+
       const openrouterKey = resolvedKeys.openrouter;
       const parallelKey = searchEnabled ? resolvedKeys.parallel : undefined;
-      console.log(`[chat/${flow}] resolve (thread+keys+settings): ${(performance.now() - resolveStart).toFixed(1)}ms`);
 
       if (threadStatus && !threadStatus.owned) {
         return new Response(JSON.stringify({ error: "Thread not found or unauthorized" }), {
@@ -107,19 +97,13 @@ export async function POST(req: Request) {
       if (threadId && !isRegeneration) {
         const lastMessage = messages[messages.length - 1];
         if (lastMessage?.role === "user") {
-          const saveStart = performance.now();
           saveMessage(threadId, session.user.id, lastMessage, { searchEnabled, reasoningLevel })
-            .then(() => {
-              console.log(`[chat/${flow}] saveUserMessage (fire-and-forget): ${(performance.now() - saveStart).toFixed(1)}ms`);
-            })
             .catch((error) => {
-              console.log(`[chat/${flow}] saveUserMessage failed after ${(performance.now() - saveStart).toFixed(1)}ms`);
               Sentry.captureException(error, { tags: { operation: "save-user-message" } });
             });
         }
       }
 
-      const streamStart = performance.now();
       const { stream, createMetadata } = await streamChatResponse(
         messages,
         baseModelId,
@@ -135,8 +119,6 @@ export async function POST(req: Request) {
         },
         reasoningLevel,
       );
-      console.log(`[chat/${flow}] streamChatResponse setup: ${(performance.now() - streamStart).toFixed(1)}ms`);
-      console.log(`[chat/${flow}] total pre-stream: ${(performance.now() - routeStart).toFixed(1)}ms`);
 
       if (threadId && messages.length === 1 && messages[0].role === "user") {
         const firstMessage = messages[0];
@@ -166,11 +148,8 @@ export async function POST(req: Request) {
           const metadata = createMetadata(part);
           return metadata;
         },
-        onFinish: async ({ responseMessage, isAborted }) => {
+        onFinish: async ({ responseMessage }) => {
           if (threadId) {
-            if (isAborted) {
-              console.log(`[chat/${flow}] Stream aborted, saving partial response`);
-            }
             await saveMessage(threadId, session.user.id, responseMessage);
           }
         },
