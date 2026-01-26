@@ -74,6 +74,10 @@ export type ContentState = NonNullable<TextUIPart["state"]>;
 
 // Re-export search types from server for convenience
 export type {
+  ExtractErrorOutput,
+  ExtractOutput,
+  ExtractSource,
+  ExtractToolOutput,
   SearchErrorOutput,
   SearchOutput,
   SearchSource,
@@ -91,6 +95,16 @@ export type {
 export type SearchToolUIPart = Extract<
   ToolUIPart<SearchUITools>,
   { type: "tool-search" }
+>;
+
+/**
+ * Extract tool UI part - extracted from SDK's ToolUIPart<SearchUITools>.
+ *
+ * For our extract tool, this becomes `type: "tool-extract"`.
+ */
+export type ExtractToolUIPart = Extract<
+  ToolUIPart<SearchUITools>,
+  { type: "tool-extract" }
 >;
 
 // ============================================
@@ -116,6 +130,10 @@ export function isToolResultPart(
 
 export function isSearchToolPart(part: { type: string }): part is SearchToolUIPart {
   return part.type === "tool-search";
+}
+
+export function isExtractToolPart(part: { type: string }): part is ExtractToolUIPart {
+  return part.type === "tool-extract";
 }
 
 // ============================================

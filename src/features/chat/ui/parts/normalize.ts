@@ -1,6 +1,6 @@
-import type { ReasoningUIPart, SearchToolUIPart, TextUIPart } from "~/features/chat/types";
+import type { ExtractToolUIPart, ReasoningUIPart, SearchToolUIPart, TextUIPart } from "~/features/chat/types";
 
-import { isSearchError } from "~/features/chat/server/search/index";
+import { isExtractError, isSearchError } from "~/features/chat/server/search/index";
 import {
   isSearchToolPart,
   isTextPart,
@@ -55,11 +55,38 @@ export function normalizeSearchToolPart(part: SearchToolUIPart): NormalizedSearc
     error = part.output.message;
   }
   else if (part.output && !isSearchError(part.output)) {
-    sources = part.output.sources.map(s => ({
+    sources = (part.output.sources ?? []).map(s => ({
       id: s.url,
       sourceType: "url" as const,
       url: s.url,
       title: s.title,
+    }));
+  }
+
+  return { sources, error, complete };
+}
+
+/**
+ * Normalizes an extract tool part, extracting sources and errors with stable IDs.
+ * Uses URL as the stable key.
+ */
+export function normalizeExtractToolPart(part: ExtractToolUIPart): NormalizedSearchResult {
+  const complete = isToolComplete(part.state);
+  let sources: NormalizedSource[] = [];
+  let error: string | undefined;
+
+  if (isToolError(part.state)) {
+    error = part.errorText || "Extraction failed";
+  }
+  else if (part.output && isExtractError(part.output)) {
+    error = part.output.message;
+  }
+  else if (part.output && !isExtractError(part.output)) {
+    sources = (part.output.sources ?? []).map(s => ({
+      id: s.url,
+      sourceType: "url" as const,
+      url: s.url,
+      title: s.title ?? s.url,
     }));
   }
 

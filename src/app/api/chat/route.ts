@@ -22,6 +22,7 @@ export type SourceInfo = {
 export type CostBreakdown = {
   model: number;
   search: number;
+  extract: number;
   ocr: number;
   total: number;
 };

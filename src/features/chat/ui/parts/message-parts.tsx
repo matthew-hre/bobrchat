@@ -1,13 +1,15 @@
 /* eslint-disable react/no-array-index-key */
 "use client";
 
-import type { ReasoningUIPart, SearchToolUIPart } from "~/features/chat/types";
+import type { ExtractToolUIPart, ReasoningUIPart, SearchToolUIPart } from "~/features/chat/types";
 
 import { MemoizedMarkdown } from "~/features/chat/components/messages/markdown";
+import { ExtractingSources } from "~/features/chat/components/ui/extracting-sources";
 import { ReasoningContent } from "~/features/chat/components/ui/reasoning-content";
 import { SearchingSources } from "~/features/chat/components/ui/searching-sources";
 import {
   isContentComplete,
+  isExtractToolPart,
   isReasoningPart,
   isSearchToolPart,
   isTextPart,
@@ -15,7 +17,7 @@ import {
 } from "~/features/chat/types";
 import { cn } from "~/lib/utils";
 
-import { normalizeReasoningText, normalizeSearchToolPart } from "./normalize";
+import { normalizeExtractToolPart, normalizeReasoningText, normalizeSearchToolPart } from "./normalize";
 
 export type RenderState = {
   isLast: boolean;
@@ -115,6 +117,25 @@ export function MessageParts({
               isSearching={isSearching}
               error={error}
               stopped={searchStopped}
+            />
+          );
+        }
+
+        if (isExtractToolPart(part)) {
+          const extractPart = part as ExtractToolUIPart;
+          const { sources, error, complete } = normalizeExtractToolPart(extractPart);
+
+          const isExtracting = isActive && !complete && isToolSearching(extractPart.state) && isLoading && isLast;
+          const extractStopped = isActive && isStopped && !complete;
+
+          return (
+            <ExtractingSources
+              key={`part-${index}`}
+              id={`${messageId}-extract-${index}`}
+              sources={sources}
+              isExtracting={isExtracting}
+              error={error}
+              stopped={extractStopped}
             />
           );
         }

@@ -2,6 +2,7 @@ import type { TextStreamPart, ToolSet } from "ai";
 
 import type { SearchToolOutput } from "~/features/chat/server/search/index";
 import type { ToolResultStreamPart } from "~/features/chat/types";
+import type { ExtractToolCall, SearchToolCall } from "./cost";
 
 import { isSearchError } from "~/features/chat/server/search/index";
 import { isToolResultPart } from "~/features/chat/types";
@@ -11,6 +12,8 @@ type Source = { id: string; sourceType: string; url?: string; title?: string };
 type StreamChunkHandler = {
   onFirstToken: () => void;
   onSource: (source: Source) => void;
+  onSearchCall: (call: SearchToolCall) => void;
+  onExtractCall: (call: ExtractToolCall) => void;
 };
 
 /**
@@ -18,15 +21,21 @@ type StreamChunkHandler = {
  *
  * @param onFirstTokenCallback Called when the first token is received
  * @param onSourceCallback Called when a source is found
+ * @param onSearchCallCallback Called when a search tool call completes
+ * @param onExtractCallCallback Called when an extract tool call completes
  * @returns An object with chunk handlers
  */
 export function createStreamHandlers(
   onFirstTokenCallback: () => void,
   onSourceCallback: (source: Source) => void,
+  onSearchCallCallback: (call: SearchToolCall) => void,
+  onExtractCallCallback: (call: ExtractToolCall) => void,
 ): StreamChunkHandler {
   return {
     onFirstToken: onFirstTokenCallback,
     onSource: onSourceCallback,
+    onSearchCall: onSearchCallCallback,
+    onExtractCall: onExtractCallCallback,
   };
 }
 
@@ -74,6 +83,12 @@ export function processStreamChunk(part: TextStreamPart<ToolSet>, handlers: Stre
     if (toolPart.toolName === "search") {
       const sources = extractSourcesFromToolResult(toolPart.output);
       sources.forEach(handlers.onSource);
+      handlers.onSearchCall({ resultCount: sources.length });
+    }
+    else if (toolPart.toolName === "extract") {
+      const sources = extractSourcesFromToolResult(toolPart.output);
+      sources.forEach(handlers.onSource);
+      handlers.onExtractCall({ urlCount: sources.length });
     }
   }
 }

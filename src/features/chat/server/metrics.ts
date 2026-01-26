@@ -1,4 +1,6 @@
-import { calculateChatCost, calculateOcrCost, calculateSearchCost } from "./cost";
+import type { ExtractToolCall, SearchToolCall } from "./cost";
+
+import { calculateChatCost, calculateExtractCost, calculateOcrCost, calculateSearchCost } from "./cost";
 
 type MetadataOptions = {
   inputTokens: number;
@@ -9,7 +11,8 @@ type MetadataOptions = {
   modelId: string;
   inputCostPerMillion: number;
   outputCostPerMillion: number;
-  searchEnabled?: boolean;
+  searchCalls?: SearchToolCall[];
+  extractCalls?: ExtractToolCall[];
   sources?: Array<{ id: string; sourceType: string; url?: string; title?: string }>;
   ocrPageCount?: number;
 };
@@ -30,20 +33,14 @@ export function calculateResponseMetadata(options: MetadataOptions) {
     modelId,
     inputCostPerMillion,
     outputCostPerMillion,
-    searchEnabled,
+    searchCalls,
+    extractCalls,
     sources,
     ocrPageCount,
   } = options;
 
-  // Use actual number of discovered sources (if any) to estimate search cost.
-  // `sources` is populated via stream handlers when tool results or source
-  // events are emitted.
-  //
-  // If search isn't enabled, cost is zero.
-  // If search is enabled but no sources are found, assume a default of 10 results.
-  const resultCount = sources ? sources.length : 0;
-  const searchCost = searchEnabled ? calculateSearchCost(resultCount) : 0;
-
+  const searchCost = calculateSearchCost(searchCalls ?? []);
+  const extractCost = calculateExtractCost(extractCalls ?? []);
   const ocrCost = ocrPageCount ? calculateOcrCost(ocrPageCount) : 0;
 
   const modelCost = calculateChatCost(
@@ -52,7 +49,7 @@ export function calculateResponseMetadata(options: MetadataOptions) {
     outputCostPerMillion,
   );
 
-  const totalCost = modelCost + searchCost + ocrCost;
+  const totalCost = modelCost + searchCost + extractCost + ocrCost;
 
   return {
     inputTokens,
@@ -60,6 +57,7 @@ export function calculateResponseMetadata(options: MetadataOptions) {
     costUSD: {
       model: modelCost,
       search: searchCost,
+      extract: extractCost,
       ocr: ocrCost,
       total: totalCost,
     },

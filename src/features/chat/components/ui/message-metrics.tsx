@@ -59,11 +59,12 @@ export function MessageMetrics({
     const legacyTotalCost = metrics.costUsd as unknown as number;
     const usedSearch = metrics.sourceCount && metrics.sourceCount > 0;
     metrics.costUsd = {
-      total: usedSearch ? legacyTotalCost : legacyTotalCost, 
-      model: usedSearch ? legacyTotalCost - 0.015 : legacyTotalCost, 
-      search: usedSearch ? 0.015 : 0, 
+      total: usedSearch ? legacyTotalCost : legacyTotalCost,
+      model: usedSearch ? legacyTotalCost - 0.015 : legacyTotalCost,
+      search: usedSearch ? 0.015 : 0,
+      extract: 0,
       ocr: 0,
-    }
+    };
   }
 
   const isFree = metrics.costUsd?.total === 0;
@@ -298,6 +299,12 @@ export function MessageMetrics({
                         <div className="flex justify-between gap-4">
                           <span>Search:</span>
                           <span className="font-mono">{formatCost(metrics.costUsd.search.toFixed(6))}</span>
+                        </div>
+                      )}
+                      {metrics.costUsd.extract && Number.parseFloat(metrics.costUsd.extract.toFixed(4)) > 0 && (
+                        <div className="flex justify-between gap-4">
+                          <span>Extract:</span>
+                          <span className="font-mono">{formatCost(metrics.costUsd.extract.toFixed(6))}</span>
                         </div>
                       )}
                       {Number.parseFloat(metrics.costUsd.ocr.toFixed(4)) > 0 && (

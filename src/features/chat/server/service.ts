@@ -61,6 +61,8 @@ export async function streamChatResponse(
       const startTime = Date.now();
       let firstTokenTime: number | null = null;
       const sources: Array<{ id: string; sourceType: string; url?: string; title?: string }> = [];
+      const searchCalls: Array<{ resultCount: number }> = [];
+      const extractCalls: Array<{ urlCount: number }> = [];
 
       const provider = getModelProvider(openRouterApiKey);
 
@@ -81,6 +83,12 @@ export async function streamChatResponse(
         },
         (source) => {
           sources.push(source);
+        },
+        (call) => {
+          searchCalls.push(call);
+        },
+        (call) => {
+          extractCalls.push(call);
         },
       );
 
@@ -167,7 +175,8 @@ export async function streamChatResponse(
               modelId,
               inputCostPerMillion,
               outputCostPerMillion,
-              searchEnabled,
+              searchCalls,
+              extractCalls,
               sources,
               ocrPageCount: resolvedOcrPageCount ?? 0,
             });

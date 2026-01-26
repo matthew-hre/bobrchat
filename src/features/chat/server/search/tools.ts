@@ -17,7 +17,10 @@ Guidelines:
 - Use include_domains to restrict to trusted sources (e.g., official docs, Wikipedia)
 - Use exclude_domains to filter out unreliable or irrelevant sites`;
 
-const EXTRACT_DESCRIPTION = `Extract content from specific web URLs. Use this after search to get detailed content from promising results, or when you have specific URLs to analyze.
+const EXTRACT_DESCRIPTION = `Read and extract content from a webpage URL. Use this when:
+- The user shares a link and asks about it
+- You need detailed content from a specific URL
+- Following up on search results to get full article content
 
 Guidelines:
 - Provide a clear objective describing what information you need
