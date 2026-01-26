@@ -60,7 +60,6 @@ export async function streamChatResponse(
 
       const startTime = Date.now();
       let firstTokenTime: number | null = null;
-      const sources: Array<{ id: string; sourceType: string; url?: string; title?: string }> = [];
       const searchCalls: Array<{ resultCount: number }> = [];
       const extractCalls: Array<{ urlCount: number }> = [];
 
@@ -80,9 +79,6 @@ export async function streamChatResponse(
       const streamHandlers = createStreamHandlers(
         () => {
           // First token timing is now captured in createMetadata at text-start
-        },
-        (source) => {
-          sources.push(source);
         },
         (call) => {
           searchCalls.push(call);
@@ -177,7 +173,6 @@ export async function streamChatResponse(
               outputCostPerMillion,
               searchCalls,
               extractCalls,
-              sources,
               ocrPageCount: resolvedOcrPageCount ?? 0,
             });
           }

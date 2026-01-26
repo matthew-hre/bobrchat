@@ -3,11 +3,11 @@
 import { AlertCircle, ExternalLink, Globe, Loader2, StopCircle } from "lucide-react";
 import Link from "next/link";
 
-import type { SourceInfo } from "~/app/api/chat/route";
+import type { NormalizedSource } from "~/features/chat/ui/parts/normalize";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion";
 
-export function SearchingSources({ sources, isSearching, error, stopped, id }: { sources: SourceInfo[]; isSearching?: boolean; error?: string; stopped?: boolean; id?: string }) {
+export function SearchingSources({ sources, isSearching, error, stopped, id }: { sources: NormalizedSource[]; isSearching?: boolean; error?: string; stopped?: boolean; id?: string }) {
   if (!sources.length && !isSearching && !error && !stopped)
     return null;
 

@@ -13,7 +13,6 @@ type MetadataOptions = {
   outputCostPerMillion: number;
   searchCalls?: SearchToolCall[];
   extractCalls?: ExtractToolCall[];
-  sources?: Array<{ id: string; sourceType: string; url?: string; title?: string }>;
   ocrPageCount?: number;
 };
 
@@ -35,7 +34,6 @@ export function calculateResponseMetadata(options: MetadataOptions) {
     outputCostPerMillion,
     searchCalls,
     extractCalls,
-    sources,
     ocrPageCount,
   } = options;
 
@@ -64,6 +62,5 @@ export function calculateResponseMetadata(options: MetadataOptions) {
     model: modelId,
     tokensPerSecond: outputTokens > 0 ? outputTokens / (totalTime / 1000) : 0,
     timeToFirstTokenMs: firstTokenTime ? firstTokenTime - startTime : 0,
-    ...(sources && sources.length > 0 && { sources }),
   };
 }

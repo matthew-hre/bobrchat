@@ -12,13 +12,6 @@ import { generateThreadTitle } from "~/features/chat/server/naming";
 import { streamChatResponse } from "~/features/chat/server/service";
 import { getUserSettingsAndKeys } from "~/features/settings/queries";
 
-export type SourceInfo = {
-  id: string;
-  sourceType: string;
-  url?: string;
-  title?: string;
-};
-
 export type CostBreakdown = {
   model: number;
   search: number;
@@ -34,7 +27,6 @@ export type MessageMetadata = {
   model: string;
   tokensPerSecond: number;
   timeToFirstTokenMs: number;
-  sources?: SourceInfo[];
 };
 
 export type ChatUIMessage = UIMessage<MessageMetadata> & {
@@ -183,6 +175,7 @@ export async function POST(req: Request) {
           }
         },
         sendSources: true,
+        sendReasoning: true,
         onError: (error) => {
           Sentry.captureException(error, { tags: { operation: "chat-stream" } });
           return formatProviderError(error);

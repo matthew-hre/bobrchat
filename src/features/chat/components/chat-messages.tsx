@@ -219,7 +219,6 @@ export const ChatMessages = memo(({
                       ? message.metadata.costUSD
                       : null,
                     content: textContent,
-                    sourceCount: message.metadata?.sources ? message.metadata.sources.length : null,
                   }}
                   onRetry={() => onRegenerate?.(message.id)}
                   isRetrying={isRegenerating}

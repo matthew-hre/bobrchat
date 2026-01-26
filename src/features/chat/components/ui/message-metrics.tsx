@@ -21,7 +21,6 @@ export type MessageMetricsData = {
   ttft: number | null;
   costUsd: CostBreakdown | null;
   content: string;
-  sourceCount: number | null;
 };
 
 type MessageMetricsProps = {
@@ -54,14 +53,13 @@ export function MessageMetrics({
     return `$${num.toFixed(6)}`;
   };
 
-  // legacy cost handling
+  // legacy cost handling - old threads stored costUsd as a number
   if (typeof metrics.costUsd === "number") {
     const legacyTotalCost = metrics.costUsd as unknown as number;
-    const usedSearch = metrics.sourceCount && metrics.sourceCount > 0;
     metrics.costUsd = {
-      total: usedSearch ? legacyTotalCost : legacyTotalCost,
-      model: usedSearch ? legacyTotalCost - 0.015 : legacyTotalCost,
-      search: usedSearch ? 0.015 : 0,
+      total: legacyTotalCost,
+      model: legacyTotalCost,
+      search: 0,
       extract: 0,
       ocr: 0,
     };
