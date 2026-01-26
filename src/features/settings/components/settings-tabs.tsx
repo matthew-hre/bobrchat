@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   KeyIcon,
   LogOutIcon,
+  MenuIcon,
   PaletteIcon,
   PaperclipIcon,
   SettingsIcon,
@@ -12,7 +13,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import { signOut } from "~/features/auth/lib/auth-client";
 import { cn } from "~/lib/utils";
@@ -48,6 +49,7 @@ export function SettingsTabs() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const activeTab = (searchParams.get("settings") as TabId) || "profile";
 
@@ -57,6 +59,7 @@ export function SettingsTabs() {
       params.set("settings", tab);
       params.delete("referrer");
       router.push(`?${params.toString()}`, { scroll: false });
+      setSidebarOpen(false);
     },
     [router, searchParams],
   );
@@ -68,12 +71,53 @@ export function SettingsTabs() {
   }, [router, queryClient]);
 
   return (
-    <div className="flex h-full w-full">
+    <div className={`
+      flex h-full w-full flex-col
+      md:flex-row
+    `}
+    >
+      {/* Mobile header with hamburger */}
+      <div className={`
+        bg-muted/30 flex items-center justify-between border-b p-4
+        md:hidden
+      `}
+      >
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          <MenuIcon className="size-4" />
+          <span className="sr-only">Toggle menu</span>
+        </Button>
+        <DialogClose asChild>
+          <Button variant="ghost" size="icon-sm">
+            <XIcon className="size-4" />
+            <span className="sr-only">Close</span>
+          </Button>
+        </DialogClose>
+      </div>
+
       {/* Sidebar */}
       <div
-        className={cn(`bg-muted/30 flex w-50 shrink-0 flex-col border-r`)}
+        className={cn(
+          `
+            bg-card flex flex-col border-r
+            md:bg-muted/30 md:min-w-50 md:shrink-0
+          `,
+          !sidebarOpen && "hidden",
+          sidebarOpen && "md:hidden",
+          `
+            absolute inset-0 top-16 z-40 w-full
+            md:relative md:inset-auto md:flex md:w-auto
+          `,
+        )}
       >
-        <div className="flex items-center justify-between p-4">
+        <div className={`
+          hidden items-center justify-between p-4
+          md:flex
+        `}
+        >
           <h2 className="text-lg font-semibold">Settings</h2>
           <DialogClose asChild>
             <Button
@@ -87,7 +131,11 @@ export function SettingsTabs() {
           </DialogClose>
         </div>
 
-        <Separator />
+        <Separator className={`
+          hidden
+          md:block
+        `}
+        />
 
         <nav className="flex flex-1 flex-col gap-1 p-2">
           {tabs.map((tab) => {
@@ -119,7 +167,11 @@ export function SettingsTabs() {
           })}
         </nav>
 
-        <Separator />
+        <Separator className={`
+          hidden
+          md:block
+        `}
+        />
 
         <div className="p-2">
           <button

@@ -35,8 +35,10 @@ export function SettingsModalProvider() {
       <DialogContent
         showCloseButton={false}
         className={`
-          flex h-full max-h-[90vh] max-w-[80vw] min-w-[80vw] gap-0
-          overflow-hidden p-0
+          flex h-screen max-h-screen max-w-screen min-w-screen gap-0
+          overflow-hidden rounded-none p-0
+          md:h-full md:max-h-[90vh] md:max-w-[80vw] md:min-w-[80vw]
+          md:rounded-lg
         `}
       >
         <DialogTitle className="sr-only">Settings</DialogTitle>

@@ -2,17 +2,15 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 
-import { AlertCircle, BrainIcon, PaperclipIcon, SearchIcon, SendIcon, SquareIcon } from "lucide-react";
+import { AlertCircle, SendIcon, SquareIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
 
 import { Button } from "~/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { Kbd } from "~/components/ui/kbd";
 import { Textarea } from "~/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useFileAttachments } from "~/features/attachments/hooks/use-file-attachments";
 import { FilePreview } from "~/features/chat/components/messages/file-preview";
 import { useChatUIStore } from "~/features/chat/store";
@@ -21,6 +19,7 @@ import { useApiKeyStatus } from "~/features/settings/hooks/use-api-status";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
+import { ChatInputCapabilities } from "./chat-input-capabilities";
 import { ModelSelector } from "./ui/model-selector";
 
 type ChatInputProps = {
@@ -289,125 +288,20 @@ export function ChatInput({
 
             <div className="flex-1" />
             <div className="flex items-center gap-2">
-              {capabilities.supportsReasoning && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={hasOpenRouterKey === false}
-                          className={cn(`
-                            hover:text-foreground
-                            gap-2 transition-colors
-                          `, reasoningLevel !== "none"
-                            ? `
-                              text-primary
-                              hover:text-primary/80 hover:bg-primary/10
-                              dark:hover:text-primary/80
-                              dark:hover:bg-primary/10
-                            `
-                            : `text-muted-foreground`)}
-                          title={`Reasoning level: ${reasoningLevel}`}
-                        >
-                          <BrainIcon size={16} />
-                          Reasoning
-                          {reasoningLevel !== "none" && (
-                            <>
-                              {" "}
-                              (
-                              {reasoningLevel}
-                              )
-                            </>
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {["xhigh", "high", "medium", "low", "minimal", "none"].map(level => (
-                          <DropdownMenuItem key={level} onClick={() => setReasoningLevel(level)}>
-                            {level}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      {hasParallelApiKey === false && !isParallelApiLoading
-                        ? "Configure your Parallel API key in settings to use reasoning"
-                        : `Reasoning level: ${reasoningLevel}`}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-
-              {capabilities.supportsSearch && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSearchEnabled(!searchEnabled)}
-                        disabled={hasParallelApiKey === false}
-                        className={cn(`
-                          hover:text-foreground
-                          gap-2 transition-colors
-                        `, searchEnabled
-                          ? `
-                            text-primary
-                            hover:text-primary/80 hover:bg-primary/10
-                            dark:hover:text-primary/80 dark:hover:bg-primary/10
-                          `
-                          : `text-muted-foreground`)}
-                        title={searchEnabled ? "Search enabled" : "Search disabled"}
-                      >
-                        <SearchIcon size={16} />
-                        Search
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      {hasParallelApiKey === false && !isParallelApiLoading
-                        ? "Configure your Parallel API key in settings to use search"
-                        : searchEnabled
-                          ? "Search is enabled for this message"
-                          : "Search is disabled for this message"}
-                    </p>
-                  </TooltipContent>
-
-                </Tooltip>
-              )}
-
-              {canUpload && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleAttachClick}
-                      disabled={hasOpenRouterKey === false}
-                      className={cn(`
-                        text-muted-foreground gap-2
-                        hover:text-foreground
-                      `, pendingFiles.length > 0 && "text-primary")}
-                    >
-                      <PaperclipIcon size={8} />
-                      Attach
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      {`Accepts: ${getAcceptedFileTypesDescription(capabilities)}`}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+              {/* Capabilities Menu */}
+              <ChatInputCapabilities
+                capabilities={capabilities}
+                reasoningLevel={reasoningLevel}
+                searchEnabled={searchEnabled}
+                pendingFilesCount={pendingFiles.length}
+                hasOpenRouterKey={hasOpenRouterKey}
+                hasParallelApiKey={hasParallelApiKey}
+                isParallelApiLoading={isParallelApiLoading}
+                onReasoningLevelChange={setReasoningLevel}
+                onSearchToggle={() => setSearchEnabled(!searchEnabled)}
+                onAttachClick={handleAttachClick}
+                acceptedFileTypesDescription={getAcceptedFileTypesDescription(capabilities)}
+              />
 
               <Button
                 type={isLoading ? "button" : "submit"}

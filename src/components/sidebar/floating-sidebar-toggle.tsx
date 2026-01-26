@@ -13,7 +13,7 @@ export function FloatingSidebarToggle() {
   const pathname = usePathname();
   const isSharePage = pathname?.startsWith("/share");
 
-  const isVisible = state === "collapsed" && !isMobile && !isSharePage;
+  const isVisible = (state === "collapsed" || isMobile) && !isSharePage;
 
   return (
     <div
@@ -25,10 +25,7 @@ export function FloatingSidebarToggle() {
           pointer-events-none fixed top-4 left-4 z-40 space-x-2 duration-300
           ease-in-out
         `,
-        `
-          hidden
-          md:block
-        `,
+        !isSharePage ? "block" : "hidden",
         isVisible
           ? "animate-in slide-in-from-left-12"
           : "-translate-x-12 opacity-0",
