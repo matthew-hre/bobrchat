@@ -17,7 +17,7 @@ export async function proxy(request: NextRequest) {
   const protectedRoutes = ["/chat", "/settings"];
 
   // Routes that don't require authentication
-  const publicRoutes = ["/landing", "/auth", "/api", "/share"];
+  const publicRoutes = ["/auth", "/api", "/share"];
 
   // Check if current route requires authentication
   const isProtectedRoute = protectedRoutes.some(route =>
