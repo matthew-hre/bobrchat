@@ -17,7 +17,7 @@ const mockModels = [
   },
   {
     name: "GLM 4.7 Flash",
-    id: "google/glm-4.7-flash",
+    id: "z-ai/glm-4.7-flash",
     selected: false,
     capabilities: ["reasoning", "search"],
   },

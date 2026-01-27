@@ -153,16 +153,16 @@ export function LandingPage() {
             >
               <div className={`
                 border-border/60 order-2 flex items-center justify-center
-                border-dashed p-8
-                lg:order-1 lg:border-r
+                border-b border-dashed p-8
+                lg:order-1 lg:border-r lg:border-b-0
               `}
               >
                 <ParallelSearchMockup />
               </div>
               <div className={`
-                border-border/60 order-1 flex flex-col justify-center
+                border-border/60 order-1 flex flex-col justify-center border-b
                 border-dashed p-8
-                lg:order-2
+                lg:order-2 lg:border-b-0
               `}
               >
                 <h2 className="text-xl font-semibold">Search smarter</h2>
