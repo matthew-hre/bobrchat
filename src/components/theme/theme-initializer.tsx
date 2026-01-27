@@ -21,7 +21,8 @@ export function applyAccentColor(color: AccentColor) {
     // Custom hue - apply inline styles
     const primary = `oklch(0.72 0.19 ${color})`;
     CUSTOM_COLOR_VARS.forEach(v => html.style.setProperty(v, primary));
-  } else if (color !== "green") {
+  }
+  else if (color !== "green") {
     // Preset (non-default) - use class
     html.classList.add(`accent-${color}`);
   }

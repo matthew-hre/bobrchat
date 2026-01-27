@@ -1,5 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { createHighlighter, type Highlighter } from "shiki";
+import type { NextRequest } from "next/server";
+import type { Highlighter } from "shiki";
+
+import { NextResponse } from "next/server";
+import { createHighlighter } from "shiki";
 
 const SUPPORTED_LANGS = [
   "javascript",

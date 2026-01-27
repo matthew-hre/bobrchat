@@ -61,12 +61,14 @@ export const CodeBlock: FC<CodeBlockProps> = memo(({ language: propLanguage, val
   }, [value, language, resolvedTheme]);
 
   const copyToClipboard = () => {
-    if (!value) return;
+    if (!value)
+      return;
     copy(value);
   };
 
   const downloadFile = async () => {
-    if (!value) return;
+    if (!value)
+      return;
 
     try {
       if ("showSaveFilePicker" in window) {
