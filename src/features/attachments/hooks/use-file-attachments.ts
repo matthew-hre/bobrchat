@@ -31,16 +31,12 @@ export function useFileAttachments({
 
   const uploadFiles = React.useCallback(
     async (filesToUpload: FileList | File[]) => {
-      console.log("[uploadFiles] called with", filesToUpload.length, "files");
       const files = Array.from(filesToUpload);
       if (files.length === 0) {
-        console.log("[uploadFiles] no files, returning early");
         return;
       }
 
-      console.log("[uploadFiles] validating files:", files.map(f => ({ name: f.name, size: f.size, type: f.type })));
       const { valid, invalid } = validateFilesForModel(files, capabilities);
-      console.log("[uploadFiles] validation result:", { valid: valid.length, invalid: invalid.length });
 
       if (invalid.length > 0) {
         for (const { file, reason } of invalid) {
@@ -49,11 +45,9 @@ export function useFileAttachments({
       }
 
       if (valid.length === 0) {
-        console.log("[uploadFiles] no valid files after validation, returning");
         return;
       }
 
-      console.log("[uploadFiles] creating temp files for", valid.length, "valid files");
       const tempFiles: PendingFile[] = valid.map(file => ({
         id: crypto.randomUUID(),
         filename: file.name,
@@ -62,26 +56,23 @@ export function useFileAttachments({
         isUploading: true,
       }));
 
-      console.log("[uploadFiles] setting pending files");
       setPendingFiles(prev => [...prev, ...tempFiles]);
 
       const formData = new FormData();
       valid.forEach(file => formData.append("files", file));
+      tempFiles.forEach(tf => formData.append("clientIds", tf.id));
 
       const fileLabel
         = valid.length === 1 ? valid[0].name : `${valid.length} files`;
 
       const uploadPromise = async () => {
-        console.log("[uploadFiles] starting fetch to /api/upload");
         const response = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         });
-        console.log("[uploadFiles] fetch response:", response.status, response.statusText);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.log("[uploadFiles] upload failed:", errorData);
           if (errorData.code === "QUOTA_EXCEEDED") {
             throw new Error(errorData.error || "Storage quota exceeded");
           }
@@ -89,7 +80,6 @@ export function useFileAttachments({
         }
 
         const result = await response.json();
-        console.log("[uploadFiles] upload success:", result);
 
         if (result.errors?.length > 0) {
           console.error("[uploadFiles] server returned errors:", result.errors);
@@ -104,8 +94,12 @@ export function useFileAttachments({
 
         setPendingFiles((prev) => {
           const updated = [...prev];
-          result.files.forEach((uploaded: PendingFile, index: number) => {
-            const tempFile = tempFiles[index];
+          result.files.forEach((uploaded: PendingFile & { clientId?: string }) => {
+            const tempFile = uploaded.clientId
+              ? tempFiles.find(tf => tf.id === uploaded.clientId)
+              : tempFiles[result.files.indexOf(uploaded)];
+            if (!tempFile)
+              return;
             const existingIndex = updated.findIndex(f => f.id === tempFile.id);
             if (existingIndex !== -1) {
               URL.revokeObjectURL(updated[existingIndex].url);
@@ -126,9 +120,15 @@ export function useFileAttachments({
         loading: `Uploading ${fileLabel}...`,
         success: `Uploaded ${fileLabel}`,
         error: (err) => {
-          setPendingFiles(prev =>
-            prev.filter(f => !tempFiles.some(tf => tf.id === f.id)),
-          );
+          setPendingFiles((prev) => {
+            for (const tf of tempFiles) {
+              const file = prev.find(f => f.id === tf.id);
+              if (file?.url.startsWith("blob:")) {
+                URL.revokeObjectURL(file.url);
+              }
+            }
+            return prev.filter(f => !tempFiles.some(tf => tf.id === f.id));
+          });
           if (err instanceof Error && err.message.includes("quota")) {
             return err.message;
           }
@@ -164,14 +164,10 @@ export function useFileAttachments({
 
   const handlePaste = React.useCallback(
     (e: React.ClipboardEvent) => {
-      console.log("[handlePaste] paste event triggered");
       const items = e.clipboardData?.items;
       if (!items) {
-        console.log("[handlePaste] no clipboard items");
         return;
       }
-
-      console.log("[handlePaste] clipboard items:", Array.from(items).map(i => ({ kind: i.kind, type: i.type })));
 
       const files: File[] = [];
       let hasText = false;
@@ -187,11 +183,8 @@ export function useFileAttachments({
         }
       }
 
-      console.log("[handlePaste] parsed:", { filesCount: files.length, hasText, supportsImages: capabilities.supportsImages });
-
       // If we have files and model supports uploads, upload them
       if (files.length > 0 && capabilities.supportsImages) {
-        console.log("[handlePaste] uploading files directly");
         e.preventDefault();
         uploadFiles(files);
         return;
@@ -200,28 +193,24 @@ export function useFileAttachments({
       // Check if pasted text is long and should be treated as a file
       // Only convert to file if the model supports file uploads
       if (hasText) {
-        console.log("[handlePaste] processing text paste");
         e.preventDefault();
         for (const item of items) {
           if (item.kind === "string" && item.type === "text/plain") {
             item.getAsString((text) => {
-              console.log("[handlePaste] getAsString callback, text length:", text.length);
               // Count lines efficiently without creating a huge array
               let lineCount = 1;
               for (let i = 0; i < text.length && lineCount <= PASTE_LINE_THRESHOLD; i++) {
-                if (text[i] === "\n") lineCount++;
+                if (text[i] === "\n")
+                  lineCount++;
               }
               const isLongText
                 = text.length > PASTE_TEXT_THRESHOLD
                   || lineCount > PASTE_LINE_THRESHOLD;
 
-              console.log("[handlePaste] text analysis:", { lineCount, isLongText, autoCreateFilesFromPaste });
-
               if (isLongText && autoCreateFilesFromPaste) {
                 const language = detectLanguage(text);
                 const extension = getLanguageExtension(language);
                 const filename = `pasted-${Date.now()}.${extension}`;
-                console.log("[handlePaste] creating file:", { filename, language });
 
                 const file = new File([text], filename, {
                   type: "text/plain",
@@ -274,7 +263,14 @@ export function useFileAttachments({
   const isUploading = pendingFiles.some(f => f.isUploading);
 
   const clearPendingFiles = React.useCallback(() => {
-    setPendingFiles([]);
+    setPendingFiles((prev) => {
+      for (const file of prev) {
+        if (file.url.startsWith("blob:")) {
+          URL.revokeObjectURL(file.url);
+        }
+      }
+      return [];
+    });
   }, []);
 
   return {

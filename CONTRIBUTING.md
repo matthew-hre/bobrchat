@@ -81,12 +81,12 @@ Keep your commit messages clear and concise. Prefix your commits with the domain
 
 ## Individual Contributor License Agreement (CLA)
 
-By contributing, you agree that your contributions will be licensed under the [PolyForm Noncommercial License 1.0.0](./LICENSE), and you agree to the following terms:
+By contributing, you agree that your contributions will be licensed under the [Business Source License 1.1](./LICENSE), and you agree to the following terms:
 
 1. **Grant of Rights:** You grant the project owner a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable license to use, reproduce, modify, and distribute your contributions.
 
 2. **Monetization:** You acknowledge that your contributions may be included in paid, hosted, or commercial versions of this software. You are not entitled to any compensation or royalties.
 
-3. **Ownership:** You retain ownership of your original work, but you grant the project owner the right to re-license your contributions under any terms, including the Polyform Noncommercial license or future proprietary/commercial licenses.
+3. **Ownership:** You retain ownership of your original work, but you grant the project owner the right to re-license your contributions under any terms, including the Business Source License 1.1.
 
 4. **Authority:** You represent that you are the legal owner of the code you are contributing and that it does not infringe on any third-party intellectual property.

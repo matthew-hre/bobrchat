@@ -109,6 +109,7 @@ export async function POST(req: Request) {
         baseModelId,
         openrouterKey,
         settings,
+        session.user.id,
         searchEnabled,
         parallelKey,
         undefined,

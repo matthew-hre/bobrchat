@@ -234,3 +234,31 @@ export async function getPdfPageCountsByStoragePaths(storagePaths: string[]): Pr
   }
   return map;
 }
+
+export type AttachmentRecord = {
+  id: string;
+  storagePath: string;
+  mediaType: string;
+  filename: string;
+};
+
+export async function getAttachmentsByIds(
+  userId: string,
+  ids: string[],
+): Promise<AttachmentRecord[]> {
+  const uniqueIds = Array.from(new Set(ids)).filter(id => typeof id === "string" && id.length > 0);
+  if (uniqueIds.length === 0)
+    return [];
+
+  const rows = await db
+    .select({
+      id: attachments.id,
+      storagePath: attachments.storagePath,
+      mediaType: attachments.mediaType,
+      filename: attachments.filename,
+    })
+    .from(attachments)
+    .where(and(eq(attachments.userId, userId), inArray(attachments.id, uniqueIds)));
+
+  return rows;
+}

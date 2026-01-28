@@ -60,6 +60,7 @@ export async function POST(req: Request) {
       try {
         const formData = await req.formData();
         const files = formData.getAll("files") as File[];
+        const clientIds = formData.getAll("clientIds") as string[];
 
         if (files.length === 0) {
           return new Response(JSON.stringify({ error: "No files provided" }), {
@@ -104,11 +105,15 @@ export async function POST(req: Request) {
         const results = [];
         const errors = [];
 
-        for (const file of files) {
+        for (let index = 0; index < files.length; index++) {
+          const file = files[index];
+          const clientId = clientIds[index];
+
           if (file.size > MAX_FILE_SIZE) {
             errors.push({
               filename: file.name,
               error: `File exceeds maximum size of ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+              ...(clientId && { clientId }),
             });
             continue;
           }
@@ -128,6 +133,7 @@ export async function POST(req: Request) {
             errors.push({
               filename: file.name,
               error: `File type ${preferredMime} is not allowed`,
+              ...(clientId && { clientId }),
             });
             continue;
           }
@@ -159,7 +165,7 @@ export async function POST(req: Request) {
             messageId: null,
           });
 
-          results.push({ ...uploaded, pageCount });
+          results.push({ ...uploaded, pageCount, ...(clientId && { clientId }) });
         }
 
         span.setAttribute("upload.successCount", results.length);

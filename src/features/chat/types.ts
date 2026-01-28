@@ -59,6 +59,38 @@ export function isFilePart(part: { type: string }): part is FileUIPart {
 }
 
 // ============================================
+// App-specific file part types
+// ============================================
+
+/**
+ * App-specific metadata added to file parts.
+ * These fields are used for database tracking and storage.
+ */
+export type AppFileMeta = {
+  id?: string;
+  storagePath?: string;
+  size?: number;
+};
+
+/**
+ * Extended file part with app-specific metadata.
+ * Use this instead of defining local FilePart types.
+ */
+export type AppFileUIPart = FileUIPart & AppFileMeta;
+
+/**
+ * Type guard for app file parts with required id.
+ */
+export function isAppFilePartWithId(
+  part: { type: string },
+): part is AppFileUIPart & { id: string } {
+  return (
+    part.type === "file"
+    && typeof (part as AppFileUIPart).id === "string"
+  );
+}
+
+// ============================================
 // Derived state types from SDK
 // ============================================
 

@@ -3,7 +3,9 @@
 import { useMemo } from "react";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { AppFileUIPart } from "~/features/chat/types";
 
+import { isFilePart, isTextPart } from "~/features/chat/types";
 import { cn } from "~/lib/utils";
 
 import type { EditedMessagePayload, ExistingAttachment } from "./inline-message-editor";
@@ -23,46 +25,33 @@ type EditableUserMessageProps = {
   isSubmitting?: boolean;
 };
 
-type FilePart = {
-  type: "file";
-  id?: string;
-  url: string;
-  filename?: string;
-  mediaType?: string;
-  storagePath?: string;
-};
-
 function extractTextAndAttachments(message: ChatUIMessage): {
   textContent: string;
   attachments: ExistingAttachment[];
 } {
-  const textParts = message.parts
-    .filter(part => part.type === "text")
-    .map(part => part.text);
+  const textContent = message.parts
+    .filter(isTextPart)
+    .map(part => part.text)
+    .join("");
 
-  const fileParts = message.parts
-    .filter(part => part.type === "file")
-    .reduce<ExistingAttachment[]>((attachments, part) => {
-      const filePart = part as FilePart;
+  const attachments = message.parts
+    .filter(isFilePart)
+    .reduce<ExistingAttachment[]>((acc, part) => {
+      const filePart = part as AppFileUIPart;
+      if (!filePart.id)
+        return acc;
 
-      if (!filePart.id) {
-        return attachments;
-      }
-
-      attachments.push({
+      acc.push({
         id: filePart.id,
         url: filePart.url,
         filename: filePart.filename,
         mediaType: filePart.mediaType,
         storagePath: filePart.storagePath,
       });
-
-      return attachments;
+      return acc;
     }, []);
-  return {
-    textContent: textParts.join(""),
-    attachments: fileParts,
-  };
+
+  return { textContent, attachments };
 }
 
 export function EditableUserMessage({

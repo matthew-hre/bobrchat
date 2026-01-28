@@ -39,6 +39,7 @@ export async function streamChatResponse(
   modelId: string,
   openRouterApiKey: string,
   userSettings: UserSettingsData,
+  userId: string,
   searchEnabled?: boolean,
   parallelApiKey?: string,
   onFirstToken?: () => void,
@@ -70,7 +71,7 @@ export async function streamChatResponse(
       const systemPrompt = generatePrompt(userSettings);
       const [{ inputCostPerMillion, outputCostPerMillion }, processedMessages] = await Promise.all([
         getTokenCosts(modelId),
-        processMessageFiles(messages),
+        processMessageFiles(messages, userId),
       ]);
       const convertedMessages = await convertToModelMessages(processedMessages);
 

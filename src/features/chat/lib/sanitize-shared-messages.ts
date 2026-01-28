@@ -1,46 +1,21 @@
+import type { FileUIPart } from "ai";
+
 import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { AppFileUIPart } from "~/features/chat/types";
 
-type FilePart = {
-  type: "file";
-  id?: string;
-  url?: string;
-  storagePath?: string;
-  filename?: string;
-  mediaType?: string;
-  size?: number;
-};
+import { isFilePart } from "~/features/chat/types";
 
-type SanitizedFilePart = {
-  type: "file";
-  filename?: string;
-  mediaType?: string;
-  size?: number;
-};
-
-function isFilePart(part: unknown): part is FilePart {
-  return (
-    typeof part === "object"
-    && part !== null
-    && (part as { type?: unknown }).type === "file"
-  );
-}
-
-function sanitizeFilePart(part: FilePart): SanitizedFilePart {
-  const sanitized: SanitizedFilePart = {
+/**
+ * Sanitizes a file part by removing internal fields (id, storagePath)
+ * while keeping SDK-required fields (url, mediaType).
+ */
+function sanitizeFilePart(part: AppFileUIPart): FileUIPart {
+  return {
     type: "file",
+    url: part.url,
+    mediaType: part.mediaType,
+    ...(part.filename !== undefined && { filename: part.filename }),
   };
-
-  if (part.filename !== undefined) {
-    sanitized.filename = part.filename;
-  }
-  if (part.mediaType !== undefined) {
-    sanitized.mediaType = part.mediaType;
-  }
-  if (part.size !== undefined) {
-    sanitized.size = part.size;
-  }
-
-  return sanitized;
 }
 
 export function sanitizeMessagesForSharing(
@@ -52,21 +27,17 @@ export function sanitizeMessagesForSharing(
   }
 
   return messages.map((message) => {
-    const parts = (message as unknown as { parts?: unknown[] }).parts;
-    if (!Array.isArray(parts)) {
+    if (!message.parts) {
       return message;
     }
 
-    const sanitizedParts = parts.map((part) => {
+    const sanitizedParts = message.parts.map((part) => {
       if (isFilePart(part)) {
-        return sanitizeFilePart(part);
+        return sanitizeFilePart(part as AppFileUIPart);
       }
       return part;
     });
 
-    return {
-      ...message,
-      parts: sanitizedParts,
-    } as ChatUIMessage;
+    return { ...message, parts: sanitizedParts };
   });
 }
