@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { PendingFile } from "~/features/chat/components/messages/file-preview";
 import type { getModelCapabilities } from "~/features/models";
 
+import { useGlobalDropZone } from "~/features/attachments/components/global-drop-zone";
 import { STORAGE_QUOTA_KEY } from "~/features/attachments/hooks/use-attachments";
 import { detectLanguage, getLanguageExtension } from "~/features/chat/utils/detect-language";
 import { validateFilesForModel } from "~/features/models";
@@ -262,6 +263,58 @@ export function useFileAttachments({
 
   const isUploading = pendingFiles.some(f => f.isUploading);
 
+  // Register with global drop zone for app-wide drag-and-drop
+  const globalDropHandler = React.useCallback(
+    (files: FileList) => {
+      if (capabilities.supportsImages) {
+        uploadFiles(files);
+      }
+    },
+    [uploadFiles, capabilities.supportsImages],
+  );
+  const isGlobalDragging = useGlobalDropZone(globalDropHandler);
+
+  const [isDragging, setIsDragging] = React.useState(false);
+  const dragCounterRef = React.useRef(0);
+
+  const handleDragEnter = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer?.types.includes("Files")) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = React.useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current = 0;
+      setIsDragging(false);
+
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0 && capabilities.supportsImages) {
+        uploadFiles(files);
+      }
+    },
+    [uploadFiles, capabilities.supportsImages],
+  );
+
   const clearPendingFiles = React.useCallback(() => {
     setPendingFiles((prev) => {
       for (const file of prev) {
@@ -277,10 +330,15 @@ export function useFileAttachments({
     pendingFiles,
     fileInputRef,
     isUploading,
+    isDragging: isDragging || isGlobalDragging,
     handleRemoveFile,
     handlePaste,
     handleAttachClick,
     handleFileInputChange,
+    handleDragEnter,
+    handleDragLeave,
+    handleDragOver,
+    handleDrop,
     clearPendingFiles,
   };
 }

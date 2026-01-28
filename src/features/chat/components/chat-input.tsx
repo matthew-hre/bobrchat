@@ -2,7 +2,7 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 
-import { AlertCircle, SendIcon, SquareIcon } from "lucide-react";
+import { AlertCircle, SendIcon, SquareIcon, Upload } from "lucide-react";
 import Link from "next/link";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
@@ -47,10 +47,37 @@ export function ChatInput({
         )}
         <form
           onSubmit={send.submit}
-          className={cn(`
-            border-border bg-background relative flex flex-col border
-          `)}
+          onDragEnter={attachments.handleDragEnter}
+          onDragLeave={attachments.handleDragLeave}
+          onDragOver={attachments.handleDragOver}
+          onDrop={attachments.handleDrop}
+          className={cn(
+            `border-border bg-background relative flex flex-col border`,
+            attachments.isDragging && "ring-primary ring-2",
+          )}
         >
+          {/* Drop overlay */}
+          <div
+            className={cn(
+              `
+                pointer-events-none absolute inset-0 z-10 flex items-center
+                justify-center transition-all duration-200 ease-out
+              `,
+              attachments.isDragging
+                ? "bg-background/60 opacity-100 backdrop-blur-[2px]"
+                : "pointer-events-none opacity-0",
+            )}
+          >
+            <div
+              className={cn(
+                "flex items-center gap-2 transition-transform duration-200",
+                attachments.isDragging ? "scale-100" : "scale-95",
+              )}
+            >
+              <Upload className="text-primary size-5" />
+              <span className="text-sm font-medium">Drop files to upload</span>
+            </div>
+          </div>
           {/* File Preview Area */}
           {attachments.pendingFiles.length > 0 && (
             <div className="border-border border-b p-3">
