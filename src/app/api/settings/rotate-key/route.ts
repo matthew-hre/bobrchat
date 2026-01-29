@@ -16,7 +16,8 @@ export async function POST() {
   try {
     await rotateKey(session.user.id);
     return NextResponse.json({ success: true });
-  } catch (err) {
+  }
+  catch (err) {
     console.error(`Key rotation failure: ${err}`);
     return NextResponse.json({ error: "Key rotation failed" }, { status: 500 });
   }

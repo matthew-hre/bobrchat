@@ -1,4 +1,5 @@
 import { index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+
 import { users } from "./auth";
 
 export const keys = pgTable(
@@ -11,5 +12,5 @@ export const keys = pgTable(
     rotatedAt: timestamp("rotated_at"),
     salt: text("key_salt").notNull(),
   },
-  (t) => [index("encryption_keys_userId_idx").on(t.userId)],
+  t => [index("encryption_keys_userId_idx").on(t.userId)],
 );

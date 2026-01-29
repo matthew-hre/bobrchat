@@ -8,8 +8,8 @@ import { db } from "~/lib/db";
 import { attachments, messages, threads } from "~/lib/db/schema/chat";
 import { threadShares } from "~/lib/db/schema/sharing";
 import { serverEnv } from "~/lib/env";
-import { getKeyMeta, getOrCreateKeyMeta } from "~/lib/security/keys";
 import { decryptMessage, encryptMessage } from "~/lib/security/encryption";
+import { getKeyMeta, getOrCreateKeyMeta } from "~/lib/security/keys";
 
 function cleanReasoningPart(part: unknown): unknown | null {
   if (!part || typeof part !== "object")
@@ -121,39 +121,47 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
     .where(eq(threads.id, threadId))
     .limit(1);
 
-    if (thread.length === 0) return [];
-    const userId = thread[0].userId;
-    const keyMeta = await getKeyMeta(userId);
+  if (thread.length === 0)
+    return [];
+  const userId = thread[0].userId;
+  const keyMeta = await getKeyMeta(userId);
 
-    const rows = await db
-      .select({
-        id: messages.id,
-        content: messages.content,
-        ciphertext: messages.ciphertext,
-        keyVersion: messages.keyVersion,
-        searchEnabled: messages.searchEnabled,
-        reasoningLevel: messages.reasoningLevel,
-      })
-      .from(messages)
-      .where(eq(messages.threadId, threadId))
-      .orderBy(messages.createdAt);
-    
-    return rows.map((row) => {
-      let message: ChatUIMessage;
+  const rows = await db
+    .select({
+      id: messages.id,
+      content: messages.content,
+      iv: messages.iv,
+      ciphertext: messages.ciphertext,
+      authTag: messages.authTag,
+      keyVersion: messages.keyVersion,
+      searchEnabled: messages.searchEnabled,
+      reasoningLevel: messages.reasoningLevel,
+    })
+    .from(messages)
+    .where(eq(messages.threadId, threadId))
+    .orderBy(messages.createdAt);
 
-      if (row.ciphertext && keyMeta) {
-        message = decryptMessage(row.ciphertext, userId, keyMeta.salt);
-      } else {
-        message = row.content as ChatUIMessage;
-      }
+  return rows.map((row) => {
+    let message: ChatUIMessage;
 
-      return {
-        ...message,
-        id: row.id,
-        searchEnabled: row.searchEnabled,
-        reasoningLevel: row.reasoningLevel,
-      };
-    });
+    if (row.iv && row.ciphertext && row.authTag && keyMeta) {
+      message = decryptMessage(
+        { iv: row.iv, ciphertext: row.ciphertext, authTag: row.authTag },
+        userId,
+        keyMeta.salt,
+      );
+    }
+    else {
+      message = row.content as ChatUIMessage;
+    }
+
+    return {
+      ...message,
+      id: row.id,
+      searchEnabled: row.searchEnabled,
+      reasoningLevel: row.reasoningLevel,
+    };
+  });
 });
 
 /**
@@ -186,7 +194,7 @@ export async function saveMessage(
   const { ids: attachmentIds, storagePaths: attachmentStoragePaths } = extractAttachmentRefs(filteredMessage);
 
   const keyMeta = await getOrCreateKeyMeta(userId);
-  const ciphertext = encryptMessage(filteredMessage, userId, keyMeta.salt);
+  const encrypted = encryptMessage(filteredMessage, userId, keyMeta.salt);
 
   await db.transaction(async (tx) => {
     const messageId = crypto.randomUUID();
@@ -195,7 +203,9 @@ export async function saveMessage(
       id: messageId,
       threadId,
       role,
-      ciphertext,
+      iv: encrypted.iv,
+      ciphertext: encrypted.ciphertext,
+      authTag: encrypted.authTag,
       content: null,
       keyVersion: keyMeta.version,
       searchEnabled: options?.searchEnabled,
@@ -251,12 +261,14 @@ export async function saveMessages(
     await tx.insert(messages).values(
       messagesToSave.map((message) => {
         const filtered = filterAndCleanReasoningParts(message);
-        const ciphertext = encryptMessage(filtered, userId, keyMeta.salt);
+        const encrypted = encryptMessage(filtered, userId, keyMeta.salt);
         return {
           threadId,
           role: message.role,
           content: null,
-          ciphertext,
+          iv: encrypted.iv,
+          ciphertext: encrypted.ciphertext,
+          authTag: encrypted.authTag,
           keyVersion: keyMeta.version,
         };
       }),

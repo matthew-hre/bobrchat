@@ -20,11 +20,14 @@ export function DataManagementSection() {
     setIsRotating(true);
     try {
       const res = await fetch("/api/settings/rotate-key", { method: "POST" });
-      if (!res.ok) throw new Error("Failed to rotate key");
+      if (!res.ok)
+        throw new Error("Failed to rotate key");
       toast.success("Encryption key rotated successfully");
-    } catch {
+    }
+    catch {
       toast.error("Failed to rotate encryption key");
-    } finally {
+    }
+    finally {
       setIsRotating(false);
     }
   };
