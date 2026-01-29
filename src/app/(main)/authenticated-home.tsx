@@ -7,8 +7,8 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
-import type { ThreadIcon } from "~/lib/db/schema/chat";
 import type { LandingPageContentType } from "~/features/settings/types";
+import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { BetaBanner } from "~/features/chat/components/beta-banner";
 import { ChatInput } from "~/features/chat/components/chat-input";
