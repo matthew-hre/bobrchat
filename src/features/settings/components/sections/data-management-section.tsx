@@ -64,7 +64,7 @@ export function DataManagementSection() {
         <div className="space-y-2">
           <ConfirmationDialog
             trigger={(
-              <Button variant="outline" className="w-full">
+              <Button variant="destructive" className="w-full">
                 <Trash2Icon className="size-4" />
                 Delete All Threads
               </Button>
