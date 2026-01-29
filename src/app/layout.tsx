@@ -20,9 +20,31 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BobrChat",
-  description: "A fast, minimal AI chat interface with support for multiple models",
-  robots: "noindex, nofollow",
+  title: {
+    default: "BobrChat - Fast, Minimal AI Chat Interface",
+    template: "%s | BobrChat",
+  },
+  description:
+    "BobrChat is a fast, minimal AI chat interface with support for multiple models. Experience seamless conversations with Claude, GPT, and more.",
+  keywords: ["AI chat", "chatbot", "Claude", "GPT", "AI assistant", "bobrchat", "chat interface"],
+  authors: [{ name: "BobrChat" }],
+  creator: "BobrChat",
+  metadataBase: new URL("https://bobrchat.com"),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://bobrchat.com",
+    siteName: "BobrChat",
+    title: "BobrChat - Fast, Minimal AI Chat Interface",
+    description:
+      "A fast, minimal AI chat interface with support for multiple models. Experience seamless conversations with Claude, GPT, and more.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BobrChat - Fast, Minimal AI Chat Interface",
+    description:
+      "A fast, minimal AI chat interface with support for multiple models. Experience seamless conversations with Claude, GPT, and more.",
+  },
 };
 
 export const viewport: Viewport = {
