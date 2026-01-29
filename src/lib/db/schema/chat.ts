@@ -45,7 +45,9 @@ export const messages = pgTable(
       .notNull()
       .references(() => threads.id, { onDelete: "cascade" }),
     role: text("role", { enum: ["user", "assistant", "system"] }).notNull(),
-    content: jsonb("content").notNull(),
+    content: jsonb("content"),
+    ciphertext: text("ciphertext"),
+    keyVersion: integer("key_version"),
     reasoningLevel: text("reasoning_level"),
     searchEnabled: boolean("search_enabled"),
     createdAt: timestamp("created_at").defaultNow().notNull(),

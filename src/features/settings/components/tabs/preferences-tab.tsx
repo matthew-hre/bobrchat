@@ -11,8 +11,8 @@ import {
   ChatBehaviorSection,
 } from "../sections/chat-behavior-section";
 import {
-  DeleteAllThreadsSection,
-} from "../sections/delete-all-threads-section";
+  DataManagementSection,
+} from "../sections/data-management-section";
 
 export function PreferencesTab() {
   const { data: settings, isLoading } = useUserSettings({ enabled: true });
@@ -40,7 +40,7 @@ export function PreferencesTab() {
 
           <Separator />
 
-          <DeleteAllThreadsSection />
+          <DataManagementSection />
         </div>
       </div>
     </div>
