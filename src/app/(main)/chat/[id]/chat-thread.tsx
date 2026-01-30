@@ -53,8 +53,8 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
       const body = {
         messages: allMessages,
         threadId: id,
-        searchEnabled: state.searchEnabled,
-        reasoningLevel: state.reasoningLevel,
+        searchEnabled: state.searchEnabled && capabilities.supportsSearch,
+        reasoningLevel: state.reasoningLevel && capabilities.supportsReasoning,
         ...(state.openrouterKey && { openrouterClientKey: state.openrouterKey }),
         ...(state.parallelKey && { parallelClientKey: state.parallelKey }),
         ...(state.selectedModelId && { modelId: state.selectedModelId }),
