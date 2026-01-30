@@ -23,7 +23,8 @@ export function UserMessage({ content, attachments, className }: UserMessageProp
             rounded-br-sm px-4 py-2.5
           `)}
         >
-          <p className="wrap-break-word whitespace-pre-wrap">{content}</p>
+          {/* wrap-anywhere to deal with absurdly long urls */}
+          <p className="wrap-anywhere whitespace-pre-wrap">{content}</p>
           {attachments && attachments.length > 0 && (
             <MessageAttachments attachments={attachments} />
           )}
