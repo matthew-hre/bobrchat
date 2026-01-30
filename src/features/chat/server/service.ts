@@ -7,6 +7,7 @@ import type { ChatUIMessage } from "~/app/api/chat/route";
 import type { UserSettingsData } from "~/features/settings/types";
 
 import { getTokenCosts } from "./cost";
+import { createHandoffTool } from "./handoff/index";
 import { calculateResponseMetadata } from "./metrics";
 import { getModelProvider } from "./models";
 import { generatePrompt } from "./prompt";
@@ -45,6 +46,7 @@ export async function streamChatResponse(
   onFirstToken?: () => void,
   pdfEngineConfig?: PdfEngineConfig,
   reasoningLevel?: string,
+  threadId?: string,
 ) {
   return Sentry.startSpan(
     { op: "ai.inference", name: `streamChatResponse ${modelId}` },
@@ -87,7 +89,11 @@ export async function streamChatResponse(
         },
       );
 
-      const tools = searchEnabled && parallelApiKey ? createSearchTools(parallelApiKey) : undefined;
+      const searchTools = searchEnabled && parallelApiKey ? createSearchTools(parallelApiKey) : {};
+      const handoffTools = threadId ? createHandoffTool(userId, threadId, messages, openRouterApiKey) : {};
+      const tools = Object.keys({ ...searchTools, ...handoffTools }).length > 0
+        ? { ...searchTools, ...handoffTools }
+        : undefined;
 
       const getPdfPluginConfig = () => {
         if (!hasPdf) {

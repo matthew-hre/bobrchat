@@ -119,6 +119,7 @@ export async function POST(req: Request) {
           supportsNativePdf: supportsNativePdf ?? false,
         },
         reasoningLevel,
+        threadId,
       );
 
       if (threadId && messages.length === 1 && messages[0].role === "user") {

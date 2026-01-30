@@ -292,6 +292,9 @@ export async function saveMessages(
  *
  * @param userId ID of the user
  * @param options Options for thread creation
+ * @param options.threadId Optional ID for the thread (if not provided, a new UUID is generated)
+ * @param options.title Optional title for the thread
+ * @param options.icon Optional icon for the thread
  * @return {Promise<string>} The ID of the thread (created or existing)
  */
 export async function createThread(
@@ -372,6 +375,28 @@ export const getThreadById = cache(async (threadId: string) => {
 });
 
 /**
+ * Get parent thread info for a thread (if it has one)
+ * Cached per-request using React cache() for deduplication.
+ *
+ * @param threadId ID of the thread to get parent for
+ * @return {Promise<{ id: string; title: string } | null>} Parent thread info or null
+ */
+export const getParentThread = cache(async (threadId: string) => {
+  const thread = await getThreadById(threadId);
+  if (!thread?.parentThreadId) {
+    return null;
+  }
+
+  const parent = await db
+    .select({ id: threads.id, title: threads.title })
+    .from(threads)
+    .where(eq(threads.id, thread.parentThreadId))
+    .limit(1);
+
+  return parent[0] || null;
+});
+
+/**
  * Get paginated threads for a user, sorted by last message (most recent first)
  *
  * @param userId ID of the user
@@ -438,7 +463,7 @@ export async function deleteThreadById(threadId: string, userId: string): Promis
     .delete(threads)
     .where(and(eq(threads.id, threadId), eq(threads.userId, userId)))
     .returning();
-  return result.length > 0;
+  return Array.isArray(result) && result.length > 0;
 }
 
 /**

@@ -1,4 +1,5 @@
-import type { ExtractToolUIPart, ReasoningUIPart, SearchToolUIPart, TextUIPart } from "~/features/chat/types";
+import type { HandoffErrorOutput, HandoffToolOutput } from "~/features/chat/server/handoff/types";
+import type { ExtractToolUIPart, HandoffToolUIPart, ReasoningUIPart, SearchToolUIPart, TextUIPart } from "~/features/chat/types";
 
 import { isExtractError, isSearchError } from "~/features/chat/server/search/index";
 import {
@@ -7,6 +8,10 @@ import {
   isToolComplete,
   isToolError,
 } from "~/features/chat/types";
+
+function isHandoffError(output: HandoffToolOutput): output is HandoffErrorOutput {
+  return "error" in output && output.error === true;
+}
 
 export type NormalizedSource = {
   id: string;
@@ -118,4 +123,34 @@ export function hasSearchContent(part: { type: string }): boolean {
     return false;
   const result = normalizeSearchToolPart(part as SearchToolUIPart);
   return result.sources.length > 0 || !!result.error;
+}
+
+export type NormalizedHandoffResult = {
+  newThreadId?: string;
+  generatedPrompt?: string;
+  error?: string;
+  complete: boolean;
+};
+
+/**
+ * Normalizes a handoff tool part, extracting the new thread info and any errors.
+ */
+export function normalizeHandoffToolPart(part: HandoffToolUIPart): NormalizedHandoffResult {
+  const complete = isToolComplete(part.state);
+  let newThreadId: string | undefined;
+  let generatedPrompt: string | undefined;
+  let error: string | undefined;
+
+  if (isToolError(part.state)) {
+    error = part.errorText || "Handoff failed";
+  }
+  else if (part.output && isHandoffError(part.output)) {
+    error = part.output.message;
+  }
+  else if (part.output && !isHandoffError(part.output)) {
+    newThreadId = part.output.newThreadId;
+    generatedPrompt = part.output.generatedPrompt;
+  }
+
+  return { newThreadId, generatedPrompt, error, complete };
 }

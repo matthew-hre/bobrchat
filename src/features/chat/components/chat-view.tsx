@@ -10,6 +10,7 @@ import { cn } from "~/lib/utils";
 
 import { BetaBanner } from "./beta-banner";
 import { ChatInput } from "./chat-input";
+import { ParentThreadLink } from "./ui/parent-thread-link";
 
 export function ChatView({
   messages,
@@ -17,6 +18,7 @@ export function ChatView({
   isLoading,
   onStop,
   threadId,
+  parentThread,
   children,
 }: {
   messages: ChatUIMessage[];
@@ -24,6 +26,7 @@ export function ChatView({
   isLoading?: boolean;
   onStop?: () => void;
   threadId?: string;
+  parentThread?: { id: string; title: string } | null;
   children: React.ReactNode;
 }) {
   const { scrollRef, messagesEndRef, isInitialScrollComplete } = useChatScroll(messages, { threadId });
@@ -31,6 +34,9 @@ export function ChatView({
   return (
     <div className="flex h-full max-h-screen flex-col">
       <BetaBanner />
+      {parentThread && (
+        <ParentThreadLink parentId={parentThread.id} parentTitle={parentThread.title} />
+      )}
       <ScrollArea className="min-h-0 flex-1" ref={scrollRef}>
         <div className={cn(
           "origin-bottom transition-all duration-300 ease-out",

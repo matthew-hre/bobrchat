@@ -1,15 +1,17 @@
 /* eslint-disable react/no-array-index-key */
 "use client";
 
-import type { ExtractToolUIPart, ReasoningUIPart, SearchToolUIPart } from "~/features/chat/types";
+import type { ExtractToolUIPart, HandoffToolUIPart, ReasoningUIPart, SearchToolUIPart } from "~/features/chat/types";
 
 import { MemoizedMarkdown } from "~/features/chat/components/messages/markdown";
 import { ExtractingSources } from "~/features/chat/components/ui/extracting-sources";
+import { HandingOff } from "~/features/chat/components/ui/handing-off";
 import { ReasoningContent } from "~/features/chat/components/ui/reasoning-content";
 import { SearchingSources } from "~/features/chat/components/ui/searching-sources";
 import {
   isContentComplete,
   isExtractToolPart,
+  isHandoffToolPart,
   isReasoningPart,
   isSearchToolPart,
   isTextPart,
@@ -17,7 +19,7 @@ import {
 } from "~/features/chat/types";
 import { cn } from "~/lib/utils";
 
-import { normalizeExtractToolPart, normalizeReasoningText, normalizeSearchToolPart } from "./normalize";
+import { normalizeExtractToolPart, normalizeHandoffToolPart, normalizeReasoningText, normalizeSearchToolPart } from "./normalize";
 
 export type RenderState = {
   isLast: boolean;
@@ -136,6 +138,27 @@ export function MessageParts({
               isExtracting={isExtracting}
               error={error}
               stopped={extractStopped}
+            />
+          );
+        }
+
+        if (isHandoffToolPart(part)) {
+          const handoffPart = part as HandoffToolUIPart;
+          const { newThreadId, generatedPrompt, error, complete } = normalizeHandoffToolPart(handoffPart);
+
+          const isHandingOff = isActive && !complete && isToolSearching(handoffPart.state) && isLoading && isLast;
+          const handoffStopped = isActive && isStopped && !complete;
+
+          return (
+            <HandingOff
+              key={`part-${index}`}
+              id={`${messageId}-handoff-${index}`}
+              isHandingOff={isHandingOff}
+              newThreadId={newThreadId}
+              generatedPrompt={generatedPrompt}
+              error={error}
+              stopped={handoffStopped}
+              isActiveSession={isActive && isLast}
             />
           );
         }

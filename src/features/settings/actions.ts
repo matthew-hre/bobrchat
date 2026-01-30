@@ -237,5 +237,5 @@ export async function deleteAllThreads(): Promise<{ deletedCount: number }> {
     .where(eq(threads.userId, session.user.id))
     .returning();
 
-  return { deletedCount: result.length };
+  return { deletedCount: Array.isArray(result) ? result.length : 0 };
 }

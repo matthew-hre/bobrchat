@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { auth } from "~/features/auth/lib/auth";
-import { getMessagesByThreadId, getThreadById } from "~/features/chat/queries";
+import { getMessagesByThreadId, getParentThread, getThreadById } from "~/features/chat/queries";
 
 import ChatThread from "./chat-thread";
 
@@ -30,10 +30,11 @@ export default async function ChatServer({ params }: ChatServerProps) {
     redirect("/");
   }
 
-  // Fetch thread and messages in parallel
-  const [thread, initialMessages] = await Promise.all([
+  // Fetch thread, messages, and parent thread in parallel
+  const [thread, initialMessages, parentThread] = await Promise.all([
     getThreadById(id),
     getMessagesByThreadId(id),
+    getParentThread(id),
   ]);
 
   // If thread exists, verify ownership
@@ -48,7 +49,14 @@ export default async function ChatServer({ params }: ChatServerProps) {
   // The client component (chat-thread.tsx) will retrieve it from sessionStorage.
   const initialPendingMessage: UIMessage | null = null;
 
-  return <ChatThread params={Promise.resolve({ id })} initialMessages={initialMessages} initialPendingMessage={initialPendingMessage} />;
+  return (
+    <ChatThread
+      params={Promise.resolve({ id })}
+      initialMessages={initialMessages}
+      initialPendingMessage={initialPendingMessage}
+      parentThread={parentThread}
+    />
+  );
 }
 
 export async function generateMetadata({ params }: ChatServerProps): Promise<Metadata> {

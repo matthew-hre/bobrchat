@@ -50,8 +50,10 @@ function extractStoragePathsFromThreadMessages(messages: ChatUIMessage[]): strin
  * Creates a new chat thread for the authenticated user (idempotent).
  * Accepts an optional client-generated threadId for optimistic updates.
  *
+ * @param options Options for thread creation
  * @param options.threadId Optional client-generated thread ID
  * @param options.title Optional thread title
+ * @param options.icon Optional thread icon
  * @returns {Promise<string>} The ID of the newly created thread.
  * @throws {Error} If user is not authenticated.
  */

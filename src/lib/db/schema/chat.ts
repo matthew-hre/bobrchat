@@ -27,6 +27,7 @@ export const threads = pgTable(
     title: text("title").notNull().default("New Chat"),
     model: text("model"),
     icon: text("icon").$type<ThreadIcon>().default("message-circle"),
+    parentThreadId: uuid("parent_thread_id"),
     lastMessageAt: timestamp("last_message_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

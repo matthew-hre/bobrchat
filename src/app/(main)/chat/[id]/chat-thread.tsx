@@ -20,15 +20,32 @@ type ChatThreadProps = {
   params: Promise<{ id: string }>;
   initialMessages: ChatUIMessage[];
   initialPendingMessage?: any | null;
+  parentThread?: { id: string; title: string } | null;
 };
 
-function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThreadProps): React.ReactNode {
+function ChatThread({ params, initialMessages, initialPendingMessage, parentThread }: ChatThreadProps): React.ReactNode {
   const { id } = use(params);
   const queryClient = useQueryClient();
   const {
     clearInput,
+    setInput,
     setStreamingThreadId,
   } = useChatUIStore();
+
+  // Handle handoff prompt from sessionStorage
+  const hasSetHandoffPromptRef = useRef(false);
+  useEffect(() => {
+    if (hasSetHandoffPromptRef.current) {
+      return;
+    }
+
+    const handoffPrompt = sessionStorage.getItem(`handoff_${id}`);
+    if (handoffPrompt) {
+      hasSetHandoffPromptRef.current = true;
+      setInput(handoffPrompt);
+      sessionStorage.removeItem(`handoff_${id}`);
+    }
+  }, [id, setInput]);
 
   const { data: models } = useModels();
 
@@ -54,7 +71,7 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
         messages: allMessages,
         threadId: id,
         searchEnabled: state.searchEnabled && capabilities.supportsSearch,
-        reasoningLevel: state.reasoningLevel && capabilities.supportsReasoning,
+        reasoningLevel: capabilities.supportsReasoning ? state.reasoningLevel : undefined,
         ...(state.openrouterKey && { openrouterClientKey: state.openrouterKey }),
         ...(state.parallelKey && { parallelClientKey: state.parallelKey }),
         ...(state.selectedModelId && { modelId: state.selectedModelId }),
@@ -183,6 +200,7 @@ function ChatThread({ params, initialMessages, initialPendingMessage }: ChatThre
       isLoading={isLoading}
       onStop={handleStop}
       threadId={id}
+      parentThread={parentThread}
     >
       <ChatMessages
         messages={messages}

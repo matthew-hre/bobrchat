@@ -20,6 +20,7 @@ import type {
   ToolUIPart,
 } from "ai";
 
+import type { HandoffUITools } from "./server/handoff/index";
 import type { SearchUITools } from "./server/search/index";
 
 // Re-export SDK types for convenience
@@ -31,8 +32,12 @@ export type {
   TextUIPart,
 };
 
-// Re-export inferred search tool types for UI type safety
-export type { SearchTools, SearchUITools } from "./server/search/index";
+// Re-export handoff types from server for convenience
+export type {
+  HandoffErrorOutput,
+  HandoffOutput,
+  HandoffToolOutput,
+} from "./server/handoff/index";
 
 // ============================================
 // Simple type guards (work with loose part types)
@@ -104,6 +109,11 @@ export type ContentState = NonNullable<TextUIPart["state"]>;
 // App-specific tool types (Search)
 // ============================================
 
+export type { HandoffTools, HandoffUITools } from "./server/handoff/index";
+
+// Re-export inferred search tool types for UI type safety
+export type { SearchTools, SearchUITools } from "./server/search/index";
+
 // Re-export search types from server for convenience
 export type {
   ExtractErrorOutput,
@@ -139,6 +149,16 @@ export type ExtractToolUIPart = Extract<
   { type: "tool-extract" }
 >;
 
+/**
+ * Handoff tool UI part - extracted from SDK's ToolUIPart<HandoffUITools>.
+ *
+ * For our handoff tool, this becomes `type: "tool-handoff"`.
+ */
+export type HandoffToolUIPart = Extract<
+  ToolUIPart<HandoffUITools>,
+  { type: "tool-handoff" }
+>;
+
 // ============================================
 // Server-side stream types (derived from SDK)
 // ============================================
@@ -166,6 +186,10 @@ export function isSearchToolPart(part: { type: string }): part is SearchToolUIPa
 
 export function isExtractToolPart(part: { type: string }): part is ExtractToolUIPart {
   return part.type === "tool-extract";
+}
+
+export function isHandoffToolPart(part: { type: string }): part is HandoffToolUIPart {
+  return part.type === "tool-handoff";
 }
 
 // ============================================
