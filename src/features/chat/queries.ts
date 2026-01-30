@@ -9,7 +9,7 @@ import { attachments, messages, threads } from "~/lib/db/schema/chat";
 import { threadShares } from "~/lib/db/schema/sharing";
 import { serverEnv } from "~/lib/env";
 import { decryptMessage, encryptMessage } from "~/lib/security/encryption";
-import { getKeyMeta, getOrCreateKeyMeta } from "~/lib/security/keys";
+import { getKeyMeta, getOrCreateKeyMeta, getSaltForVersion } from "~/lib/security/keys";
 
 function cleanReasoningPart(part: unknown): unknown | null {
   if (!part || typeof part !== "object")
@@ -141,14 +141,19 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
     .where(eq(messages.threadId, threadId))
     .orderBy(messages.createdAt);
 
-  return rows.map((row) => {
+  return Promise.all(rows.map(async (row) => {
     let message: ChatUIMessage;
 
     if (row.iv && row.ciphertext && row.authTag && keyMeta) {
+      // Get the salt for this message's specific key version
+      const salt = await getSaltForVersion(userId, row.keyVersion ?? keyMeta.version);
+      if (!salt) {
+        throw new Error(`Missing salt for key version ${row.keyVersion}`);
+      }
       message = decryptMessage(
         { iv: row.iv, ciphertext: row.ciphertext, authTag: row.authTag },
         userId,
-        keyMeta.salt,
+        salt,
       );
     }
     else {
@@ -161,7 +166,7 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
       searchEnabled: row.searchEnabled,
       reasoningLevel: row.reasoningLevel,
     };
-  });
+  }));
 });
 
 /**
