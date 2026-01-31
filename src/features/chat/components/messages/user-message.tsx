@@ -14,20 +14,22 @@ type UserMessageProps = {
 };
 
 export function UserMessage({ content, attachments, className }: UserMessageProps) {
+  const hasContent = Boolean(content);
+  const hasAttachments = attachments && attachments.length > 0;
+
   return (
     <div className={cn("group flex w-full flex-col items-end gap-2", className)}>
-      {content && (
+      {(hasContent || hasAttachments) && (
         <div
           className={cn(`
             bg-primary text-primary-foreground prose prose-sm rounded-2xl
             rounded-br-sm px-4 py-2.5
           `)}
         >
-          {/* wrap-anywhere to deal with absurdly long urls */}
-          <p className="wrap-anywhere whitespace-pre-wrap">{content}</p>
-          {attachments && attachments.length > 0 && (
-            <MessageAttachments attachments={attachments} />
+          {hasContent && (
+            <p className="wrap-anywhere whitespace-pre-wrap">{content}</p>
           )}
+          {hasAttachments && <MessageAttachments attachments={attachments} />}
         </div>
       )}
     </div>
