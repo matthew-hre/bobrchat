@@ -6,6 +6,11 @@ import { withSentryConfig } from "@sentry/nextjs";
 import { serverEnv } from "./src/lib/env";
 
 const isDev = process.env.NODE_ENV === "development";
+// Initialize OpenNext Cloudflare bindings for local development
+// Only run in dev mode to avoid starting workerd during production builds
+if (isDev) {
+  initOpenNextCloudflareForDev();
+}
 
 const nextConfig: NextConfig = {
   logging: {
