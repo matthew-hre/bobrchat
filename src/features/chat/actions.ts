@@ -215,7 +215,7 @@ export async function setThreadIcon(threadId: string, icon: ThreadIcon): Promise
  * @param clientKey Optional API key provided by the client (from localStorage)
  * @return {Promise<string>} The new title
  */
-export async function regenerateThreadName(threadId: string, clientKey?: string): Promise<string> {
+export async function regenerateThreadName(threadId: string, clientKey?: string, useAllMessages = false): Promise<string> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -242,13 +242,28 @@ export async function regenerateThreadName(threadId: string, clientKey?: string)
     throw new Error("No user messages found to generate title from");
   }
 
-  const firstUserMessage = textMessages[0];
-  const userContent = firstUserMessage.parts
-    ? firstUserMessage.parts
-        .filter(p => p.type === "text")
-        .map(p => (p as { text: string }).text)
-        .join("")
-    : "";
+  let userContent: string;
+  if (useAllMessages) {
+    userContent = textMessages
+      .map((m) => {
+        if (!m.parts) return "";
+        return m.parts
+          .filter(p => p.type === "text")
+          .map(p => (p as { text: string }).text)
+          .join("");
+      })
+      .filter(Boolean)
+      .join("\n\n");
+  }
+  else {
+    const firstUserMessage = textMessages[0];
+    userContent = firstUserMessage.parts
+      ? firstUserMessage.parts
+          .filter(p => p.type === "text")
+          .map(p => (p as { text: string }).text)
+          .join("")
+      : "";
+  }
 
   const newTitle = await generateThreadTitle(userContent, openrouterKey);
 

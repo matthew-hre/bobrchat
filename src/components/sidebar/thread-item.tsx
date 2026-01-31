@@ -160,7 +160,7 @@ function ThreadItemComponent({
 
   const handleRegenerateNameClick = async () => {
     try {
-      await regenerateThreadNameMutation.mutateAsync({ threadId: id, clientKey: openrouterKey ?? undefined });
+      await regenerateThreadNameMutation.mutateAsync({ threadId: id, clientKey: openrouterKey ?? undefined, useAllMessages: true });
       toast.success("Thread name regenerated");
     }
     catch (error) {

@@ -156,8 +156,8 @@ export function useRegenerateThreadName() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ threadId, clientKey }: { threadId: string; clientKey?: string }) =>
-      regenerateThreadName(threadId, clientKey),
+    mutationFn: ({ threadId, clientKey, useAllMessages }: { threadId: string; clientKey?: string; useAllMessages?: boolean }) =>
+      regenerateThreadName(threadId, clientKey, useAllMessages),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: THREADS_KEY });
     },
