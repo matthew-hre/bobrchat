@@ -1,5 +1,6 @@
+import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { cache, CustomFont, ImageResponse } from "@cf-wasm/og/workerd";
-import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
+import { neon } from "@neondatabase/serverless";
 import postgres from "postgres";
 
 import fontData from "./fonts/RethinkSans.ttf";
@@ -25,7 +26,8 @@ function getSqlClient(env: Env): SqlClient {
         strings: TemplateStringsArray,
         ...values: unknown[]
       ): Promise<T[]> => {
-        return sql(strings, ...values) as unknown as Promise<T[]>;
+        // postgres.js requires tagged template literals; cast to any to bypass strict typing
+        return await (sql as any)(strings, ...values);
       },
     };
   }

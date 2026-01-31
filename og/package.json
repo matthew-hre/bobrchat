@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@cf-wasm/og": "^0.3.3",
@@ -13,7 +15,9 @@
     "postgres": "^3.4.5"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^7.2.0",
     "@cloudflare/workers-types": "^4.20250124.0",
+    "eslint": "^9.20.1",
     "typescript": "^5.7.3",
     "wrangler": "^4.14.4"
   }
