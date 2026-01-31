@@ -28,7 +28,7 @@ export function FloatingSidebarToggle() {
         !isSharePage ? "block" : "hidden",
         isVisible
           ? "animate-in slide-in-from-left-12"
-          : "-translate-x-12 opacity-0",
+          : "-translate-x-12 opacity-0 invisible",
       )}
     >
       <Button
