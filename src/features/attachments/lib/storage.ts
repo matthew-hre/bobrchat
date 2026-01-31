@@ -1,6 +1,4 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { Buffer } from "node:buffer";
-import path from "node:path";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 import { serverEnv } from "~/lib/env";
 
@@ -14,48 +12,44 @@ export type UploadedFile = {
   pageCount?: number | null;
 };
 
-function getR2Client() {
-  return new S3Client({
-    region: "auto",
-    endpoint: `https://${serverEnv.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: serverEnv.R2_ACCESS_KEY_ID,
-      secretAccessKey: serverEnv.R2_SECRET_ACCESS_KEY,
-    },
-  });
+function getR2Bucket(): R2Bucket {
+  const { env } = getCloudflareContext();
+  return env.R2_UPLOADS;
 }
 
 function generateFileId(): string {
   return crypto.randomUUID();
 }
 
+function getExtension(filename: string): string {
+  const lastDot = filename.lastIndexOf(".");
+  return lastDot === -1 ? "" : filename.slice(lastDot);
+}
+
 export async function saveFile(
   file: File,
   options?: {
-    buffer?: Buffer;
+    buffer?: ArrayBuffer;
     contentTypeOverride?: string;
     contentDisposition?: "inline" | "attachment";
   },
 ): Promise<UploadedFile> {
-  const client = getR2Client();
+  const bucket = getR2Bucket();
 
   const fileId = generateFileId();
-  const ext = path.extname(file.name);
+  const ext = getExtension(file.name);
   const key = `uploads/${fileId}${ext}`;
 
-  const buffer = options?.buffer ?? Buffer.from(await file.arrayBuffer());
+  const body = options?.buffer ?? (await file.arrayBuffer());
   const contentType = options?.contentTypeOverride ?? file.type;
   const disposition = options?.contentDisposition ?? "inline";
 
-  await client.send(
-    new PutObjectCommand({
-      Bucket: serverEnv.R2_BUCKET_NAME,
-      Key: key,
-      Body: buffer,
-      ContentType: contentType,
-      ContentDisposition: `${disposition}; filename="${file.name}"`,
-    }),
-  );
+  await bucket.put(key, body, {
+    httpMetadata: {
+      contentType,
+      contentDisposition: `${disposition}; filename="${file.name}"`,
+    },
+  });
 
   const publicUrl = `${serverEnv.R2_PUBLIC_URL}/${key}`;
 
@@ -70,23 +64,17 @@ export async function saveFile(
 }
 
 export async function deleteFile(storagePath: string): Promise<void> {
-  const client = getR2Client();
-  await client.send(
-    new DeleteObjectCommand({
-      Bucket: serverEnv.R2_BUCKET_NAME,
-      Key: storagePath,
-    }),
-  );
+  const bucket = getR2Bucket();
+  await bucket.delete(storagePath);
 }
 
 export async function getFileContent(storagePath: string): Promise<string> {
-  const client = getR2Client();
-  const response = await client.send(
-    new GetObjectCommand({
-      Bucket: serverEnv.R2_BUCKET_NAME,
-      Key: storagePath,
-    }),
-  );
+  const bucket = getR2Bucket();
+  const object = await bucket.get(storagePath);
 
-  return response.Body?.transformToString() ?? "";
+  if (!object) {
+    return "";
+  }
+
+  return object.text();
 }

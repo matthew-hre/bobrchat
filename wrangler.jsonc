@@ -1,0 +1,57 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bobrchat",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-08-16",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Durable Objects migrations (required for DO bindings)
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["DOQueueHandler"]
+    }
+  ],
+
+  // R2 bucket for Next.js incremental cache
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "bobrchat-cache"
+    },
+    {
+      "binding": "R2_UPLOADS",
+      "bucket_name": "bobrchat" // Replace with your R2 bucket name
+    }
+  ],
+
+  // Durable Objects for cache queue (time-based revalidation)
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "NEXT_CACHE_DO_QUEUE",
+        "class_name": "DOQueueHandler"
+      }
+    ]
+  },
+
+  // D1 database for Next.js cache tags (revalidateTag/revalidatePath)
+  "d1_databases": [
+    {
+      "binding": "NEXT_TAG_CACHE_D1",
+      "database_name": "bobrchat-tag-cache",
+      "database_id": "bfd05995-d0c9-4aa6-bce2-e9d3e09cfbcb"
+    }
+  ],
+
+  // Static assets
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  // Observability
+  "observability": {
+    "enabled": true
+  }
+}

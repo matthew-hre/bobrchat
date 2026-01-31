@@ -1,16 +1,14 @@
-import type { Buffer } from "node:buffer";
-
 import { PDFDocument } from "pdf-lib";
 
 /**
- * Extracts the page count from a PDF buffer.
+ * Extracts the page count from a PDF.
  *
- * @param buffer The PDF file buffer
+ * @param data The PDF file data as ArrayBuffer or Uint8Array
  * @returns The number of pages, or null if extraction fails
  */
-export async function getPdfPageCount(buffer: Buffer): Promise<number | null> {
+export async function getPdfPageCount(data: ArrayBuffer | Uint8Array): Promise<number | null> {
   try {
-    const pdfDoc = await PDFDocument.load(buffer, { ignoreEncryption: true });
+    const pdfDoc = await PDFDocument.load(data, { ignoreEncryption: true });
     return pdfDoc.getPageCount();
   }
   catch (error) {
