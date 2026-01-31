@@ -46,7 +46,6 @@ jobs:
       - name: Install dependencies
         run: nix develop -c bash -c 'cd og && bun install'
       - name: Deploy to Cloudflare
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: cd og && nix develop --command bun run deploy
+        run: |
+          cd og
+          nix develop --command bash -c 'CLOUDFLARE_API_TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}" CLOUDFLARE_ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" bun run deploy'
