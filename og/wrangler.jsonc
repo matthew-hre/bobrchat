@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bobrchat-og",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-08-16",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Bundle font files as binary
+  "rules": [
+    { "type": "Data", "globs": ["**/*.woff2", "**/*.ttf"], "fallthrough": true }
+  ],
+
+  // Custom domain: og.bobrchat.com
+  "routes": [
+    {
+      "pattern": "og.bobrchat.com",
+      "custom_domain": true
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  },
+
+  // Hyperdrive for Neon Postgres connection pooling
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "9a8e70ca7e2648f59ddda635f72ee6a0",
+      "localConnectionString": "postgresql://postgres:postgres@localhost:5432/ai_frontend"
+    }
+  ]
+}
