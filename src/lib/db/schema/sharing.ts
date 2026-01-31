@@ -13,6 +13,10 @@ export const threadShares = pgTable(
     showAttachments: boolean("show_attachments").notNull().default(false),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     revokedAt: timestamp("revoked_at"),
+    // OG preview data (populated at share time for Cloudflare Worker access)
+    ogTitle: text("og_title"),
+    ogModel: text("og_model"),
+    ogFirstMessage: text("og_first_message"),
   },
   table => [index("thread_shares_threadId_idx").on(table.threadId)],
 );

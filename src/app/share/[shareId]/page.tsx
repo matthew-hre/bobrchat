@@ -154,6 +154,7 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
 
   const title = `${thread.title} - Shared from BobrChat`;
   const description = "A shared conversation from BobrChat";
+  const ogImageUrl = `https://og.bobrchat.com/share/${shareId}`;
 
   return {
     title,
@@ -164,11 +165,13 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
       description,
       type: "article",
       siteName: "BobrChat",
+      images: [{ url: ogImageUrl, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImageUrl],
     },
   };
 }

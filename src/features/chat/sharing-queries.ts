@@ -3,11 +3,110 @@ import crypto from "node:crypto";
 import { cache } from "react";
 
 import { db } from "~/lib/db";
-import { threads } from "~/lib/db/schema/chat";
+import { messages, threads } from "~/lib/db/schema/chat";
 import { threadShares } from "~/lib/db/schema/sharing";
+import { decryptMessage } from "~/lib/security/encryption";
+import { getKeyMeta, getSaltForVersion } from "~/lib/security/keys";
+
+type ChatUIMessage = {
+  role: string;
+  parts?: Array<{ type?: string; text?: string }>;
+  content?: string;
+  metadata?: { model?: string };
+};
 
 function generateShareId(): string {
   return crypto.randomBytes(9).toString("base64url");
+}
+
+function extractTextContent(message: ChatUIMessage): string {
+  if (typeof message.content === "string") return message.content;
+  if (Array.isArray(message.parts)) {
+    for (const part of message.parts) {
+      if (part?.type === "text" && part.text) return part.text;
+    }
+  }
+  return "";
+}
+
+/**
+ * Fetch and compute OG preview data for a thread.
+ * Decrypts messages to extract first user message and model info.
+ */
+async function getOgPreviewData(
+  threadId: string,
+  userId: string,
+): Promise<{ ogTitle: string; ogModel: string | null; ogFirstMessage: string | null }> {
+  // Get thread title
+  const thread = await db
+    .select({ title: threads.title, model: threads.model })
+    .from(threads)
+    .where(eq(threads.id, threadId))
+    .limit(1);
+
+  const ogTitle = thread[0]?.title || "Shared Chat";
+  let ogModel: string | null = thread[0]?.model || null;
+  let ogFirstMessage: string | null = null;
+
+  // Get encryption key metadata
+  const keyMeta = await getKeyMeta(userId);
+  if (!keyMeta) {
+    return { ogTitle, ogModel, ogFirstMessage };
+  }
+
+  // Fetch first few messages to find user message and assistant model
+  const rows = await db
+    .select({
+      role: messages.role,
+      content: messages.content,
+      iv: messages.iv,
+      ciphertext: messages.ciphertext,
+      authTag: messages.authTag,
+      keyVersion: messages.keyVersion,
+    })
+    .from(messages)
+    .where(eq(messages.threadId, threadId))
+    .orderBy(messages.createdAt)
+    .limit(5);
+
+  for (const row of rows) {
+    let decrypted: ChatUIMessage | null = null;
+
+    if (row.iv && row.ciphertext && row.authTag) {
+      try {
+        const salt = await getSaltForVersion(userId, row.keyVersion ?? keyMeta.version);
+        if (salt) {
+          decrypted = decryptMessage(
+            { iv: row.iv, ciphertext: row.ciphertext, authTag: row.authTag },
+            userId,
+            salt,
+          ) as ChatUIMessage;
+        }
+      } catch {
+        continue;
+      }
+    } else {
+      decrypted = row.content as ChatUIMessage;
+    }
+
+    if (!decrypted) continue;
+
+    // Extract first user message
+    if (row.role === "user" && !ogFirstMessage) {
+      const text = extractTextContent(decrypted);
+      ogFirstMessage = text.length > 200 ? `${text.slice(0, 197)}...` : text;
+    }
+
+    // Extract model from first assistant message
+    if (row.role === "assistant" && !ogModel) {
+      ogModel = decrypted.metadata?.model || ogModel;
+    }
+
+    // Stop once we have both
+    if (ogFirstMessage && ogModel) break;
+  }
+
+  return { ogTitle, ogModel, ogFirstMessage };
 }
 
 /**
@@ -30,6 +129,9 @@ export async function upsertThreadShare(
     throw new Error("Thread not found or unauthorized");
   }
 
+  // Get OG preview data (decrypts messages to extract preview info)
+  const { ogTitle, ogModel, ogFirstMessage } = await getOgPreviewData(threadId, userId);
+
   // Check for existing share
   const existing = await db
     .select({ id: threadShares.id })
@@ -38,10 +140,10 @@ export async function upsertThreadShare(
     .limit(1);
 
   if (existing.length > 0) {
-    // Update existing share (un-revoke if revoked, update settings)
+    // Update existing share (un-revoke if revoked, update settings and OG data)
     await db
       .update(threadShares)
-      .set({ showAttachments, revokedAt: null })
+      .set({ showAttachments, revokedAt: null, ogTitle, ogModel, ogFirstMessage })
       .where(eq(threadShares.threadId, threadId));
     return { shareId: existing[0].id, isNew: false };
   }
@@ -52,6 +154,9 @@ export async function upsertThreadShare(
     id: shareId,
     threadId,
     showAttachments,
+    ogTitle,
+    ogModel,
+    ogFirstMessage,
   });
   return { shareId, isNew: true };
 }
