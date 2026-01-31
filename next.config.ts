@@ -1,10 +1,10 @@
 /* eslint-disable node/no-process-env */
 import type { NextConfig } from "next";
 
-import { withSentryConfig } from "@sentry/nextjs";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
-import { serverEnv } from "./src/lib/env";
-
+// Use process.env directly in next.config.ts to avoid triggering env validation
+// during OpenNext bundling phase when env vars aren't available
 const isDev = process.env.NODE_ENV === "development";
 const r2PublicUrl = process.env.R2_PUBLIC_URL || "";
 
@@ -20,10 +20,11 @@ const nextConfig: NextConfig = {
       fullUrl: true,
     },
   },
+  serverExternalPackages: ["tiktoken", "tokenlens"],
   images: {
     remotePatterns: [
       {
-        hostname: serverEnv.R2_PUBLIC_URL?.replace(/^https?:\/\//, "") || "",
+        hostname: r2PublicUrl.replace(/^https?:\/\//, "") || "placeholder.local",
       },
     ],
   },
@@ -41,9 +42,9 @@ const nextConfig: NextConfig = {
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
             "style-src 'self' 'unsafe-inline'",
-            `img-src 'self' data: blob: ${serverEnv.R2_PUBLIC_URL || ""} https://avatars.githubusercontent.com`,
+            `img-src 'self' data: blob: ${r2PublicUrl} https://avatars.githubusercontent.com`,
             "font-src 'self' data:",
-            "connect-src 'self' https://openrouter.ai https://*.parallel.ai",
+            "connect-src 'self' https://openrouter.ai https://*.parallel.ai https://*.sentry.io",
             "frame-ancestors 'none'",
           ].join("; "),
         },
@@ -52,6 +53,4 @@ const nextConfig: NextConfig = {
   ],
 };
 
-// Skip Sentry in dev to avoid ~600ms proxy.ts overhead per request
-export default isDev ? nextConfig : withSentryConfig(nextConfig);
 export default nextConfig;

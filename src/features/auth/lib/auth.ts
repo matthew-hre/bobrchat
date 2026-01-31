@@ -81,7 +81,6 @@ export const auth = betterAuth({
     },
   },
   rateLimit: {
-    storage: process.env.NODE_ENV === "development" ? "memory" : "database",
     // We need to use NODE_ENV directly, due to
     // https://github.com/vercel/next.js/issues/87719
     storage: process.env.NODE_ENV === "development" ? "memory" : "database",

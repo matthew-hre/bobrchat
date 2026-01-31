@@ -27,7 +27,6 @@ function isTransientError(error: unknown): boolean {
 }
 
 function createDb() {
-  if (process.env.NODE_ENV === "development") {
   // We need to use NODE_ENV directly, due to
   // https://github.com/vercel/next.js/issues/87719
   if (process.env.NODE_ENV === "development") {
