@@ -29,9 +29,14 @@ bun db:push
 ## Structure
 
 - **`src/app/`**: Next App Router pages and API routes. API endpoints live under `src/app/api/*`.
-- **`src/components/`**: Shared UI primitives and higher-level components (shadcn/radix based).
-- **`src/features/`**: Feature folders (e.g., `chat`, `auth`, `attachments`, `settings`). Each feature typically contains `components/`, `hooks/`, `server/`, `actions.ts`, `queries.ts`, and `types.ts`.
-- **`src/lib/`**: Utilities and infra glue: `env.ts`, `db/` (schema + migrations), `api-keys/`, `queries/`, `hooks/`, and more.
+  - `(main)/` — authenticated app shell (chat, settings)
+  - `auth/` — login/signup pages
+  - `share/` — public shared thread views
+- **`src/components/`**: Shared UI primitives and higher-level components (shadcn/radix based), plus app-specific UI (sidebar, theme, etc.).
+- **`src/features/`**: Feature folders (e.g., `chat`, `auth`, `attachments`, `settings`, `models`, `landing`). Each feature typically contains `components/`, `hooks/`, `server/`, `actions.ts`, `queries.ts`, and `types.ts` (some features add `lib/`, `ui/`, `utils/`, or `store.ts`).
+- **`src/lib/`**: Utilities and infra glue: `env.ts`, `db/` (schema + migrations), `api-keys/`, `queries/`, `hooks/`, `security/`, and more.
+- **`src/types/`**: Global TypeScript declarations.
+- **`og/`**: Cloudflare Worker for Open Graph image generation.
 
 ## State + Data Flow
 

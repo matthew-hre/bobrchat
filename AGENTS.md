@@ -12,13 +12,14 @@
 
 - **Next.js 16** app with App Router (`src/app/`), React 19, Tailwind v4
 - **Database**: PostgreSQL via Drizzle ORM; schema in `src/lib/db/schema/`, migrations in `src/lib/db/migrations/`
-- **Auth**: better-auth (`src/lib/auth.ts`, `src/lib/auth-client.ts`)
-- **AI**: Vercel AI SDK + OpenRouter (`src/server/ai/`)
+- **Auth**: better-auth (`src/features/auth/lib/auth.ts`, `src/features/auth/lib/auth-client.ts`, `src/app/api/auth/`)
+- **AI**: Vercel AI SDK + OpenRouter (`src/features/chat/server/`)
+- **Features**: feature modules live under `src/features/` (chat, auth, attachments, settings, models, landing)
 - **UI**: Radix primitives + shadcn/ui components (`src/components/ui/`)
 
 ## Code Style
 
-Code style is automatically fixed via ESLint and Prettier on commit (husky + lint-staged). Don't waste time resolving style issues manually; they will be handled automatically.
+Code style is enforced via ESLint (see `eslint.config.mjs`). Formatting is handled by ESLint.
 
 - Use `~/*` path alias for imports from `src/` (e.g., `~/lib/utils`)
 - Filenames: `kebab-case` (enforced by eslint)

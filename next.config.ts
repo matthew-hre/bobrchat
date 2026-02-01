@@ -1,11 +1,6 @@
-/* eslint-disable node/no-process-env */
 import type { NextConfig } from "next";
 
-import { withSentryConfig } from "@sentry/nextjs";
-
 import { serverEnv } from "./src/lib/env";
-
-const isDev = process.env.NODE_ENV === "development";
 
 const nextConfig: NextConfig = {
   logging: {
@@ -36,7 +31,7 @@ const nextConfig: NextConfig = {
             "style-src 'self' 'unsafe-inline'",
             `img-src 'self' data: blob: ${serverEnv.R2_PUBLIC_URL || ""} https://avatars.githubusercontent.com`,
             "font-src 'self' data:",
-            "connect-src 'self' https://openrouter.ai https://*.parallel.ai https://*.sentry.io",
+            "connect-src 'self' https://openrouter.ai https://*.parallel.ai",
             "frame-ancestors 'none'",
           ].join("; "),
         },
@@ -45,5 +40,4 @@ const nextConfig: NextConfig = {
   ],
 };
 
-// Skip Sentry in dev to avoid ~600ms proxy.ts overhead per request
-export default isDev ? nextConfig : withSentryConfig(nextConfig);
+export default nextConfig;

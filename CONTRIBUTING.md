@@ -48,9 +48,10 @@ We enforce style via ESLint. This is done automatically when using VSCode.
 See [README.md](./README.md) for architecture details. Key folders:
 
 - **`src/app/`**: Next.js App Router pages and API routes
-- **`src/features/`**: Feature folders (chat, auth, attachments, settings, etc.)
-- **`src/lib/`**: Shared utilities, database, auth config
+- **`src/features/`**: Feature folders (chat, auth, attachments, settings, models, landing)
+- **`src/lib/`**: Shared utilities, database, auth config, security, and queries
 - **`src/components/ui/`**: Shared UI primitives (shadcn/radix)
+- **`og/`**: Cloudflare Worker for Open Graph image generation
 
 ## Running Tests & Checks
 

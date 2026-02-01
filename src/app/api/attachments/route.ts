@@ -1,4 +1,3 @@
-import * as Sentry from "@sentry/nextjs";
 import { headers } from "next/headers";
 
 import { deleteFile } from "~/features/attachments/lib/storage";
@@ -49,42 +48,35 @@ export async function GET(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  return Sentry.startSpan(
-    { op: "http.server", name: "DELETE /api/attachments" },
-    async (span) => {
-      const session = await auth.api.getSession({ headers: await headers() });
-      if (!session?.user)
-        return json({ error: "Not authenticated" }, { status: 401 });
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user)
+    return json({ error: "Not authenticated" }, { status: 401 });
 
-      let body: unknown;
-      try {
-        body = await req.json();
-      }
-      catch {
-        return json({ error: "Invalid JSON" }, { status: 400 });
-      }
+  let body: unknown;
+  try {
+    body = await req.json();
+  }
+  catch {
+    return json({ error: "Invalid JSON" }, { status: 400 });
+  }
 
-      const ids = (body as { ids?: unknown }).ids;
-      if (!Array.isArray(ids) || ids.some(id => typeof id !== "string")) {
-        return json({ error: "Expected { ids: string[] }" }, { status: 400 });
-      }
+  const ids = (body as { ids?: unknown }).ids;
+  if (!Array.isArray(ids) || ids.some(id => typeof id !== "string")) {
+    return json({ error: "Expected { ids: string[] }" }, { status: 400 });
+  }
 
-      span.setAttribute("attachments.deleteCount", ids.length);
+  const toDelete = await deleteUserAttachments({ userId: session.user.id, ids });
+  if (toDelete.ids.length === 0)
+    return json({ deleted: 0 });
 
-      const toDelete = await deleteUserAttachments({ userId: session.user.id, ids });
-      if (toDelete.ids.length === 0)
-        return json({ deleted: 0 });
+  try {
+    await Promise.all(toDelete.storagePaths.map(p => deleteFile(p)));
+  }
+  catch (error) {
+    console.error("Failed to delete attachments from storage", error);
+    return json({ error: "Failed to delete from storage" }, { status: 500 });
+  }
 
-      try {
-        await Promise.all(toDelete.storagePaths.map(p => deleteFile(p)));
-      }
-      catch (error) {
-        Sentry.captureException(error, { tags: { operation: "delete-attachments" } });
-        return json({ error: "Failed to delete from storage" }, { status: 500 });
-      }
-
-      const deleted = await deleteUserAttachmentsByIds({ userId: session.user.id, ids: toDelete.ids });
-      return json({ deleted });
-    },
-  );
+  const deleted = await deleteUserAttachmentsByIds({ userId: session.user.id, ids: toDelete.ids });
+  return json({ deleted });
 }

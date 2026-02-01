@@ -1,6 +1,5 @@
 import type { TextStreamPart, ToolSet } from "ai";
 
-import * as Sentry from "@sentry/nextjs";
 import { convertToModelMessages, stepCountIs, streamText } from "ai";
 
 import type { ChatUIMessage } from "~/app/api/chat/route";
@@ -49,143 +48,127 @@ export async function streamChatResponse(
   threadId?: string,
   modelPricing?: { prompt: string; completion: string },
 ) {
-  return Sentry.startSpan(
-    { op: "ai.inference", name: `streamChatResponse ${modelId}` },
-    async (span) => {
-      if (!openRouterApiKey) {
-        throw new Error("No API key configured. Please set up your OpenRouter API key in settings.");
-      }
+  if (!openRouterApiKey) {
+    throw new Error("No API key configured. Please set up your OpenRouter API key in settings.");
+  }
 
-      span.setAttribute("ai.model", modelId);
-      span.setAttribute("ai.searchEnabled", searchEnabled ?? false);
-      span.setAttribute("ai.messageCount", messages.length);
+  const startTime = Date.now();
+  let firstTokenTime: number | null = null;
+  const searchCalls: Array<{ resultCount: number }> = [];
+  const extractCalls: Array<{ urlCount: number }> = [];
 
-      const startTime = Date.now();
-      let firstTokenTime: number | null = null;
-      const searchCalls: Array<{ resultCount: number }> = [];
-      const extractCalls: Array<{ urlCount: number }> = [];
+  const provider = getModelProvider(openRouterApiKey);
 
-      const provider = getModelProvider(openRouterApiKey);
+  const hasPdf = hasPdfAttachment(messages);
+  const useOcr = hasPdf && pdfEngineConfig?.useOcrForPdfs && !pdfEngineConfig?.supportsNativePdf;
+  const ocrPageCountPromise = useOcr ? getTotalPdfPageCount(messages) : Promise.resolve(0);
 
-      const hasPdf = hasPdfAttachment(messages);
-      const useOcr = hasPdf && pdfEngineConfig?.useOcrForPdfs && !pdfEngineConfig?.supportsNativePdf;
-      const ocrPageCountPromise = useOcr ? getTotalPdfPageCount(messages) : Promise.resolve(0);
+  const systemPrompt = generatePrompt(userSettings);
 
-      const systemPrompt = generatePrompt(userSettings);
+  // Use pricing from client cache or default to 0
+  const inputCostPerToken = Number(modelPricing?.prompt ?? 0);
+  const outputCostPerToken = Number(modelPricing?.completion ?? 0);
 
-      // Use pricing from client cache or default to 0
-      const inputCostPerToken = Number(modelPricing?.prompt ?? 0);
-      const outputCostPerToken = Number(modelPricing?.completion ?? 0);
+  const processedMessages = await processMessageFiles(messages, userId);
+  const convertedMessages = await convertToModelMessages(processedMessages);
 
-      const processedMessages = await processMessageFiles(messages, userId);
-      const convertedMessages = await convertToModelMessages(processedMessages);
-
-      const streamHandlers = createStreamHandlers(
-        () => {
-          // First token timing is now captured in createMetadata at text-start
-        },
-        (call) => {
-          searchCalls.push(call);
-        },
-        (call) => {
-          extractCalls.push(call);
-        },
-      );
-
-      const searchTools = searchEnabled && parallelApiKey ? createSearchTools(parallelApiKey) : {};
-      const handoffTools = threadId ? createHandoffTool(userId, threadId, messages, openRouterApiKey) : {};
-      const tools = Object.keys({ ...searchTools, ...handoffTools }).length > 0
-        ? { ...searchTools, ...handoffTools }
-        : undefined;
-
-      const getPdfPluginConfig = () => {
-        if (!hasPdf) {
-          return undefined;
-        }
-
-        if (pdfEngineConfig?.supportsNativePdf) {
-          return undefined;
-        }
-
-        const engine = pdfEngineConfig?.useOcrForPdfs ? "mistral-ocr" : "pdf-text";
-        return {
-          plugins: [{
-            id: "file-parser" as const,
-            pdf: { engine: engine as "pdf-text" | "mistral-ocr" },
-          }],
-        };
-      };
-
-      const getReasoningConfig = () => {
-        if (!reasoningLevel || reasoningLevel === "none") {
-          return undefined;
-        }
-        return {
-          reasoning: {
-            effort: reasoningLevel as ReasoningLevel,
-          },
-        };
-      };
-
-      const result = streamText({
-        model: provider(modelId),
-        system: systemPrompt,
-        messages: convertedMessages,
-        tools,
-        stopWhen: stepCountIs(8),
-        providerOptions: {
-          openrouter: {
-            usage: { include: true },
-            ...getPdfPluginConfig(),
-            ...getReasoningConfig(),
-          },
-        },
-        onChunk({ chunk }) {
-          processStreamChunk(chunk, streamHandlers);
-        },
-      });
-
-      let resolvedOcrPageCount: number | null = null;
-      ocrPageCountPromise.then((count) => {
-        resolvedOcrPageCount = count;
-      });
-
-      return {
-        stream: result,
-        createMetadata: (part: TextStreamPart<ToolSet>) => {
-          // Capture TTFT at first actual output token (reasoning or text-start)
-          if (firstTokenTime === null && (part.type === "reasoning-start" || part.type === "text-start")) {
-            firstTokenTime = Date.now();
-            onFirstToken?.();
-          }
-
-          if (part.type === "finish") {
-            const usage = part.totalUsage;
-            const totalTime = Date.now() - startTime;
-
-            span.setAttribute("ai.inputTokens", usage.inputTokens ?? 0);
-            span.setAttribute("ai.outputTokens", usage.outputTokens ?? 0);
-            span.setAttribute("ai.totalTimeMs", totalTime);
-            if (firstTokenTime) {
-              span.setAttribute("ai.timeToFirstTokenMs", firstTokenTime - startTime);
-            }
-
-            return calculateResponseMetadata({
-              inputTokens: usage.inputTokens ?? 0,
-              outputTokens: usage.outputTokens ?? 0,
-              totalTime,
-              firstTokenTime,
-              startTime,
-              modelId,
-              inputCostPerToken,
-              outputCostPerToken,
-              searchCalls,
-              extractCalls,
-              ocrPageCount: resolvedOcrPageCount ?? 0,
-            });
-          }
-        },
-      };
+  const streamHandlers = createStreamHandlers(
+    () => {
+      // First token timing is now captured in createMetadata at text-start
+    },
+    (call) => {
+      searchCalls.push(call);
+    },
+    (call) => {
+      extractCalls.push(call);
     },
   );
+
+  const searchTools = searchEnabled && parallelApiKey ? createSearchTools(parallelApiKey) : {};
+  const handoffTools = threadId ? createHandoffTool(userId, threadId, messages, openRouterApiKey) : {};
+  const tools = Object.keys({ ...searchTools, ...handoffTools }).length > 0
+    ? { ...searchTools, ...handoffTools }
+    : undefined;
+
+  const getPdfPluginConfig = () => {
+    if (!hasPdf) {
+      return undefined;
+    }
+
+    if (pdfEngineConfig?.supportsNativePdf) {
+      return undefined;
+    }
+
+    const engine = pdfEngineConfig?.useOcrForPdfs ? "mistral-ocr" : "pdf-text";
+    return {
+      plugins: [{
+        id: "file-parser" as const,
+        pdf: { engine: engine as "pdf-text" | "mistral-ocr" },
+      }],
+    };
+  };
+
+  const getReasoningConfig = () => {
+    if (!reasoningLevel || reasoningLevel === "none") {
+      return undefined;
+    }
+    return {
+      reasoning: {
+        effort: reasoningLevel as ReasoningLevel,
+      },
+    };
+  };
+
+  const result = streamText({
+    model: provider(modelId),
+    system: systemPrompt,
+    messages: convertedMessages,
+    tools,
+    stopWhen: stepCountIs(8),
+    providerOptions: {
+      openrouter: {
+        usage: { include: true },
+        ...getPdfPluginConfig(),
+        ...getReasoningConfig(),
+      },
+    },
+    onChunk({ chunk }) {
+      processStreamChunk(chunk, streamHandlers);
+    },
+  });
+
+  let resolvedOcrPageCount: number | null = null;
+  ocrPageCountPromise.then((count) => {
+    resolvedOcrPageCount = count;
+  });
+
+  return {
+    stream: result,
+    createMetadata: (part: TextStreamPart<ToolSet>) => {
+      // Capture TTFT at first actual output token (reasoning or text-start)
+      if (firstTokenTime === null && (part.type === "reasoning-start" || part.type === "text-start")) {
+        firstTokenTime = Date.now();
+        onFirstToken?.();
+      }
+
+      if (part.type === "finish") {
+        const usage = part.totalUsage;
+        const totalTime = Date.now() - startTime;
+
+        return calculateResponseMetadata({
+          inputTokens: usage.inputTokens ?? 0,
+          outputTokens: usage.outputTokens ?? 0,
+          totalTime,
+          firstTokenTime,
+          startTime,
+          modelId,
+          inputCostPerToken,
+          outputCostPerToken,
+          searchCalls,
+          extractCalls,
+          ocrPageCount: resolvedOcrPageCount ?? 0,
+        });
+      }
+    },
+  };
 }
