@@ -19,10 +19,12 @@ function generateShareId(): string {
 }
 
 function extractTextContent(message: ChatUIMessage): string {
-  if (typeof message.content === "string") return message.content;
+  if (typeof message.content === "string")
+    return message.content;
   if (Array.isArray(message.parts)) {
     for (const part of message.parts) {
-      if (part?.type === "text" && part.text) return part.text;
+      if (part?.type === "text" && part.text)
+        return part.text;
     }
   }
   return "";
@@ -83,14 +85,17 @@ async function getOgPreviewData(
             salt,
           ) as ChatUIMessage;
         }
-      } catch {
+      }
+      catch {
         continue;
       }
-    } else {
+    }
+    else {
       decrypted = row.content as ChatUIMessage;
     }
 
-    if (!decrypted) continue;
+    if (!decrypted)
+      continue;
 
     // Extract first user message
     if (row.role === "user" && !ogFirstMessage) {
@@ -104,7 +109,8 @@ async function getOgPreviewData(
     }
 
     // Stop once we have both
-    if (ogFirstMessage && ogModel) break;
+    if (ogFirstMessage && ogModel)
+      break;
   }
 
   return { ogTitle, ogModel, ogFirstMessage };

@@ -1,3 +1,6 @@
+/* eslint-disable react/no-array-index-key */
+// I do not care about using index as key in this specific case
+
 "use client";
 
 import { CopyIcon, DownloadIcon, LoaderIcon, ShieldCheckIcon, ShieldOffIcon } from "lucide-react";

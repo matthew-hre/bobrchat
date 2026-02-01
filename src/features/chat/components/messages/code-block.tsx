@@ -163,7 +163,7 @@ export const CodeBlock: FC<CodeBlockProps> = memo(({ language: propLanguage, val
       <div className="prism-code overflow-x-auto p-4 font-mono text-xs">
         <pre className={cn(
           wrap
-            ? "break-words whitespace-pre-wrap"
+            ? "wrap-break-word whitespace-pre-wrap"
             : "overflow-x-auto whitespace-pre",
         )}
         >
@@ -174,6 +174,7 @@ export const CodeBlock: FC<CodeBlockProps> = memo(({ language: propLanguage, val
                   className={`
                     language-${language}
                   `}
+                  // eslint-disable-next-line react-dom/no-dangerously-set-innerhtml
                   dangerouslySetInnerHTML={{ __html: highlightedHtml }}
                 />
               )
