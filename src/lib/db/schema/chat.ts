@@ -58,6 +58,29 @@ export const messages = pgTable(
   table => [index("messages_threadId_idx").on(table.threadId)],
 );
 
+export const messageMetadata = pgTable(
+  "message_metadata",
+  {
+    messageId: uuid("message_id")
+      .primaryKey()
+      .references(() => messages.id, { onDelete: "cascade" }),
+    model: text("model"),
+    inputTokens: integer("input_tokens"),
+    outputTokens: integer("output_tokens"),
+    costTotalUsd: text("cost_total_usd"), // stored as string for precision, parsed to number
+    costBreakdown: jsonb("cost_breakdown").$type<{
+      promptCost: number;
+      completionCost: number;
+      search: number;
+      extract: number;
+      ocr: number;
+    }>(),
+    tokensPerSecond: text("tokens_per_second"), // stored as string for precision
+    timeToFirstTokenMs: integer("time_to_first_token_ms"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+);
+
 export const attachments = pgTable(
   "attachments",
   {

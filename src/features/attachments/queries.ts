@@ -2,7 +2,7 @@ import { and, asc, desc, eq, gt, inArray, like, lt, or, sql, sum } from "drizzle
 import { Buffer } from "node:buffer";
 
 import { db } from "~/lib/db";
-import { attachments, messages } from "~/lib/db/schema/chat";
+import { attachments, messageMetadata, messages } from "~/lib/db/schema/chat";
 import { serverEnv } from "~/lib/env";
 
 import type { AttachmentListItem, AttachmentOrder, AttachmentTypeFilter, Cursor } from "./types";
@@ -22,29 +22,44 @@ export async function getThreadStats(params: {
   userId: string;
   threadId: string;
 }): Promise<{ messageCount: number; attachmentCount: number; attachmentSize: number; totalCost: number }> {
-  const [messageResult, attachmentResult] = await Promise.all([
-    db
-      .select({
-        count: sql<number>`count(*)::int`,
-        totalCost: sql<number>`coalesce(sum((${messages.content}->'metadata'->'costUSD'->>'total')::numeric), 0)::float`,
-      })
-      .from(messages)
-      .where(eq(messages.threadId, params.threadId)),
-    db
-      .select({
-        count: sql<number>`count(*)::int`,
-        size: sql<number>`coalesce(sum(${attachments.size}), 0)::bigint`,
-      })
-      .from(attachments)
-      .innerJoin(messages, eq(attachments.messageId, messages.id))
-      .where(eq(messages.threadId, params.threadId)),
-  ]);
+  type StatsRow = {
+    message_count: number;
+    total_cost: number;
+    attachment_count: number;
+    attachment_size: string;
+  };
 
+  const result = await db.execute<StatsRow>(sql`
+    select
+      (select count(*)::int from ${messages} where ${messages.threadId} = ${params.threadId}) as message_count,
+      (
+        select coalesce(sum(${messageMetadata.costTotalUsd}::numeric), 0)::float
+        from ${messageMetadata}
+        inner join ${messages} on ${messageMetadata.messageId} = ${messages.id}
+        where ${messages.threadId} = ${params.threadId}
+      ) as total_cost,
+      (
+        select count(*)::int
+        from ${attachments}
+        inner join ${messages} on ${attachments.messageId} = ${messages.id}
+        where ${messages.threadId} = ${params.threadId}
+      ) as attachment_count,
+      (
+        select coalesce(sum(${attachments.size}), 0)::bigint
+        from ${attachments}
+        inner join ${messages} on ${attachments.messageId} = ${messages.id}
+        where ${messages.threadId} = ${params.threadId}
+      ) as attachment_size
+  `);
+
+  // Handle different return types from postgres-js (array) vs neon-serverless (QueryResult)
+  const rows = "rows" in result ? result.rows : (result as unknown as StatsRow[]);
+  const row = rows[0];
   return {
-    messageCount: messageResult[0]?.count ?? 0,
-    attachmentCount: attachmentResult[0]?.count ?? 0,
-    attachmentSize: Number(attachmentResult[0]?.size ?? 0),
-    totalCost: messageResult[0]?.totalCost ?? 0,
+    messageCount: row?.message_count ?? 0,
+    attachmentCount: row?.attachment_count ?? 0,
+    attachmentSize: Number(row?.attachment_size ?? 0),
+    totalCost: row?.total_cost ?? 0,
   };
 }
 

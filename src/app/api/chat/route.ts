@@ -16,7 +16,6 @@ import { getUserSettingsAndKeys } from "~/features/settings/queries";
 export type CostBreakdown = {
   promptCost: number;
   completionCost: number;
-  model?: number; // legacy
   search: number;
   extract: number;
   ocr: number;

@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { cache } from "react";
 
 import { db } from "~/lib/db";
-import { messages, threads } from "~/lib/db/schema/chat";
+import { messageMetadata, messages, threads } from "~/lib/db/schema/chat";
 import { threadShares } from "~/lib/db/schema/sharing";
 import { decryptMessage } from "~/lib/security/encryption";
 import { getKeyMeta, getSaltForVersion } from "~/lib/security/keys";
@@ -12,7 +12,6 @@ type ChatUIMessage = {
   role: string;
   parts?: Array<{ type?: string; text?: string }>;
   content?: string;
-  metadata?: { model?: string };
 };
 
 function generateShareId(): string {
@@ -63,8 +62,10 @@ async function getOgPreviewData(
       ciphertext: messages.ciphertext,
       authTag: messages.authTag,
       keyVersion: messages.keyVersion,
+      metaModel: messageMetadata.model,
     })
     .from(messages)
+    .leftJoin(messageMetadata, eq(messages.id, messageMetadata.messageId))
     .where(eq(messages.threadId, threadId))
     .orderBy(messages.createdAt)
     .limit(5);
@@ -97,9 +98,9 @@ async function getOgPreviewData(
       ogFirstMessage = text.length > 200 ? `${text.slice(0, 197)}...` : text;
     }
 
-    // Extract model from first assistant message
-    if (row.role === "assistant" && !ogModel) {
-      ogModel = decrypted.metadata?.model || ogModel;
+    // Extract model from message_metadata table for assistant messages
+    if (row.role === "assistant" && !ogModel && row.metaModel) {
+      ogModel = row.metaModel;
     }
 
     // Stop once we have both

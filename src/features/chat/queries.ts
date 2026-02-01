@@ -5,7 +5,7 @@ import type { ChatUIMessage } from "~/app/api/chat/route";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { db } from "~/lib/db";
-import { attachments, messages, threads } from "~/lib/db/schema/chat";
+import { attachments, messageMetadata, messages, threads } from "~/lib/db/schema/chat";
 import { threadShares } from "~/lib/db/schema/sharing";
 import { serverEnv } from "~/lib/env";
 import { decryptMessage, encryptMessage } from "~/lib/security/encryption";
@@ -136,8 +136,17 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
       keyVersion: messages.keyVersion,
       searchEnabled: messages.searchEnabled,
       reasoningLevel: messages.reasoningLevel,
+      // Metadata from message_metadata table
+      metaModel: messageMetadata.model,
+      metaInputTokens: messageMetadata.inputTokens,
+      metaOutputTokens: messageMetadata.outputTokens,
+      metaCostTotalUsd: messageMetadata.costTotalUsd,
+      metaCostBreakdown: messageMetadata.costBreakdown,
+      metaTokensPerSecond: messageMetadata.tokensPerSecond,
+      metaTimeToFirstTokenMs: messageMetadata.timeToFirstTokenMs,
     })
     .from(messages)
+    .leftJoin(messageMetadata, eq(messages.id, messageMetadata.messageId))
     .where(eq(messages.threadId, threadId))
     .orderBy(messages.createdAt);
 
@@ -160,11 +169,36 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
       message = row.content as ChatUIMessage;
     }
 
+    // Build metadata from message_metadata table if available
+    const metadata = row.metaModel
+      ? {
+          model: row.metaModel,
+          inputTokens: row.metaInputTokens ?? 0,
+          outputTokens: row.metaOutputTokens ?? 0,
+          tokensPerSecond: row.metaTokensPerSecond ? Number.parseFloat(row.metaTokensPerSecond) : 0,
+          timeToFirstTokenMs: row.metaTimeToFirstTokenMs ?? 0,
+          costUSD: row.metaCostBreakdown
+            ? {
+                ...row.metaCostBreakdown,
+                total: row.metaCostTotalUsd ? Number.parseFloat(row.metaCostTotalUsd) : 0,
+              }
+            : {
+                promptCost: 0,
+                completionCost: 0,
+                search: 0,
+                extract: 0,
+                ocr: 0,
+                total: row.metaCostTotalUsd ? Number.parseFloat(row.metaCostTotalUsd) : 0,
+              },
+        }
+      : undefined;
+
     return {
       ...message,
       id: row.id,
       searchEnabled: row.searchEnabled,
       reasoningLevel: row.reasoningLevel,
+      metadata,
     };
   }));
 });
@@ -216,6 +250,29 @@ export async function saveMessage(
       searchEnabled: options?.searchEnabled,
       reasoningLevel: options?.reasoningLevel,
     });
+
+    // Insert metadata for assistant messages (user messages don't have cost/token info)
+    if (role === "assistant" && filteredMessage.metadata) {
+      const meta = filteredMessage.metadata;
+      await tx.insert(messageMetadata).values({
+        messageId,
+        model: meta.model,
+        inputTokens: meta.inputTokens,
+        outputTokens: meta.outputTokens,
+        costTotalUsd: meta.costUSD?.total?.toString(),
+        costBreakdown: meta.costUSD
+          ? {
+              promptCost: meta.costUSD.promptCost,
+              completionCost: meta.costUSD.completionCost,
+              search: meta.costUSD.search,
+              extract: meta.costUSD.extract,
+              ocr: meta.costUSD.ocr,
+            }
+          : undefined,
+        tokensPerSecond: meta.tokensPerSecond?.toString(),
+        timeToFirstTokenMs: meta.timeToFirstTokenMs,
+      });
+    }
 
     if (messageId) {
       if (attachmentIds.length > 0) {
