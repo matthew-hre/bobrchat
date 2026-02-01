@@ -246,7 +246,8 @@ export async function regenerateThreadName(threadId: string, clientKey?: string,
   if (useAllMessages) {
     userContent = textMessages
       .map((m) => {
-        if (!m.parts) return "";
+        if (!m.parts)
+          return "";
         return m.parts
           .filter(p => p.type === "text")
           .map(p => (p as { text: string }).text)

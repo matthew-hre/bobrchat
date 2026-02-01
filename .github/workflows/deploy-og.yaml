@@ -5,8 +5,14 @@ on:
     branches:
       - main
     paths:
-      - 'og/**'
-      - '.github/workflows/deploy-og.yaml'
+      - "og/**"
+      - .github/workflows/deploy-og.yaml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "og/**"
+      - .github/workflows/deploy-og.yaml
 
 jobs:
   lint:
