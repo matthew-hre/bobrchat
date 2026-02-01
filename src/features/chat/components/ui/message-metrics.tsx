@@ -22,10 +22,21 @@ type MessageMetricsProps = {
   stopped?: boolean;
 };
 
-function normalizeCostUsd(costUsd: CostBreakdown | number | undefined): CostBreakdown | null {
+type LegacyCostBreakdown = CostBreakdown & { model?: number };
+
+function normalizeCostUsd(costUsd: LegacyCostBreakdown | number | undefined): CostBreakdown | null {
   if (!costUsd) return null;
   if (typeof costUsd === "number") {
     return { promptCost: costUsd, completionCost: 0, total: costUsd, search: 0, extract: 0, ocr: 0 };
+  }
+  // Handle legacy `model` field - treat it as completionCost
+  if ("model" in costUsd && typeof costUsd.model === "number") {
+    const { model, ...rest } = costUsd;
+    return {
+      ...rest,
+      completionCost: rest.completionCost + model,
+      total: rest.total, // total already includes model cost
+    };
   }
   return costUsd;
 }
@@ -260,13 +271,7 @@ export function MessageMetrics({
                           <span className="font-mono">{formatCost(costUsd.completionCost)}</span>
                         </div>
                       )}
-                      {costUsd?.model && costUsd?.model > 0.000001 && ( // We used to handle model as a separate cost,
-                                                   // but now it's shown as prompt + completion
-                        <div className="flex justify-between gap-4">
-                          <span>Model:</span>
-                          <span className="font-mono">{formatCost(costUsd?.model)}</span>
-                        </div>
-                      )}
+
                       {costUsd.search > 0.000001 && (
                         <div className="flex justify-between gap-4">
                           <span>Search:</span>
