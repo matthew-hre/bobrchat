@@ -13,19 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-      BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-      GITHUB_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
-      GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
-      ENCRYPTION_SECRET: ${{ secrets.ENCRYPTION_SECRET }}
-      ENCRYPTION_SALT: ${{ secrets.ENCRYPTION_SALT }}
-      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-      R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-      R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
-      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      SKIP_ENV_VALIDATION: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
