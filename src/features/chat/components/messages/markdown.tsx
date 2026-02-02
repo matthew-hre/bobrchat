@@ -24,7 +24,9 @@ const MemoizedMarkdownBlock = memo(
         components={{
           code: ({ node, className, children, ...props }) => {
             const match = /language-(\w+)/.exec(className || "");
-            const isInline = !match;
+            const hasNewlines = String(children).includes("\n");
+            const isInline = !match && !hasNewlines;
+
             if (isInline) {
               return (
                 <code
@@ -39,7 +41,7 @@ const MemoizedMarkdownBlock = memo(
             }
             return (
               <CodeBlock
-                language={match ? match[1] : ""}
+                language={match ? match[1] : "plaintext"}
                 value={String(children).replace(/\n$/, "")}
               />
             );
