@@ -13,7 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      SKIP_ENV_VALIDATION: "true"
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost:5432/ci' }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'ci-placeholder-secret-at-least-32-chars!' }}
+      BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL || 'http://localhost:3000' }}
+      GITHUB_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID || 'ci-placeholder' }}
+      GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET || 'ci-placeholder' }}
+      ENCRYPTION_SECRET: ${{ secrets.ENCRYPTION_SECRET || 'ci-placeholder-secret-at-least-32-chars!' }}
+      ENCRYPTION_SALT: ${{ secrets.ENCRYPTION_SALT || 'ci-salt!!' }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID || 'ci-placeholder' }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID || 'ci-placeholder' }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY || 'ci-placeholder' }}
+      R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME || 'ci-placeholder' }}
+      R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL || 'https://placeholder.example.com' }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || 'ci-placeholder' }}
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main

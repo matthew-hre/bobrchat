@@ -70,7 +70,7 @@ export function useChatInputController({
   }, [
     capabilities.supportsSearch,
     searchEnabled,
-    setSearchEnabled
+    setSearchEnabled,
   ]);
 
   const canUpload = canUploadFiles(capabilities);
@@ -131,8 +131,8 @@ export function useChatInputController({
   const onKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const shouldSend
       = (keyboardShortcut === "enter" && e.key === "Enter" && !e.shiftKey && !e.ctrlKey)
-      || (keyboardShortcut === "ctrlEnter" && e.key === "Enter" && e.ctrlKey)
-      || (keyboardShortcut === "shiftEnter" && e.key === "Enter" && e.shiftKey);
+        || (keyboardShortcut === "ctrlEnter" && e.key === "Enter" && e.ctrlKey)
+        || (keyboardShortcut === "shiftEnter" && e.key === "Enter" && e.shiftKey);
 
     if (shouldSend) {
       e.preventDefault();

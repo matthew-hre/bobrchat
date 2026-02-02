@@ -1,3 +1,4 @@
+/* eslint-disable node/no-process-env */
 import { loadEnv } from "@matthew-hre/env";
 import * as z from "zod";
 
