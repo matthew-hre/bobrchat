@@ -15,7 +15,6 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   BrainIcon,
   FileTextIcon,
@@ -26,7 +25,6 @@ import {
   SparklesIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import type { CapabilityFilter, SortOrder } from "~/features/models/types";
 
@@ -48,21 +46,17 @@ import {
 import { Skeleton } from "~/components/ui/skeleton";
 import {
   ModelCard,
-  MODELS_KEY,
   SortableFavoriteModel,
-  useModels,
+  useModelsQuery,
 } from "~/features/models";
-import { useModelDirectory } from "~/features/models/hooks/use-model-directory";
 import { useFavoriteModelsDraft } from "~/features/settings/hooks/use-favorite-models-draft";
+import { useDebouncedValue } from "~/lib/hooks/use-debounced-value";
 import { useInfiniteScroll } from "~/lib/hooks/use-infinite-scroll";
-import { cn } from "~/lib/utils";
 
 import { useApiKeyStatus } from "../../hooks/use-api-status";
 
 export function ModelsTab() {
   const { hasKey: hasOpenRouterKey, isLoading: isKeyLoading } = useApiKeyStatus("openrouter");
-  const { data: models = [], isLoading, isFetching, refetch } = useModels({ enabled: true });
-  const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [capabilityFilters, setCapabilityFilters] = useState<CapabilityFilter[]>([]);
@@ -70,20 +64,28 @@ export function ModelsTab() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
 
-  const { draftIds, draftSet, draftModels, toggle, reorder, isSaving } = useFavoriteModelsDraft();
-  const { results: searchResults, totalCount } = useModelDirectory(models, {
-    query: searchQuery,
-    capabilityFilters,
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
+  const { data, isLoading } = useModelsQuery({
+    search: debouncedSearch || undefined,
+    capabilities: capabilityFilters.length > 0 ? capabilityFilters : undefined,
     sortOrder,
+    pageSize: 500,
   });
 
+  const models = useMemo(() => data?.models ?? [], [data?.models]);
+  const totalCount = data?.total ?? 0;
+
+  const { draftIds, draftSet, draftModels, toggle, reorder, isSaving } = useFavoriteModelsDraft();
+
   const availableResults = useMemo(
-    () => searchResults.filter(m => !draftSet.has(m.id)),
-    [searchResults, draftSet],
+    () => models.filter(m => !draftSet.has(m.id)),
+    [models, draftSet],
   );
+
   const { displayedCount, observerRef, hasMore } = useInfiniteScroll({
     totalCount: availableResults.length,
-    resetKeys: [searchQuery, capabilityFilters, sortOrder],
+    resetKeys: [debouncedSearch, capabilityFilters, sortOrder],
   });
 
   const sensors = useSensors(
@@ -103,12 +105,6 @@ export function ModelsTab() {
 
   const activeFilterCount = capabilityFilters.length + (sortOrder !== "provider-asc" ? 1 : 0);
 
-  const handleRefreshModels = async () => {
-    await queryClient.invalidateQueries({ queryKey: MODELS_KEY });
-    await refetch();
-    toast.success("Models updated successfully");
-  };
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -118,8 +114,6 @@ export function ModelsTab() {
       reorder(oldIndex, newIndex);
     }
   };
-
-  const isRefreshing = isFetching && !isLoading;
 
   return (
     <div className="flex flex-col overflow-hidden">
@@ -135,7 +129,7 @@ export function ModelsTab() {
       </div>
 
       {/* Search Bar */}
-      {models.length > 0 && (
+      {hasOpenRouterKey && (
         <div className="border-border border-b px-6 py-3">
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -230,23 +224,9 @@ export function ModelsTab() {
               </Select>
             </div>
           )}
-          <div className="text-muted-foreground mt-2 text-xs">
-            {`${searchResults.length} of ${totalCount} models. `}
-            <Button
-              variant="link"
-              size="sm"
-              onClick={handleRefreshModels}
-              className="-ml-2 h-min text-xs"
-            >
-              Refresh model list?
-              <Loader2 className={cn(
-                "size-3 transition-transform duration-500",
-                isRefreshing ? "animate-spin" : "hidden",
-              )}
-              />
-            </Button>
-          </div>
-
+          <p className="text-muted-foreground mt-2 text-xs">
+            {`${availableResults.length} of ${totalCount} models`}
+          </p>
         </div>
       )}
 
@@ -302,7 +282,7 @@ export function ModelsTab() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        {isLoading || isRefreshing
+        {isLoading
           ? (
               <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map(i => (
@@ -340,15 +320,15 @@ export function ModelsTab() {
                       )
                     : (
                         <>
-                          <h3 className="mb-1 font-medium">No models loaded</h3>
+                          <h3 className="mb-1 font-medium">No models found</h3>
                           <p className="text-muted-foreground mb-6 text-sm">
-                            Loading available models from OpenRouter...
+                            No models are available. They will be synced automatically.
                           </p>
                         </>
                       )}
                 </div>
               )
-            : searchResults.length === 0
+            : availableResults.length === 0
               ? (
                   <div className={`
                     flex flex-col items-center justify-center py-12 text-center
@@ -359,13 +339,10 @@ export function ModelsTab() {
                 )
               : (
                   <div className="grid gap-3">
-                    {availableResults
-                      .slice(0, displayedCount)
-                      .map((model) => {
-                        const isSelected = draftSet.has(model.id);
-                        return (<ModelCard key={model.id} model={model} isSelected={isSelected} toggleModel={toggle} />);
-                      })}
-                    {/* Intersection observer target for infinite scroll */}
+                    {availableResults.slice(0, displayedCount).map((model) => {
+                      const isSelected = draftSet.has(model.id);
+                      return (<ModelCard key={model.id} model={model} isSelected={isSelected} toggleModel={toggle} />);
+                    })}
                     <div ref={observerRef} className="h-1" />
                     {hasMore && (
                       <div className="flex justify-center py-4">

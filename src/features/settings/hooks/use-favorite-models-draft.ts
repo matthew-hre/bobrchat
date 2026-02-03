@@ -4,7 +4,7 @@ import type { Model } from "@openrouter/sdk/models";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useModels } from "~/features/models/hooks/use-models";
+import { useFavoriteModels } from "~/features/models/hooks/use-models";
 import {
   useUpdateFavoriteModels,
   useUserSettings,
@@ -15,7 +15,7 @@ const DEBOUNCE_MS = 500;
 
 export function useFavoriteModelsDraft() {
   const { data: settings } = useUserSettings();
-  const { data: allModels } = useModels();
+  const { models: favoriteModels } = useFavoriteModels();
   const { mutate: saveFavorites, isPending: isSaving } = useUpdateFavoriteModels();
 
   const [draftIds, setDraftIds] = useState<string[]>([]);
@@ -65,12 +65,10 @@ export function useFavoriteModelsDraft() {
   const draftSet = useMemo(() => new Set(draftIds), [draftIds]);
 
   const draftModels = useMemo(() => {
-    if (!allModels)
-      return [];
     return draftIds
-      .map(id => allModels.find(m => m.id === id))
+      .map(id => favoriteModels.find(m => m.id === id))
       .filter((m): m is Model => m !== undefined);
-  }, [draftIds, allModels]);
+  }, [draftIds, favoriteModels]);
 
   const toggle = useCallback((modelId: string) => {
     setDraftIds((prev) => {

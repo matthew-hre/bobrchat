@@ -25,4 +25,21 @@ export type SortOrder
     | "cost-asc"
     | "cost-desc";
 
+export type ModelsQueryParams = {
+  search?: string;
+  capabilities?: CapabilityFilter[];
+  providers?: string[];
+  sortOrder?: SortOrder;
+  page?: number;
+  pageSize?: number;
+};
+
+export type ModelsQueryResult = {
+  models: Model[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export type { Model };

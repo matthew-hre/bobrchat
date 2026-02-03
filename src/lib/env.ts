@@ -17,6 +17,8 @@ const schema = {
     R2_BUCKET_NAME: z.string(),
     R2_PUBLIC_URL: z.url(),
     RESEND_API_KEY: z.string(),
+    OPENROUTER_API_KEY: z.string().optional(),
+    CRON_SECRET: z.string().optional(),
   }),
   client: z.object({
     NEXT_PUBLIC_BETTER_AUTH_URL: z.url().optional(),

@@ -69,7 +69,7 @@ export function InlineMessageEditor({
 
   const { hasKey: hasParallelApiKey, isLoading: isParallelApiLoading } = useApiKeyStatus("parallel");
 
-  const favoriteModels = useFavoriteModels();
+  const { models: favoriteModels } = useFavoriteModels();
   const [selectedModelId, setSelectedModelId] = React.useState<string | null>(
     initialModelId || favoriteModels[0]?.id || null,
   );
