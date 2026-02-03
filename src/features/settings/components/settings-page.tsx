@@ -2,25 +2,30 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowLeftIcon,
   KeyIcon,
   LogOutIcon,
-  MenuIcon,
   PaletteIcon,
   PaperclipIcon,
   SettingsIcon,
   SparklesIcon,
   UserIcon,
-  XIcon,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
+import { Button } from "~/components/ui/button";
+import { Separator } from "~/components/ui/separator";
 import { signOut } from "~/features/auth/lib/auth-client";
 import { cn } from "~/lib/utils";
 
-import { Button } from "../../../components/ui/button";
-import { DialogClose } from "../../../components/ui/dialog";
-import { Separator } from "../../../components/ui/separator";
+const SIDEBAR_WIDTH_STORAGE_KEY = "sidebar_width";
+const SIDEBAR_WIDTH_DEFAULT = 16;
+const SIDEBAR_WIDTH_MIN = 14;
+const SIDEBAR_WIDTH_MAX = 20;
+
 import { AttachmentsTab } from "./tabs/attachments-tab";
 import { IntegrationsTab } from "./tabs/integrations-tab";
 import { InterfaceTab } from "./tabs/interface-tab";
@@ -45,24 +50,28 @@ const tabs: TabConfig[] = [
   { id: "attachments", label: "Attachments", icon: PaperclipIcon },
 ];
 
-export function SettingsTabs() {
+type SettingsPageProps = {
+  initialTab?: TabId;
+};
+
+export function SettingsPage({ initialTab = "profile" }: SettingsPageProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_WIDTH_DEFAULT);
 
-  const activeTab = (searchParams.get("settings") as TabId) || "profile";
+  useEffect(() => {
+    const stored = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
+    if (stored) {
+      const width = Math.max(SIDEBAR_WIDTH_MIN, Math.min(SIDEBAR_WIDTH_MAX, parseFloat(stored)));
+      setSidebarWidth(width);
+    }
+  }, []);
 
-  const setActiveTab = useCallback(
-    (tab: TabId) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("settings", tab);
-      params.delete("referrer");
-      router.push(`?${params.toString()}`, { scroll: false });
-      setSidebarOpen(false);
-    },
-    [router, searchParams],
-  );
+  const handleTabChange = useCallback((tab: TabId) => {
+    setActiveTab(tab);
+    window.history.replaceState(null, "", `/settings?tab=${tab}`);
+  }, []);
 
   const handleSignOut = useCallback(async () => {
     await signOut();
@@ -71,72 +80,45 @@ export function SettingsTabs() {
   }, [router, queryClient]);
 
   return (
-    <div className={`
-      flex h-full w-full flex-col
-      md:flex-row
-    `}
-    >
-      {/* Mobile header with hamburger */}
-      <div className={`
-        bg-muted/30 flex items-center justify-between border-b p-4
-        md:hidden
-      `}
-      >
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          <MenuIcon className="size-4" />
-          <span className="sr-only">Toggle menu</span>
-        </Button>
-        <DialogClose asChild>
-          <Button variant="ghost" size="icon-sm">
-            <XIcon className="size-4" />
-            <span className="sr-only">Close</span>
-          </Button>
-        </DialogClose>
-      </div>
-
-      {/* Sidebar */}
-      <div
-        className={cn(
-          `
-            bg-card flex flex-col border-r
-            md:bg-muted/30 md:min-w-50 md:shrink-0
-          `,
-          !sidebarOpen && "hidden",
-          sidebarOpen && "md:hidden",
-          `
-            absolute inset-0 top-16 z-40 w-full
-            md:relative md:inset-auto md:flex md:w-auto
-          `,
-        )}
-      >
-        <div className={`
-          hidden items-center justify-between p-4
-          md:flex
+    <div className="flex h-full w-full">
+      {/* Sidebar - matching ChatSidebar style */}
+      <aside
+        style={{ width: `${sidebarWidth}rem` }}
+        className={`
+          bg-sidebar text-sidebar-foreground border-sidebar-border flex
+          h-full shrink-0 flex-col border-r
         `}
-        >
-          <h2 className="text-lg font-semibold">Settings</h2>
-          <DialogClose asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="absolute top-4 right-4"
-            >
-              <XIcon className="size-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </DialogClose>
+      >
+        {/* Header */}
+        <div className="flex h-14 items-center justify-between px-3">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/icon.png"
+              alt="BobrChat Logo"
+              width={64}
+              height={64}
+              className="size-8"
+            />
+            <span className="text-base font-semibold tracking-tight">
+              Settings
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="size-7"
+            title="Back to chat"
+            asChild
+          >
+            <Link href="/">
+              <ArrowLeftIcon className="size-4" />
+            </Link>
+          </Button>
         </div>
 
-        <Separator className={`
-          hidden
-          md:block
-        `}
-        />
+        <Separator />
 
+        {/* Navigation */}
         <nav className="flex flex-1 flex-col gap-1 p-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -146,17 +128,17 @@ export function SettingsTabs() {
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={cn(
                   `
                     flex items-center gap-3 rounded-md px-3 py-2 text-sm
                     font-medium transition-colors
                   `,
                   isActive
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : `
-                      text-muted-foreground
-                      hover:bg-muted hover:text-foreground
+                      text-sidebar-foreground/70
+                      hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
                     `,
                 )}
               >
@@ -167,19 +149,16 @@ export function SettingsTabs() {
           })}
         </nav>
 
-        <Separator className={`
-          hidden
-          md:block
-        `}
-        />
+        <Separator />
 
+        {/* Sign out */}
         <div className="p-2">
           <button
             type="button"
             onClick={handleSignOut}
             className={cn(`
-              text-muted-foreground flex w-full items-center gap-3 rounded-md
-              px-3 py-4 text-sm font-medium transition-colors
+              text-sidebar-foreground/70 flex w-full items-center gap-3
+              rounded-md px-3 py-2 text-sm font-medium transition-colors
               hover:bg-destructive/10 hover:text-destructive
             `)}
           >
@@ -187,7 +166,7 @@ export function SettingsTabs() {
             Sign Out
           </button>
         </div>
-      </div>
+      </aside>
 
       {/* Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
