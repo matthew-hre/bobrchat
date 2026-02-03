@@ -6,39 +6,51 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useApiKeyStatus } from "~/features/settings/hooks/use-api-status";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
-import { getClientKey } from "~/lib/api-keys/client";
 import { MODELS_KEY } from "~/lib/queries/query-keys";
 
-import { fetchOpenRouterModels } from "../actions";
+import type { ModelsQueryParams, ModelsQueryResult } from "../types";
+
+import { fetchModels, fetchModelsByIds } from "../actions";
 
 export { MODELS_KEY };
 
-export function useModels(options: { enabled?: boolean } = {}) {
-  const { hasKey, source } = useApiKeyStatus("openrouter");
+/**
+ * Fetch models with filtering, sorting, and pagination
+ */
+export function useModelsQuery(
+  params: ModelsQueryParams,
+  options: { enabled?: boolean } = {},
+) {
+  const { hasKey } = useApiKeyStatus("openrouter");
 
-  return useQuery({
-    queryKey: MODELS_KEY,
-    queryFn: async () => {
-      const clientKey = source === "client"
-        ? getClientKey("openrouter") ?? undefined
-        : undefined;
-      return fetchOpenRouterModels(clientKey);
-    },
-    enabled: hasKey && options.enabled,
-    staleTime: 24 * 60 * 60 * 1000,
-    gcTime: 24 * 60 * 60 * 1000,
+  return useQuery<ModelsQueryResult>({
+    queryKey: [...MODELS_KEY, params],
+    queryFn: () => fetchModels(params),
+    enabled: hasKey && options.enabled !== false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 }
 
-export function useFavoriteModels(): Model[] {
-  const { data: allModels } = useModels();
-  const { data: settings } = useUserSettings();
+/**
+ * Get favorite models by fetching only the needed IDs
+ * More efficient than loading all models
+ */
+export function useFavoriteModels(): { models: Model[]; isLoading: boolean } {
+  const { hasKey } = useApiKeyStatus("openrouter");
+  const { data: settings, isLoading: isSettingsLoading } = useUserSettings();
+  const favoriteIds = settings?.favoriteModels ?? [];
 
-  if (!allModels || !settings?.favoriteModels) {
-    return [];
-  }
+  const { data: favoriteModels, isLoading: isModelsLoading } = useQuery({
+    queryKey: [...MODELS_KEY, "favorites", favoriteIds],
+    queryFn: () => fetchModelsByIds(favoriteIds),
+    enabled: hasKey && favoriteIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
-  return settings.favoriteModels
-    .map((modelId: string) => allModels.find((m: Model) => m.id === modelId))
-    .filter((m: Model | undefined): m is Model => m !== undefined);
+  return {
+    models: favoriteModels ?? [],
+    isLoading: isSettingsLoading || isModelsLoading,
+  };
 }

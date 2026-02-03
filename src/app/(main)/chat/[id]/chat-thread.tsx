@@ -14,7 +14,7 @@ import { useChatActions } from "~/features/chat/hooks/use-chat-actions";
 import { THREADS_KEY } from "~/features/chat/hooks/use-threads";
 import { parseAIError } from "~/features/chat/lib/parse-ai-error";
 import { useChatUIStore } from "~/features/chat/store";
-import { getModelCapabilities, useModels } from "~/features/models";
+import { getModelCapabilities, useFavoriteModels } from "~/features/models";
 
 type ChatThreadProps = {
   params: Promise<{ id: string }>;
@@ -47,14 +47,14 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
     }
   }, [id, setInput]);
 
-  const { data: models } = useModels();
+  const { models: favoriteModels } = useFavoriteModels();
 
   // Keep models in a ref so we can access them in the transport callback
-  // without triggering valid re-renders if we were to recreate the transport
-  const modelsRef = useRef(models);
+  // without triggering re-renders if we were to recreate the transport
+  const modelsRef = useRef(favoriteModels);
   useEffect(() => {
-    modelsRef.current = models;
-  }, [models]);
+    modelsRef.current = favoriteModels;
+  }, [favoriteModels]);
 
   // Memoize transport to avoid recreating on every render
   const transport = useMemo(() => new DefaultChatTransport({

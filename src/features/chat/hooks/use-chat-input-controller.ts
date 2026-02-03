@@ -13,7 +13,6 @@ import {
   getAcceptedFileTypes,
   getModelCapabilities,
   useFavoriteModels,
-  useModels,
 } from "~/features/models";
 import { useApiKeyStatus } from "~/features/settings/hooks/use-api-status";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
@@ -37,8 +36,7 @@ export function useChatInputController({
   const { hasKey: hasOpenRouterKey, isLoading: isOpenRouterLoading } = useApiKeyStatus("openrouter");
   const { hasKey: hasParallelApiKey, isLoading: isParallelApiLoading } = useApiKeyStatus("parallel");
 
-  const favoriteModels = useFavoriteModels();
-  const { isLoading: isModelsLoading } = useModels({ enabled: hasOpenRouterKey });
+  const { models: favoriteModels, isLoading: isModelsLoading } = useFavoriteModels();
 
   const {
     input: value,

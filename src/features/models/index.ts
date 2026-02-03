@@ -1,13 +1,17 @@
 // Actions
-export { fetchOpenRouterModels } from "./actions";
+export {
+  fetchModelById,
+  fetchModels,
+  fetchModelsByIds,
+  fetchProviders,
+} from "./actions";
 
 // Components
 export { ModelCard } from "./components/model-card";
 export { SortableFavoriteModel } from "./components/sortable-favorite-model";
 
-export { useModelDirectory } from "./hooks/use-model-directory";
 // Hooks
-export { MODELS_KEY, useFavoriteModels, useModels } from "./hooks/use-models";
+export { MODELS_KEY, useFavoriteModels, useModelsQuery } from "./hooks/use-models";
 
 // Types
 export type {
@@ -15,6 +19,8 @@ export type {
   FileValidationResult,
   Model,
   ModelCapabilities,
+  ModelsQueryParams,
+  ModelsQueryResult,
   SortOrder,
 } from "./types";
 
