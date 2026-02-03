@@ -3,7 +3,7 @@
 import type { Model } from "@openrouter/sdk/models";
 
 import { OpenRouter } from "@openrouter/sdk";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 import { db } from "~/lib/db";
 import { models, modelsSyncStatus } from "~/lib/db/schema";
@@ -140,7 +140,7 @@ export async function getLastSyncTime(): Promise<Date | null> {
   const [status] = await db
     .select({ lastSyncedAt: modelsSyncStatus.lastSyncedAt })
     .from(modelsSyncStatus)
-    .orderBy(modelsSyncStatus.lastSyncedAt)
+    .orderBy(desc(modelsSyncStatus.lastSyncedAt))
     .limit(1);
 
   return status?.lastSyncedAt ?? null;
