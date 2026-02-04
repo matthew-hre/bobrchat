@@ -9,13 +9,13 @@ import {
   PaletteIcon,
   PaperclipIcon,
   SettingsIcon,
+  ShieldIcon,
   SparklesIcon,
-  UserIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
@@ -26,56 +26,66 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "~/components/ui/sheet";
-import { signOut } from "~/features/auth/lib/auth-client";
+import { Skeleton } from "~/components/ui/skeleton";
+import { signOut, useSession } from "~/features/auth/lib/auth-client";
 import { cn } from "~/lib/utils";
 
 import { AttachmentsTab } from "./tabs/attachments-tab";
+import { AuthTab } from "./tabs/auth-tab";
 import { IntegrationsTab } from "./tabs/integrations-tab";
 import { InterfaceTab } from "./tabs/interface-tab";
 import { ModelsTab } from "./tabs/models-tab";
 import { PreferencesTab } from "./tabs/preferences-tab";
-import { ProfileTab } from "./tabs/profile-tab";
+import { UserAvatar } from "./ui/user-avatar";
 
-const SIDEBAR_WIDTH_STORAGE_KEY = "sidebar_width";
-const SIDEBAR_WIDTH_DEFAULT = 16;
-const SIDEBAR_WIDTH_MIN = 14;
-const SIDEBAR_WIDTH_MAX = 20;
-
-type TabId = "profile" | "interface" | "preferences" | "integrations" | "models" | "attachments";
+type TabId = "interface" | "preferences" | "integrations" | "models" | "attachments" | "auth";
 
 type TabConfig = {
   id: TabId;
   label: string;
-  icon: typeof UserIcon;
+  icon: typeof ShieldIcon;
 };
 
 const tabs: TabConfig[] = [
-  { id: "profile", label: "Profile", icon: UserIcon },
   { id: "interface", label: "Interface", icon: PaletteIcon },
   { id: "preferences", label: "Chat & AI", icon: SettingsIcon },
   { id: "integrations", label: "Integrations", icon: KeyIcon },
   { id: "models", label: "Models", icon: SparklesIcon },
   { id: "attachments", label: "Attachments", icon: PaperclipIcon },
+  { id: "auth", label: "Auth", icon: ShieldIcon },
+];
+
+const keyboardShortcuts = [
+  { label: "Toggle Sidebar", keys: ["Ctrl", "B"] },
 ];
 
 type SettingsPageProps = {
   initialTab?: TabId;
 };
 
-export function SettingsPage({ initialTab = "profile" }: SettingsPageProps) {
+export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
-  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_WIDTH_DEFAULT);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const stored = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
-    if (stored) {
-      const width = Math.max(SIDEBAR_WIDTH_MIN, Math.min(SIDEBAR_WIDTH_MAX, Number.parseFloat(stored)));
-      setSidebarWidth(width);
-    }
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = tabsRef.current;
+    if (!el)
+      return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
   }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    window.addEventListener("resize", updateScrollState);
+    return () => window.removeEventListener("resize", updateScrollState);
+  }, [updateScrollState]);
 
   const handleTabChange = useCallback((tab: TabId) => {
     setActiveTab(tab);
@@ -89,125 +99,55 @@ export function SettingsPage({ initialTab = "profile" }: SettingsPageProps) {
     router.push("/auth");
   }, [router, queryClient]);
 
-  const activeTabConfig = tabs.find((tab) => tab.id === activeTab);
+  const activeTabConfig = tabs.find(tab => tab.id === activeTab);
 
   return (
-    <div className="flex h-full w-full">
-      {/* Desktop Sidebar */}
-      <aside
-        style={{ width: `${sidebarWidth}rem` }}
-        className={`
-          bg-sidebar text-sidebar-foreground border-sidebar-border hidden h-full
-          shrink-0 flex-col border-r
-          md:flex
-        `}
-      >
-        {/* Header */}
-        <div className="flex h-14 items-center justify-between px-3">
-          <div className="flex items-center gap-2">
-            <Image
-              src="/icon.png"
-              alt="BobrChat Logo"
-              width={64}
-              height={64}
-              className="size-8"
-            />
-            <span className="text-base font-semibold tracking-tight">
-              Settings
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="size-7"
-            title="Back to chat"
-            asChild
+    <div className="flex h-full w-full overflow-auto">
+      <div className="mx-auto flex w-full max-w-6xl">
+        {/* Desktop Profile Sidebar */}
+        <ProfileSidebar onSignOut={handleSignOut} />
+
+        {/* Main Content Area */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Desktop Header with Horizontal Tabs */}
+          <header className={`
+            bg-background hidden px-6 pt-14 pb-4
+            md:block
+          `}
           >
-            <Link href="/">
-              <ArrowLeftIcon className="size-4" />
-            </Link>
-          </Button>
-        </div>
-
-        <Separator />
-
-        {/* Navigation */}
-        <nav className="flex flex-1 flex-col gap-1 p-2">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleTabChange(tab.id)}
+            {/* Horizontal Tabs */}
+            <div className="relative overflow-hidden">
+              {/* Left gradient */}
+              <div
                 className={cn(
                   `
-                    flex items-center gap-3 rounded-md px-3 py-2 text-sm
-                    font-medium transition-colors
+                    from-background pointer-events-none absolute top-0 left-0
+                    z-10 h-full w-8 bg-linear-to-r to-transparent
+                    transition-opacity
                   `,
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : `
-                      text-sidebar-foreground/70
-                      hover:bg-sidebar-accent
-                      hover:text-sidebar-accent-foreground
-                    `,
+                  canScrollLeft ? "opacity-100" : "opacity-0",
                 )}
+              />
+              {/* Right gradient */}
+              <div
+                className={cn(
+                  `
+                    from-background pointer-events-none absolute top-0 right-0
+                    z-10 h-full w-8 bg-linear-to-l to-transparent
+                    transition-opacity
+                  `,
+                  canScrollRight ? "opacity-100" : "opacity-0",
+                )}
+              />
+              <nav
+                ref={tabsRef}
+                onScroll={updateScrollState}
+                className={`
+                  bg-muted/50 inline-flex max-w-full gap-1 overflow-x-auto
+                  rounded-lg p-1
+                `}
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
-                <Icon className="size-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        <Separator />
-
-        {/* Sign out */}
-        <div className="p-2">
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className={cn(`
-              text-sidebar-foreground/70 flex w-full items-center gap-3
-              rounded-md px-3 py-2 text-sm font-medium transition-colors
-              hover:bg-destructive/10 hover:text-destructive
-            `)}
-          >
-            <LogOutIcon className="size-4" />
-            Sign Out
-          </button>
-        </div>
-      </aside>
-
-      {/* Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Mobile Header */}
-        <div className="bg-sidebar text-sidebar-foreground border-sidebar-border flex h-14 items-center gap-3 border-b px-3 md:hidden">
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="size-7">
-                <MenuIcon className="size-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="bg-sidebar text-sidebar-foreground w-64 p-0">
-              <SheetHeader className="flex h-14 flex-row items-center gap-2 border-b px-3">
-                <Image
-                  src="/icon.png"
-                  alt="BobrChat Logo"
-                  width={64}
-                  height={64}
-                  className="size-8"
-                />
-                <SheetTitle className="text-base font-semibold tracking-tight">
-                  Settings
-                </SheetTitle>
-              </SheetHeader>
-
-              <nav className="flex flex-1 flex-col gap-1 p-2">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
@@ -219,15 +159,14 @@ export function SettingsPage({ initialTab = "profile" }: SettingsPageProps) {
                       onClick={() => handleTabChange(tab.id)}
                       className={cn(
                         `
-                          flex items-center gap-3 rounded-md px-3 py-2 text-sm
-                          font-medium transition-colors
+                          flex shrink-0 items-center gap-2 rounded-md px-3
+                          py-1.5 text-sm font-medium transition-colors
                         `,
                         isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          ? "bg-background text-foreground shadow-sm"
                           : `
-                            text-sidebar-foreground/70
-                            hover:bg-sidebar-accent
-                            hover:text-sidebar-accent-foreground
+                            text-muted-foreground
+                            hover:text-foreground
                           `,
                       )}
                     >
@@ -237,44 +176,253 @@ export function SettingsPage({ initialTab = "profile" }: SettingsPageProps) {
                   );
                 })}
               </nav>
+            </div>
+          </header>
 
-              <Separator />
+          {/* Mobile Header */}
+          <header className={`
+            bg-sidebar text-sidebar-foreground border-sidebar-border flex
+            min-h-14 items-center gap-3 border-b px-3
+            md:hidden
+          `}
+          >
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon-sm" className="size-7">
+                  <MenuIcon className="size-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                className="bg-sidebar text-sidebar-foreground w-72 p-0"
+              >
+                <SheetHeader className={`
+                  flex h-14 flex-row items-center gap-2 border-b px-4
+                `}
+                >
+                  <Image
+                    src="/icon.png"
+                    alt="BobrChat Logo"
+                    width={64}
+                    height={64}
+                    className="size-8"
+                  />
+                  <SheetTitle className="text-base font-semibold tracking-tight">
+                    Settings
+                  </SheetTitle>
+                </SheetHeader>
 
-              <div className="p-2">
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className={cn(`
-                    text-sidebar-foreground/70 flex w-full items-center gap-3
-                    rounded-md px-3 py-2 text-sm font-medium transition-colors
+                <div className="p-4">
+                  <MobileProfileCard />
+                </div>
+
+                <Separator />
+
+                <nav className="flex flex-col gap-1 p-2">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => handleTabChange(tab.id)}
+                        className={cn(
+                          `
+                            flex items-center gap-3 rounded-md px-3 py-2 text-sm
+                            font-medium whitespace-nowrap transition-colors
+                          `,
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : `
+                              text-sidebar-foreground/70
+                              hover:bg-sidebar-accent
+                              hover:text-sidebar-accent-foreground
+                            `,
+                        )}
+                      >
+                        <Icon className="size-4" />
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </nav>
+
+                <Separator />
+
+                <div className="p-2">
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className={`
+                      text-sidebar-foreground/70 flex w-full items-center gap-3
+                      rounded-md px-3 py-2 text-sm font-medium transition-colors
+                      hover:bg-destructive/10 hover:text-destructive
+                    `}
+                  >
+                    <LogOutIcon className="size-4" />
+                    Sign Out
+                  </button>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <span className="text-base font-semibold">{activeTabConfig?.label}</span>
+
+            <div className="ml-auto">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="size-7"
+                title="Back to chat"
+                asChild
+              >
+                <Link href="/">
+                  <ArrowLeftIcon className="size-4" />
+                </Link>
+              </Button>
+            </div>
+          </header>
+
+          <TabContent activeTab={activeTab} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileSidebar({ onSignOut }: { onSignOut: () => void }) {
+  const { data: session, isPending } = useSession();
+
+  return (
+    <aside className={`
+      bg-background text-sidebar-foreground relative hidden w-80 shrink-0
+      flex-col
+      md:flex
+    `}
+    >
+      {/* Fading border */}
+      <div className={`
+        from-border absolute top-0 right-0 h-full w-px bg-linear-to-b
+        to-transparent
+      `}
+      />
+
+      {/* Back to Chat */}
+      <div className="p-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2"
+          asChild
+        >
+          <Link href="/">
+            <ArrowLeftIcon className="size-4" />
+            Back to Chat
+          </Link>
+        </Button>
+      </div>
+
+      {/* Profile Card */}
+      <div className="flex flex-col items-center gap-4 px-6 py-4">
+        {isPending
+          ? (
+              <>
+                <Skeleton className="size-24 rounded-full" />
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-48" />
+              </>
+            )
+          : (
+              <>
+                <UserAvatar session={session} />
+                <div className="text-center">
+                  <h2 className="text-lg font-semibold">
+                    {session?.user?.name || "Unnamed User"}
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    {session?.user?.email || "No email"}
+                  </p>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`
+                    text-muted-foreground w-full gap-2
                     hover:bg-destructive/10 hover:text-destructive
-                  `)}
+                  `}
+                  onClick={onSignOut}
                 >
                   <LogOutIcon className="size-4" />
                   Sign Out
-                </button>
+                </Button>
+              </>
+            )}
+      </div>
+
+      {/* Keyboard Shortcuts */}
+      <div className="px-4 py-4">
+        <div className="bg-muted/50 rounded-lg p-4">
+          <h3 className={`
+            text-muted-foreground mb-3 text-xs font-semibold tracking-wider
+            uppercase
+          `}
+          >
+            Keyboard Shortcuts
+          </h3>
+          <div className="space-y-2">
+            {keyboardShortcuts.map(shortcut => (
+              <div
+                key={shortcut.label}
+                className="flex items-center justify-between text-sm"
+              >
+                <span className="text-muted-foreground">{shortcut.label}</span>
+                <div className="flex gap-1">
+                  {shortcut.keys.map(key => (
+                    <kbd
+                      key={key}
+                      className={`
+                        bg-background text-muted-foreground rounded px-1.5
+                        py-0.5 font-mono text-xs
+                      `}
+                    >
+                      {key}
+                    </kbd>
+                  ))}
+                </div>
               </div>
-            </SheetContent>
-          </Sheet>
-
-          <span className="text-base font-semibold">{activeTabConfig?.label}</span>
-
-          <div className="ml-auto">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="size-7"
-              title="Back to chat"
-              asChild
-            >
-              <Link href="/">
-                <ArrowLeftIcon className="size-4" />
-              </Link>
-            </Button>
+            ))}
           </div>
         </div>
+      </div>
+    </aside>
+  );
+}
 
-        <TabContent activeTab={activeTab} />
+function MobileProfileCard() {
+  const { data: session, isPending } = useSession();
+
+  if (isPending) {
+    return (
+      <div className="flex items-center gap-3">
+        <Skeleton className="size-12 rounded-full" />
+        <div className="space-y-1">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <UserAvatar session={session} />
+      <div>
+        <p className="font-medium">{session?.user?.name || "Unnamed User"}</p>
+        <p className="text-muted-foreground text-sm">{session?.user?.email || "No email"}</p>
       </div>
     </div>
   );
@@ -282,8 +430,6 @@ export function SettingsPage({ initialTab = "profile" }: SettingsPageProps) {
 
 function TabContent({ activeTab }: { activeTab: TabId }) {
   switch (activeTab) {
-    case "profile":
-      return <ProfileTab />;
     case "interface":
       return <InterfaceTab />;
     case "preferences":
@@ -294,7 +440,9 @@ function TabContent({ activeTab }: { activeTab: TabId }) {
       return <ModelsTab />;
     case "attachments":
       return <AttachmentsTab />;
+    case "auth":
+      return <AuthTab />;
     default:
-      return <ProfileTab />;
+      return <InterfaceTab />;
   }
 }

@@ -17,7 +17,6 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Separator } from "~/components/ui/separator";
 import { authClient, useSession } from "~/features/auth/lib/auth-client";
 
 export function ChangeEmailSection() {
@@ -56,11 +55,9 @@ export function ChangeEmailSection() {
   };
 
   return (
-    <>
-      <Separator />
-      <div className="space-y-2">
-        <Label>Email</Label>
-        <Dialog
+    <div className="space-y-2">
+      <Label>Email</Label>
+      <Dialog
           open={open}
           onOpenChange={(isOpen) => {
             setOpen(isOpen);
@@ -131,11 +128,10 @@ export function ChangeEmailSection() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
-        <p className="text-muted-foreground text-xs">
-          Update your account email address.
-        </p>
-      </div>
-    </>
+      </Dialog>
+      <p className="text-muted-foreground text-xs">
+        Update your account email address.
+      </p>
+    </div>
   );
 }

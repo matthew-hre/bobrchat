@@ -63,10 +63,7 @@ export const ModelsSearchBar = memo(({
   const activeFilterCount = capabilityFilters.length + (sortOrder !== "provider-asc" ? 1 : 0);
 
   return (
-    <div className={compact
-      ? "border-border border-b px-4 py-2"
-      : `border-border border-b px-6 py-3`}
-    >
+    <div>
       <div className="flex gap-2">
         <div className="relative flex-1">
           <SearchIcon className={`

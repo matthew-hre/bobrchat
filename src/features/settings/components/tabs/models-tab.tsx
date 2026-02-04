@@ -62,7 +62,6 @@ export function ModelsTab() {
     draftModels,
     toggle,
     reorder,
-    isSaving,
     canAddMore,
     maxFavorites,
   } = useFavoriteModelsDraft();
@@ -225,40 +224,9 @@ export function ModelsTab() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Header */}
-      <div className="shrink-0 border-b p-6">
-        <h3 className="text-lg font-semibold">
-          Models
-          {isSaving && <Loader2 className="ml-2 inline size-4 animate-spin" />}
-        </h3>
-        <p className="text-muted-foreground text-sm">
-          Search and manage your favorite OpenRouter models (max
-          {" "}
-          {maxFavorites}
-          )
-        </p>
-      </div>
-
-      {/* Search Bar - spans full width */}
-      {hasOpenRouterKey && (
-        <ModelsSearchBar
-          onSearchChange={handleSearchChange}
-          capabilityFilters={capabilityFilters}
-          onCapabilityFiltersChange={handleCapabilityFiltersChange}
-          sortOrder={sortOrder}
-          onSortOrderChange={handleSortOrderChange}
-          resultCount={models.length}
-          totalCount={totalCount}
-        />
-      )}
-
-      {/* Mobile Tab Switcher */}
-      <div className={`
-        border-b p-2
-        md:hidden
-      `}
-      >
-        <div className="bg-muted flex gap-1 rounded-lg p-1">
+      {/* Tab Switcher */}
+      <div className="w-full px-6 pt-6">
+        <div className="bg-muted inline-flex w-full gap-1 rounded-lg p-1">
           <button
             onClick={() => setMobileTab("available")}
             className={cn(
@@ -275,6 +243,15 @@ export function ModelsTab() {
             )}
           >
             All Models
+            {totalCount > 0 && (
+              <span className="text-muted-foreground ml-1.5 text-xs">
+                (
+                {models.length}
+                /
+                {totalCount}
+                )
+              </span>
+            )}
           </button>
           <button
             onClick={() => setMobileTab("favorites")}
@@ -293,9 +270,11 @@ export function ModelsTab() {
           >
             Favorites
             {draftModels.length > 0 && (
-              <span className="ml-1.5 text-xs">
+              <span className="text-muted-foreground ml-1.5 text-xs">
                 (
                 {draftModels.length}
+                /
+                {maxFavorites}
                 )
               </span>
             )}
@@ -303,62 +282,33 @@ export function ModelsTab() {
         </div>
       </div>
 
-      {/* Desktop Two-Column Layout */}
-      <div className={`
-        hidden min-h-0 flex-1
-        md:flex
-      `}
-      >
-        {/* Left Column - All Models */}
-        <div className="flex w-1/2 flex-col border-r">
-          <div className="shrink-0 border-b px-4 py-3">
-            <h4 className="text-sm font-medium">All Models</h4>
-            <p className="text-muted-foreground text-xs">
-              {models.length}
-              {" "}
-              of
-              {" "}
-              {totalCount}
-              {" "}
-              models
-            </p>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4" onScroll={handleScroll}>
-            {renderAllModels()}
-          </div>
-        </div>
-
-        {/* Right Column - Favorite Models */}
-        <div className="flex w-1/2 flex-col">
-          <div className="shrink-0 border-b px-4 py-3">
-            <h4 className="text-sm font-medium">Favorite Models</h4>
-            <p className="text-muted-foreground text-xs">
-              {draftModels.length}
-              /
-              {maxFavorites}
-              {" "}
-              selected · drag to reorder
-            </p>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            {renderFavoriteModels()}
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Content */}
-      <div className={`
-        flex min-h-0 flex-1 flex-col
-        md:hidden
-      `}
-      >
+      {/* Content */}
+      <div className="flex min-h-0 flex-1 flex-col">
         {mobileTab === "available" && (
-          <div className="flex-1 overflow-y-auto p-4" onScroll={handleScroll}>
-            {renderAllModels()}
+          <div className="flex flex-1 flex-col overflow-hidden">
+            {hasOpenRouterKey && (
+              <div className={`
+                bg-background sticky top-0 z-10 shrink-0 px-6 pt-4 pb-2
+              `}
+              >
+                <ModelsSearchBar
+                  onSearchChange={handleSearchChange}
+                  capabilityFilters={capabilityFilters}
+                  onCapabilityFiltersChange={handleCapabilityFiltersChange}
+                  sortOrder={sortOrder}
+                  onSortOrderChange={handleSortOrderChange}
+                  resultCount={models.length}
+                  totalCount={totalCount}
+                />
+              </div>
+            )}
+            <div className="flex-1 overflow-y-auto px-6 pb-6" onScroll={handleScroll}>
+              {renderAllModels()}
+            </div>
           </div>
         )}
         {mobileTab === "favorites" && (
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-6">
             {renderFavoriteModels()}
           </div>
         )}

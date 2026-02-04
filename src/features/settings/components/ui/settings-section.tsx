@@ -20,7 +20,7 @@ export function SettingsSection({
       <div className="space-y-1">
         <h4
           className={cn(
-            "text-sm font-semibold",
+            "text-base font-semibold",
             variant === "danger" ? "text-destructive" : "text-foreground",
           )}
         >

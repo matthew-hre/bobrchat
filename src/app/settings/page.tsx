@@ -10,8 +10,8 @@ export default async function SettingsRoute({
   searchParams: SearchParams;
 }) {
   const { tab } = await searchParams;
-  const validTabs = ["profile", "interface", "preferences", "integrations", "models", "attachments"];
-  const initialTab = validTabs.includes(tab ?? "") ? (tab as "profile" | "interface" | "preferences" | "integrations" | "models" | "attachments") : "profile";
+  const validTabs = ["interface", "preferences", "integrations", "models", "attachments", "auth"];
+  const initialTab = validTabs.includes(tab ?? "") ? (tab as "interface" | "preferences" | "integrations" | "models" | "attachments" | "auth") : "interface";
 
   return (
     <div className="flex h-screen w-screen">
