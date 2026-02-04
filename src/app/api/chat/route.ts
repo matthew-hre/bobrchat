@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     return rateLimitResponse(reset);
   }
 
-  const { messages, threadId, openrouterClientKey, parallelClientKey, searchEnabled, reasoningLevel, modelId, supportsNativePdf, isRegeneration, modelPricing }: { messages: ChatUIMessage[]; threadId?: string; openrouterClientKey?: string; parallelClientKey?: string; searchEnabled?: boolean; reasoningLevel?: string; modelId?: string; supportsNativePdf?: boolean; isRegeneration?: boolean; modelPricing?: { prompt: string; completion: string } }
+  const { messages, threadId, openrouterClientKey, parallelClientKey, searchEnabled, reasoningLevel, modelId, supportsNativePdf, supportsTools, isRegeneration, modelPricing }: { messages: ChatUIMessage[]; threadId?: string; openrouterClientKey?: string; parallelClientKey?: string; searchEnabled?: boolean; reasoningLevel?: string; modelId?: string; supportsNativePdf?: boolean; supportsTools?: boolean; isRegeneration?: boolean; modelPricing?: { prompt: string; completion: string } }
     = await req.json();
 
   const baseModelId = modelId || "google/gemini-3-flash-preview";
@@ -118,6 +118,7 @@ export async function POST(req: Request) {
     reasoningLevel,
     threadId,
     modelPricing,
+    supportsTools,
   );
 
   if (threadId && messages.length === 1 && messages[0].role === "user") {

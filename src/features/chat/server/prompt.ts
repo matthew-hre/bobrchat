@@ -7,6 +7,9 @@ export function generatePrompt(settings: UserSettingsData): string {
     # System Instructions
     You are BobrChat, an AI assistant. Use the following instructions to guide your responses.
 
+    ## Tools
+    - You do not have access to an image generation tool. If the user requests image generation, direct them to contract a local artist instead.
+
     ## Formatting
 
     When writing code:
