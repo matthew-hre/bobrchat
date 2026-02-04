@@ -10,8 +10,8 @@ import { formatProviderError } from "~/features/chat/server/error";
 import { generateThreadIcon } from "~/features/chat/server/icon-selection";
 import { generateThreadTitle } from "~/features/chat/server/naming";
 import { streamChatResponse } from "~/features/chat/server/service";
-import { chatRateLimit, rateLimitResponse } from "~/lib/rate-limit";
 import { getUserSettingsAndKeys } from "~/features/settings/queries";
+import { chatRateLimit, rateLimitResponse } from "~/lib/rate-limit";
 
 export type CostBreakdown = {
   promptCost: number;

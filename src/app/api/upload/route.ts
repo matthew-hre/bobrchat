@@ -7,8 +7,8 @@ import { saveFile } from "~/features/attachments/lib/storage";
 import { getUserStorageUsage, STORAGE_QUOTA_BYTES } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
 import { db } from "~/lib/db";
-import { rateLimitResponse, uploadRateLimit } from "~/lib/rate-limit";
 import { attachments } from "~/lib/db/schema/chat";
+import { rateLimitResponse, uploadRateLimit } from "~/lib/rate-limit";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = new Set([
