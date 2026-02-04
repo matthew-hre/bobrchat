@@ -6,9 +6,9 @@ import { headers } from "next/headers";
 
 import { auth } from "~/features/auth/lib/auth";
 
-import type { ModelsQueryParams, ModelsQueryResult } from "./types";
+import type { ModelsListQueryResult, ModelsQueryParams, ModelsQueryResult } from "./types";
 
-import { getModelById, getModelsByIds, getProviders, queryModels } from "./server/queries";
+import { getModelById, getModelsByIds, getModelsByIdsForList, getProviders, queryModels, queryModelsForList } from "./server/queries";
 
 /**
  * Fetch models from database with filtering, sorting, and pagination
@@ -69,4 +69,35 @@ export async function fetchProviders(): Promise<string[]> {
   }
 
   return getProviders();
+}
+
+/**
+ * Fetch models for list view - returns only fields needed for display
+ * Requires authentication
+ */
+export async function fetchModelsForList(params: ModelsQueryParams = {}): Promise<ModelsListQueryResult> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  return queryModelsForList(params);
+}
+
+/**
+ * Get models by their IDs for list view (lightweight)
+ */
+export async function fetchModelsByIdsForList(ids: string[]): Promise<import("./types").ModelListItem[]> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  return getModelsByIdsForList(ids);
 }

@@ -7,7 +7,6 @@ import { ThemeInitializer } from "~/components/theme/theme-initializer";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { GlobalDropZoneProvider } from "~/features/attachments/components/global-drop-zone";
 import { auth } from "~/features/auth/lib/auth";
-
 import { getUserSettings } from "~/features/settings/queries";
 import { prefetchThreads } from "~/lib/queries/prefetch-threads";
 

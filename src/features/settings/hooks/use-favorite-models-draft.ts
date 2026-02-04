@@ -1,10 +1,10 @@
 "use client";
 
-import type { Model } from "@openrouter/sdk/models";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useFavoriteModels } from "~/features/models/hooks/use-models";
+import type { ModelListItem } from "~/features/models/types";
+
+import { useFavoriteModelsForList } from "~/features/models/hooks/use-models";
 import {
   useUpdateFavoriteModels,
   useUserSettings,
@@ -15,7 +15,7 @@ const DEBOUNCE_MS = 500;
 
 export function useFavoriteModelsDraft() {
   const { data: settings } = useUserSettings();
-  const { models: favoriteModels } = useFavoriteModels();
+  const { models: favoriteModels } = useFavoriteModelsForList();
   const { mutate: saveFavorites, isPending: isSaving } = useUpdateFavoriteModels();
 
   const [draftIds, setDraftIds] = useState<string[]>([]);
@@ -67,7 +67,7 @@ export function useFavoriteModelsDraft() {
   const draftModels = useMemo(() => {
     return draftIds
       .map(id => favoriteModels.find(m => m.id === id))
-      .filter((m): m is Model => m !== undefined);
+      .filter((m): m is ModelListItem => m !== undefined);
   }, [draftIds, favoriteModels]);
 
   const toggle = useCallback((modelId: string) => {
@@ -82,6 +82,19 @@ export function useFavoriteModelsDraft() {
     });
   }, []);
 
+  const add = useCallback((modelId: string) => {
+    setDraftIds((prev) => {
+      if (prev.includes(modelId) || prev.length >= MAX_FAVORITES) {
+        return prev;
+      }
+      return [...prev, modelId];
+    });
+  }, []);
+
+  const remove = useCallback((modelId: string) => {
+    setDraftIds(prev => prev.filter(id => id !== modelId));
+  }, []);
+
   const reorder = useCallback((fromIndex: number, toIndex: number) => {
     setDraftIds((prev) => {
       const result = [...prev];
@@ -91,13 +104,19 @@ export function useFavoriteModelsDraft() {
     });
   }, []);
 
+  const canAddMore = draftIds.length < MAX_FAVORITES;
+
   return {
     draftIds,
     draftSet,
     draftModels,
     toggle,
+    add,
+    remove,
     reorder,
     isSaving,
     isDirty,
+    canAddMore,
+    maxFavorites: MAX_FAVORITES,
   };
 }

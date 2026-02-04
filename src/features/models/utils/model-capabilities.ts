@@ -1,6 +1,6 @@
 import type { Model } from "@openrouter/sdk/models";
 
-import type { FileValidationResult, ModelCapabilities } from "../types";
+import type { FileValidationResult, ModelCapabilities, ModelListItem } from "../types";
 
 /*
  * Model Capabilities
@@ -56,6 +56,44 @@ export function getModelCapabilities(model: Model | undefined): ModelCapabilitie
   const inputModalities = model.architecture.inputModalities;
   const supportedParams = model.supportedParameters;
 
+  const contextLength = model.contextLength || 0;
+
+  const supportsImages = inputModalities.includes("image");
+  const supportsFiles = inputModalities.includes("file");
+  const supportsTools = supportedParams.includes("tools");
+  const supportsSearch = supportsTools && contextLength > 32000;
+  const supportsReasoning = supportedParams.includes("reasoning");
+
+  const capabilities: ModelCapabilities = {
+    supportsImages,
+    supportsFiles,
+    supportsPdf: contextLength > 16000,
+    supportsNativePdf: supportsFiles,
+    supportsSearch,
+    supportsTools,
+    supportsReasoning,
+  };
+
+  capabilitiesCache.set(model.id, capabilities);
+  return capabilities;
+}
+
+/**
+ * Get capabilities from a lightweight ModelListItem
+ * Used for list views where we don't have the full Model object
+ */
+export function getModelListItemCapabilities(model: ModelListItem | undefined): ModelCapabilities {
+  if (!model) {
+    return emptyCapabilities;
+  }
+
+  const cached = capabilitiesCache.get(model.id);
+  if (cached) {
+    return cached;
+  }
+
+  const inputModalities = model.inputModalities;
+  const supportedParams = model.supportedParameters;
   const contextLength = model.contextLength || 0;
 
   const supportsImages = inputModalities.includes("image");

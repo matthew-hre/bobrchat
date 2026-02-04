@@ -21,17 +21,17 @@ import { Separator } from "~/components/ui/separator";
 import { signOut } from "~/features/auth/lib/auth-client";
 import { cn } from "~/lib/utils";
 
-const SIDEBAR_WIDTH_STORAGE_KEY = "sidebar_width";
-const SIDEBAR_WIDTH_DEFAULT = 16;
-const SIDEBAR_WIDTH_MIN = 14;
-const SIDEBAR_WIDTH_MAX = 20;
-
 import { AttachmentsTab } from "./tabs/attachments-tab";
 import { IntegrationsTab } from "./tabs/integrations-tab";
 import { InterfaceTab } from "./tabs/interface-tab";
 import { ModelsTab } from "./tabs/models-tab";
 import { PreferencesTab } from "./tabs/preferences-tab";
 import { ProfileTab } from "./tabs/profile-tab";
+
+const SIDEBAR_WIDTH_STORAGE_KEY = "sidebar_width";
+const SIDEBAR_WIDTH_DEFAULT = 16;
+const SIDEBAR_WIDTH_MIN = 14;
+const SIDEBAR_WIDTH_MAX = 20;
 
 type TabId = "profile" | "interface" | "preferences" | "integrations" | "models" | "attachments";
 
@@ -63,7 +63,7 @@ export function SettingsPage({ initialTab = "profile" }: SettingsPageProps) {
   useEffect(() => {
     const stored = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
     if (stored) {
-      const width = Math.max(SIDEBAR_WIDTH_MIN, Math.min(SIDEBAR_WIDTH_MAX, parseFloat(stored)));
+      const width = Math.max(SIDEBAR_WIDTH_MIN, Math.min(SIDEBAR_WIDTH_MAX, Number.parseFloat(stored)));
       setSidebarWidth(width);
     }
   }, []);
@@ -85,8 +85,8 @@ export function SettingsPage({ initialTab = "profile" }: SettingsPageProps) {
       <aside
         style={{ width: `${sidebarWidth}rem` }}
         className={`
-          bg-sidebar text-sidebar-foreground border-sidebar-border flex
-          h-full shrink-0 flex-col border-r
+          bg-sidebar text-sidebar-foreground border-sidebar-border flex h-full
+          shrink-0 flex-col border-r
         `}
       >
         {/* Header */}
@@ -138,7 +138,8 @@ export function SettingsPage({ initialTab = "profile" }: SettingsPageProps) {
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : `
                       text-sidebar-foreground/70
-                      hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
+                      hover:bg-sidebar-accent
+                      hover:text-sidebar-accent-foreground
                     `,
                 )}
               >
