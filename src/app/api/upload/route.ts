@@ -7,6 +7,7 @@ import { saveFile } from "~/features/attachments/lib/storage";
 import { getUserStorageUsage, STORAGE_QUOTA_BYTES } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
 import { db } from "~/lib/db";
+import { rateLimitResponse, uploadRateLimit } from "~/lib/rate-limit";
 import { attachments } from "~/lib/db/schema/chat";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -51,6 +52,11 @@ export async function POST(req: Request) {
       status: 401,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  const { success, reset } = await uploadRateLimit.limit(session.user.id);
+  if (!success) {
+    return rateLimitResponse(reset);
   }
 
   try {

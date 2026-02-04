@@ -19,6 +19,8 @@ const schema = {
     RESEND_API_KEY: z.string(),
     OPENROUTER_API_KEY: z.string().optional(),
     CRON_SECRET: z.string().optional(),
+    UPSTASH_REDIS_REST_URL: z.url(),
+    UPSTASH_REDIS_REST_TOKEN: z.string(),
   }),
   client: z.object({
     NEXT_PUBLIC_BETTER_AUTH_URL: z.url().optional(),

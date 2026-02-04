@@ -7,6 +7,7 @@ import {
   listUserAttachments,
 } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
+import { deleteAttachmentsRateLimit, rateLimitResponse } from "~/lib/rate-limit";
 
 const PAGE_SIZE = 12;
 
@@ -51,6 +52,11 @@ export async function DELETE(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
     return json({ error: "Not authenticated" }, { status: 401 });
+
+  const { success, reset } = await deleteAttachmentsRateLimit.limit(session.user.id);
+  if (!success) {
+    return rateLimitResponse(reset);
+  }
 
   let body: unknown;
   try {
