@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage } from "~/features/chat/types";
 
 import { auth } from "~/features/auth/lib/auth";
 import { saveMessage } from "~/features/chat/queries";

@@ -2,15 +2,14 @@ import type { TextStreamPart, ToolSet } from "ai";
 
 import { convertToModelMessages, stepCountIs, streamText } from "ai";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage } from "~/features/chat/types";
 import type { UserSettingsData } from "~/features/settings/types";
 
-import { createHandoffTool } from "./handoff/index";
 import { calculateResponseMetadata } from "./metrics";
 import { getModelProvider } from "./models";
 import { generatePrompt } from "./prompt";
-import { createSearchTools } from "./search/index";
-import { createStreamHandlers, processStreamChunk } from "./stream";
+import { createStreamHandlers, getPdfPluginConfig, getReasoningConfig, processStreamChunk } from "./stream";
+import { createHandoffTool, createSearchTools } from "./tools";
 import { getTotalPdfPageCount, hasPdfAttachment, processMessageFiles } from "./uploads";
 
 export type PdfEngineConfig = {
@@ -27,7 +26,6 @@ export type PdfEngineConfig = {
  * @param userSettings The user's settings (pre-fetched to avoid duplicate DB queries).
  * @param searchEnabled Whether web search is enabled for this request.
  * @param parallelApiKey The Parallel Web API key for web search functionality.
- * @param onFirstToken Optional callback to capture first token timing from the messageMetadata handler.
  * @param pdfEngineConfig Configuration for PDF processing engine selection.
  * @param modelPricing Optional pricing data from client cache. If not provided, pricing will default to 0.
  * @returns An object containing the text stream and a function to create metadata for each message part.
@@ -42,7 +40,6 @@ export async function streamChatResponse(
   userId: string,
   searchEnabled?: boolean,
   parallelApiKey?: string,
-  onFirstToken?: () => void,
   pdfEngineConfig?: PdfEngineConfig,
   reasoningLevel?: string,
   threadId?: string,
@@ -91,35 +88,6 @@ export async function streamChatResponse(
     ? { ...searchTools, ...handoffTools }
     : undefined;
 
-  const getPdfPluginConfig = () => {
-    if (!hasPdf) {
-      return undefined;
-    }
-
-    if (pdfEngineConfig?.supportsNativePdf) {
-      return undefined;
-    }
-
-    const engine = pdfEngineConfig?.useOcrForPdfs ? "mistral-ocr" : "pdf-text";
-    return {
-      plugins: [{
-        id: "file-parser" as const,
-        pdf: { engine: engine as "pdf-text" | "mistral-ocr" },
-      }],
-    };
-  };
-
-  const getReasoningConfig = () => {
-    if (!reasoningLevel || reasoningLevel === "none") {
-      return undefined;
-    }
-    return {
-      reasoning: {
-        effort: reasoningLevel as ReasoningLevel,
-      },
-    };
-  };
-
   const result = streamText({
     model: provider(modelId),
     system: systemPrompt,
@@ -129,8 +97,8 @@ export async function streamChatResponse(
     providerOptions: {
       openrouter: {
         usage: { include: true },
-        ...getPdfPluginConfig(),
-        ...getReasoningConfig(),
+        ...getPdfPluginConfig(hasPdf, pdfEngineConfig),
+        ...getReasoningConfig(reasoningLevel),
       },
     },
     onChunk({ chunk }) {
@@ -149,7 +117,6 @@ export async function streamChatResponse(
       // Capture TTFT at first actual output token (reasoning or text-start)
       if (firstTokenTime === null && (part.type === "reasoning-start" || part.type === "text-start")) {
         firstTokenTime = Date.now();
-        onFirstToken?.();
       }
 
       if (part.type === "finish") {

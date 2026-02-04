@@ -1,12 +1,13 @@
 import type { TextStreamPart, ToolSet } from "ai";
 
-import type { SearchToolOutput } from "~/features/chat/server/search/index";
 import type { ToolResultStreamPart } from "~/features/chat/types";
 
-import { isSearchError } from "~/features/chat/server/search/index";
 import { isToolResultPart } from "~/features/chat/types";
 
-import type { ExtractToolCall, SearchToolCall } from "./cost";
+import type { SearchToolOutput } from "../tools/search";
+import type { ExtractToolCall, SearchToolCall } from "../metrics";
+
+import { isSearchError } from "../tools/search";
 
 type StreamChunkHandler = {
   onFirstToken: () => void;

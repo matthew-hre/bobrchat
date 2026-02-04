@@ -1,7 +1,7 @@
-import type { HandoffErrorOutput, HandoffToolOutput } from "~/features/chat/server/handoff/types";
+import type { HandoffErrorOutput, HandoffToolOutput } from "~/features/chat/server/tools/handoff/types";
 import type { ExtractToolUIPart, HandoffToolUIPart, ReasoningUIPart, SearchToolUIPart, TextUIPart } from "~/features/chat/types";
 
-import { isExtractError, isSearchError } from "~/features/chat/server/search/index";
+import { isExtractError, isSearchError } from "~/features/chat/server/tools/search";
 import {
   isSearchToolPart,
   isTextPart,

@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, isNotNull, lt } from "drizzle-orm";
 import { cache } from "react";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage } from "~/features/chat/types";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { db } from "~/lib/db";

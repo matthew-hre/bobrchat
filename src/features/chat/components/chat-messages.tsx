@@ -2,7 +2,7 @@
 
 import { memo, useMemo, useState } from "react";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage } from "~/features/chat/types";
 
 import { useChatUIStore } from "~/features/chat/store";
 import {

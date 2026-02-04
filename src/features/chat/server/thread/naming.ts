@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 
-import { getModelProvider } from "./models";
+import { getModelProvider } from "../models";
 
 /**
  * Generates a short title for a chat thread based on the first user message.

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage } from "~/features/chat/types";
 import type { LandingPageContentType } from "~/features/settings/types";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 

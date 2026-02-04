@@ -2,7 +2,7 @@
 
 import { CheckIcon, CopyIcon, RefreshCwIcon, TextSelectIcon } from "lucide-react";
 
-import type { CostBreakdown, MessageMetadata } from "~/app/api/chat/route";
+import type { CostBreakdown, MessageMetadata } from "~/features/chat/types";
 
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";

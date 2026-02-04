@@ -18,10 +18,11 @@ import type {
   TextUIPart,
   ToolSet,
   ToolUIPart,
+  UIMessage,
 } from "ai";
 
-import type { HandoffUITools } from "./server/handoff/index";
-import type { SearchUITools } from "./server/search/index";
+import type { HandoffUITools } from "./server/tools/handoff";
+import type { SearchUITools } from "./server/tools/search";
 
 // Re-export SDK types for convenience
 export type {
@@ -37,7 +38,7 @@ export type {
   HandoffErrorOutput,
   HandoffOutput,
   HandoffToolOutput,
-} from "./server/handoff/index";
+} from "./server/tools/handoff";
 
 // ============================================
 // Simple type guards (work with loose part types)
@@ -109,10 +110,10 @@ export type ContentState = NonNullable<TextUIPart["state"]>;
 // App-specific tool types (Search)
 // ============================================
 
-export type { HandoffTools, HandoffUITools } from "./server/handoff/index";
+export type { HandoffTools, HandoffUITools } from "./server/tools/handoff";
 
 // Re-export inferred search tool types for UI type safety
-export type { SearchTools, SearchUITools } from "./server/search/index";
+export type { SearchTools, SearchUITools } from "./server/tools/search";
 
 // Re-export search types from server for convenience
 export type {
@@ -124,7 +125,7 @@ export type {
   SearchOutput,
   SearchSource,
   SearchToolOutput,
-} from "./server/search/index";
+} from "./server/tools/search";
 
 /**
  * Search tool UI part - extracted from SDK's ToolUIPart<SearchUITools>.
@@ -219,3 +220,28 @@ export function isContentComplete(state?: ContentState): boolean {
 export function isContentStreaming(state?: ContentState): boolean {
   return state === "streaming";
 }
+
+export type CostBreakdown = {
+  promptCost: number;
+  completionCost: number;
+  search: number;
+  extract: number;
+  ocr: number;
+  total: number;
+};
+
+export type MessageMetadata = {
+  inputTokens: number;
+  outputTokens: number;
+  costUSD: CostBreakdown;
+  model: string;
+  tokensPerSecond: number;
+  timeToFirstTokenMs: number;
+};
+
+export type ChatUIMessage = UIMessage<MessageMetadata> & {
+  stoppedByUser?: boolean;
+  stoppedModelId?: string | null;
+  searchEnabled?: boolean | null;
+  reasoningLevel?: string | null;
+};

@@ -2,8 +2,7 @@
 
 import { useMemo } from "react";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
-import type { AppFileUIPart } from "~/features/chat/types";
+import type { AppFileUIPart, ChatUIMessage } from "~/features/chat/types";
 
 import { isFilePart, isTextPart } from "~/features/chat/types";
 import { cn } from "~/lib/utils";

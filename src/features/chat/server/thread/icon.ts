@@ -4,7 +4,7 @@ import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { THREAD_ICONS } from "~/lib/db/schema/chat";
 
-import { getModelProvider } from "./models";
+import { getModelProvider } from "../models";
 
 const ICON_DESCRIPTIONS: Record<ThreadIcon, string> = {
   "message-circle": "general chat or casual conversation",

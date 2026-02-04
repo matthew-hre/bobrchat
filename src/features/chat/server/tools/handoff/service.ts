@@ -5,7 +5,7 @@ import { generateText } from "ai";
 import { db } from "~/lib/db";
 import { threads } from "~/lib/db/schema/chat";
 
-import { getModelProvider } from "../models";
+import { getModelProvider } from "../../models";
 
 const HANDOFF_MODEL = "google/gemini-2.5-flash";
 
