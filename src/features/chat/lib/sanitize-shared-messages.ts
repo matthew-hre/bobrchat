@@ -1,7 +1,6 @@
 import type { FileUIPart } from "ai";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
-import type { AppFileUIPart } from "~/features/chat/types";
+import type { AppFileUIPart, ChatUIMessage } from "~/features/chat/types";
 
 import { isFilePart } from "~/features/chat/types";
 

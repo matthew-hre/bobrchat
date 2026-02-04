@@ -5,7 +5,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import { AlertCircle, SendIcon, SquareIcon, Upload } from "lucide-react";
 import Link from "next/link";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage } from "~/features/chat/types";
 
 import { Button } from "~/components/ui/button";
 import { Kbd } from "~/components/ui/kbd";

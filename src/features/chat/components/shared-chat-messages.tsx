@@ -2,8 +2,7 @@
 
 import { CheckIcon, CopyIcon } from "lucide-react";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
-import type { FileUIPart } from "~/features/chat/types";
+import type { ChatUIMessage, FileUIPart } from "~/features/chat/types";
 
 import { Button } from "~/components/ui/button";
 import { isFilePart } from "~/features/chat/types";

@@ -2,7 +2,7 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage } from "~/features/chat/types";
 
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { useChatScroll } from "~/features/chat/hooks/use-chat-scroll";

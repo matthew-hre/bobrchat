@@ -2,15 +2,14 @@
 
 import { headers } from "next/headers";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage } from "~/features/chat/types";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { deleteFile } from "~/features/attachments/lib/storage";
 import { deleteUserAttachmentsByIds, getThreadStats, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
 import { createThread, deleteMessagesAfterCount, deleteThreadById, getMessagesByThreadId, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
-import { generateThreadIcon } from "~/features/chat/server/icon-selection";
-import { generateThreadTitle } from "~/features/chat/server/naming";
+import { generateThreadIcon, generateThreadTitle } from "~/features/chat/server/thread";
 import { getShareByThreadId, revokeThreadShare, upsertThreadShare } from "~/features/chat/sharing-queries";
 import { resolveKey } from "~/lib/api-keys/server";
 import { serverEnv } from "~/lib/env";

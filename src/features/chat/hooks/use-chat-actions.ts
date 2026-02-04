@@ -5,8 +5,8 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import { useCallback, useTransition } from "react";
 import { toast } from "sonner";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
 import type { EditedMessagePayload } from "~/features/chat/components/messages/inline-message-editor";
+import type { ChatUIMessage } from "~/features/chat/types";
 
 import { deleteMessageAttachmentsByIds, truncateThreadMessages } from "~/features/chat/actions";
 import { useChatUIStore } from "~/features/chat/store";

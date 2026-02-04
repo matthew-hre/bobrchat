@@ -1,5 +1,4 @@
-import type { ChatUIMessage } from "~/app/api/chat/route";
-import type { AppFileUIPart } from "~/features/chat/types";
+import type { AppFileUIPart, ChatUIMessage } from "~/features/chat/types";
 
 import { getFileContent } from "~/features/attachments/lib/storage";
 import { getAttachmentsByIds, getPdfPageCountsByStoragePaths } from "~/features/attachments/queries";

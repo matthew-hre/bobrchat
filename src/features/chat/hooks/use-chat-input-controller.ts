@@ -4,7 +4,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 
 import * as React from "react";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage } from "~/features/chat/types";
 
 import { useFileAttachments } from "~/features/attachments/hooks/use-file-attachments";
 import { useChatUIStore } from "~/features/chat/store";

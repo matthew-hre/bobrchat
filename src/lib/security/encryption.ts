@@ -1,7 +1,7 @@
 import { Buffer } from "node:buffer";
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 
-import type { ChatUIMessage } from "~/app/api/chat/route";
+import type { ChatUIMessage } from "~/features/chat/types";
 
 import { serverEnv } from "~/lib/env";
 
