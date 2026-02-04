@@ -23,6 +23,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
 import { ThreadList } from "./thread-list";
+import { UpgradeBanner } from "./upgrade-banner";
 import { UserProfileCard } from "./user-profile-card";
 
 function ThreadListSkeleton() {
@@ -149,6 +150,7 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-0">
+        <UpgradeBanner />
         <UserProfileCard session={session} />
       </SidebarFooter>
     </Sidebar>

@@ -2,8 +2,8 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 
-import { useRouter } from "next/navigation";
-import { use, useCallback } from "react";
+import { use, useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import type { ChatUIMessage } from "~/features/chat/types";
@@ -16,6 +16,7 @@ import { LandingPageContent } from "~/features/chat/components/landing/landing-p
 import { useCreateThread } from "~/features/chat/hooks/use-threads";
 import { useChatUIStore } from "~/features/chat/store";
 import { UserSettingsContext } from "~/features/settings/settings-context";
+import { UpgradePromptDialog } from "~/features/subscriptions/components/upgrade-prompt-dialog";
 
 const FALLBACK_SETTINGS: Pick<UserSettingsData, "defaultThreadName" | "defaultThreadIcon" | "landingPageContent"> = {
   defaultThreadName: "New Chat",
@@ -30,6 +31,11 @@ export function AuthenticatedHome(): React.ReactNode {
   const input = useChatUIStore(state => state.input);
   const setInput = useChatUIStore(state => state.setInput);
   const createThread = useCreateThread();
+  const [upgradeDialog, setUpgradeDialog] = useState<{ open: boolean; currentUsage: number; limit: number }>({
+    open: false,
+    currentUsage: 0,
+    limit: 0,
+  });
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     setInput(suggestion);
@@ -46,8 +52,24 @@ export function AuthenticatedHome(): React.ReactNode {
       { threadId, title: resolvedSettings.defaultThreadName, icon: resolvedSettings.defaultThreadIcon },
       {
         onError: (error) => {
-          const message = error instanceof Error ? error.message : "Failed to create thread";
-          toast.error(message);
+          if (
+            error
+            && typeof error === "object"
+            && "code" in error
+            && error.code === "THREAD_LIMIT_EXCEEDED"
+            && "currentUsage" in error
+            && "limit" in error
+          ) {
+            setUpgradeDialog({
+              open: true,
+              currentUsage: error.currentUsage as number,
+              limit: error.limit as number,
+            });
+          }
+          else {
+            const message = error instanceof Error ? error.message : "Failed to create thread";
+            toast.error(message);
+          }
         },
       },
     );
@@ -56,21 +78,29 @@ export function AuthenticatedHome(): React.ReactNode {
   const showLandingPage = !input.trim() && resolvedSettings.landingPageContent !== "blank";
 
   return (
-    <div className="flex h-full max-h-screen flex-col">
-      <BetaBanner />
-      <div className="min-h-0 flex-1 overflow-auto">
-        <LandingPageContent
-          type={resolvedSettings.landingPageContent}
-          isVisible={showLandingPage}
-          onSuggestionClickAction={handleSuggestionClick}
-        />
+    <>
+      <div className="flex h-full max-h-screen flex-col">
+        <BetaBanner />
+        <div className="min-h-0 flex-1 overflow-auto">
+          <LandingPageContent
+            type={resolvedSettings.landingPageContent}
+            isVisible={showLandingPage}
+            onSuggestionClickAction={handleSuggestionClick}
+          />
+        </div>
+        <div className="shrink-0">
+          <ChatInput
+            sendMessage={handleSendMessage}
+            isLoading={createThread.isPending}
+          />
+        </div>
       </div>
-      <div className="shrink-0">
-        <ChatInput
-          sendMessage={handleSendMessage}
-          isLoading={createThread.isPending}
-        />
-      </div>
-    </div>
+      <UpgradePromptDialog
+        open={upgradeDialog.open}
+        onOpenChange={open => setUpgradeDialog(prev => ({ ...prev, open }))}
+        currentUsage={upgradeDialog.currentUsage}
+        limit={upgradeDialog.limit}
+      />
+    </>
   );
 }
