@@ -7,6 +7,7 @@ export * from "./keys";
 export * from "./models";
 export * from "./settings";
 export * from "./sharing";
+export * from "./subscriptions";
 
 export const relations = {
   ...authRelations,

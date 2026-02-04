@@ -11,6 +11,7 @@ import { auth } from "~/features/auth/lib/auth";
 import { createThread, deleteMessagesAfterCount, deleteThreadById, getMessagesByThreadId, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
 import { generateThreadIcon, generateThreadTitle } from "~/features/chat/server/thread";
 import { getShareByThreadId, revokeThreadShare, upsertThreadShare } from "~/features/chat/sharing-queries";
+import { checkThreadLimit } from "~/features/subscriptions";
 import { resolveKey } from "~/lib/api-keys/server";
 import { serverEnv } from "~/lib/env";
 
@@ -60,7 +61,7 @@ export async function createNewThread(options?: {
   threadId?: string;
   title?: string;
   icon?: ThreadIcon;
-}): Promise<string> {
+}): Promise<{ threadId: string } | { error: string; code: "THREAD_LIMIT_EXCEEDED"; currentUsage: number; limit: number }> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -68,13 +69,23 @@ export async function createNewThread(options?: {
   if (!session?.user)
     throw new Error("Not authenticated");
 
+  const limitCheck = await checkThreadLimit(session.user.id);
+  if (!limitCheck.allowed) {
+    return {
+      error: limitCheck.reason,
+      code: "THREAD_LIMIT_EXCEEDED",
+      currentUsage: limitCheck.currentUsage,
+      limit: limitCheck.limit,
+    };
+  }
+
   const threadId = await createThread(session.user.id, {
     threadId: options?.threadId,
     title: options?.title || "New Chat",
     icon: options?.icon,
   });
 
-  return threadId;
+  return { threadId };
 }
 
 /**

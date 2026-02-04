@@ -1,14 +1,26 @@
 /* eslint-disable node/no-process-env */
+import { checkout, polar, portal, webhooks } from "@polar-sh/better-auth";
+import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { twoFactor } from "better-auth/plugins";
 
 import { createDefaultUserSettings } from "~/features/settings/actions";
+import { createUserSubscription, syncSubscriptionFromPolarState } from "~/features/subscriptions/queries";
 import { db } from "~/lib/db";
 import * as schema from "~/lib/db/schema";
 import { sendEmail } from "~/lib/email";
 import { serverEnv } from "~/lib/env";
+
+const polarClient = serverEnv.POLAR_ACCESS_TOKEN
+  ? new Polar({
+      accessToken: serverEnv.POLAR_ACCESS_TOKEN,
+      server: serverEnv.POLAR_SANDBOX ? "sandbox" : "production",
+    })
+  : null;
+
+const polarEnabled = !!(polarClient && serverEnv.POLAR_WEBHOOK_SECRET && serverEnv.POLAR_SUCCESS_URL);
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -93,7 +105,10 @@ export const auth = betterAuth({
     user: {
       create: {
         async after(user) {
-          await createDefaultUserSettings(user.id);
+          await Promise.all([
+            createDefaultUserSettings(user.id),
+            createUserSubscription(user.id),
+          ]);
         },
       },
     },
@@ -108,6 +123,36 @@ export const auth = betterAuth({
     twoFactor({
       issuer: "BobrChat",
     }),
+    ...(polarEnabled && polarClient
+      ? [
+          polar({
+            client: polarClient,
+            createCustomerOnSignUp: true,
+            use: [
+              checkout({
+                successUrl: serverEnv.POLAR_SUCCESS_URL!,
+              }),
+              portal(),
+              webhooks({
+                secret: serverEnv.POLAR_WEBHOOK_SECRET!,
+                onCustomerStateChanged: async (payload) => {
+                  const state = payload.data;
+
+                  await syncSubscriptionFromPolarState({
+                    userId: state.externalId ?? undefined,
+                    polarCustomerId: state.id,
+                    activeSubscriptions: state.activeSubscriptions.map((sub) => ({
+                      id: sub.id,
+                      productId: sub.productId,
+                    })),
+                    isDeleted: state.deletedAt !== null,
+                  });
+                },
+              }),
+            ],
+          }),
+        ]
+      : []),
   ],
 });
 
