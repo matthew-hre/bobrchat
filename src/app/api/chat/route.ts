@@ -11,6 +11,7 @@ import { generateThreadIcon } from "~/features/chat/server/icon-selection";
 import { generateThreadTitle } from "~/features/chat/server/naming";
 import { streamChatResponse } from "~/features/chat/server/service";
 import { getUserSettingsAndKeys } from "~/features/settings/queries";
+import { chatRateLimit, rateLimitResponse } from "~/lib/rate-limit";
 
 export type CostBreakdown = {
   promptCost: number;
@@ -47,6 +48,11 @@ export async function POST(req: Request) {
       status: 401,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  const { success, reset } = await chatRateLimit.limit(session.user.id);
+  if (!success) {
+    return rateLimitResponse(reset);
   }
 
   const { messages, threadId, openrouterClientKey, parallelClientKey, searchEnabled, reasoningLevel, modelId, supportsNativePdf, isRegeneration, modelPricing }: { messages: ChatUIMessage[]; threadId?: string; openrouterClientKey?: string; parallelClientKey?: string; searchEnabled?: boolean; reasoningLevel?: string; modelId?: string; supportsNativePdf?: boolean; isRegeneration?: boolean; modelPricing?: { prompt: string; completion: string } }

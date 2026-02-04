@@ -8,6 +8,7 @@ import { getUserStorageUsage, STORAGE_QUOTA_BYTES } from "~/features/attachments
 import { auth } from "~/features/auth/lib/auth";
 import { db } from "~/lib/db";
 import { attachments } from "~/lib/db/schema/chat";
+import { rateLimitResponse, uploadRateLimit } from "~/lib/rate-limit";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = new Set([
@@ -51,6 +52,11 @@ export async function POST(req: Request) {
       status: 401,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  const { success, reset } = await uploadRateLimit.limit(session.user.id);
+  if (!success) {
+    return rateLimitResponse(reset);
   }
 
   try {

@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { auth } from "~/features/auth/lib/auth";
+import { rateLimitResponse, rotateKeyRateLimit } from "~/lib/rate-limit";
 import { rotateKey } from "~/lib/security/keys";
 
 export async function POST() {
@@ -11,6 +12,11 @@ export async function POST() {
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { success, reset } = await rotateKeyRateLimit.limit(session.user.id);
+  if (!success) {
+    return rateLimitResponse(reset);
   }
 
   try {
