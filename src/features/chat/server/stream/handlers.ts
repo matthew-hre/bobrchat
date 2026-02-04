@@ -4,8 +4,8 @@ import type { ToolResultStreamPart } from "~/features/chat/types";
 
 import { isToolResultPart } from "~/features/chat/types";
 
-import type { SearchToolOutput } from "../tools/search";
 import type { ExtractToolCall, SearchToolCall } from "../metrics";
+import type { SearchToolOutput } from "../tools/search";
 
 import { isSearchError } from "../tools/search";
 
