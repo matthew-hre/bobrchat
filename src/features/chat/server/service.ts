@@ -47,6 +47,7 @@ export async function streamChatResponse(
   reasoningLevel?: string,
   threadId?: string,
   modelPricing?: { prompt: string; completion: string },
+  supportsTools?: boolean,
 ) {
   if (!openRouterApiKey) {
     throw new Error("No API key configured. Please set up your OpenRouter API key in settings.");
@@ -86,7 +87,7 @@ export async function streamChatResponse(
 
   const searchTools = searchEnabled && parallelApiKey ? createSearchTools(parallelApiKey) : {};
   const handoffTools = threadId ? createHandoffTool(userId, threadId, messages, openRouterApiKey) : {};
-  const tools = Object.keys({ ...searchTools, ...handoffTools }).length > 0
+  const tools = (Object.keys({ ...searchTools, ...handoffTools }).length > 0) && supportsTools
     ? { ...searchTools, ...handoffTools }
     : undefined;
 

@@ -76,6 +76,7 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
         ...(state.parallelKey && { parallelClientKey: state.parallelKey }),
         ...(state.selectedModelId && { modelId: state.selectedModelId }),
         supportsNativePdf: capabilities.supportsNativePdf,
+        supportsTools: capabilities.supportsTools,
         // Pass pricing from client cache to avoid server-side model fetch
         ...(selectedModelInfo?.pricing && {
           modelPricing: {
