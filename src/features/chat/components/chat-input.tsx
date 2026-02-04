@@ -208,7 +208,7 @@ function ApiWarningBadge() {
       <div className="text-warning-foreground text-sm">
         No API key configured. Set up your OpenRouter API key in
         <Link
-          href="?settings=integrations"
+          href="/settings?tab=integrations"
           className={`
             ml-1 font-semibold underline
             hover:no-underline

@@ -22,8 +22,9 @@ import {
 import { Input } from "~/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "~/components/ui/input-otp";
 import { Label } from "~/components/ui/label";
-import { Separator } from "~/components/ui/separator";
 import { twoFactor, useSession } from "~/features/auth/lib/auth-client";
+
+import { SettingsSection } from "../ui/settings-section";
 
 export function TwoFactorSection({ hasCredentialAccount }: { hasCredentialAccount: boolean }) {
   const { data: session } = useSession();
@@ -32,52 +33,30 @@ export function TwoFactorSection({ hasCredentialAccount }: { hasCredentialAccoun
 
   if (!hasCredentialAccount && !is2FAEnabled) {
     return (
-      <>
-        <Separator />
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <ShieldOffIcon className="text-muted-foreground size-5" />
-            <div>
-              <Label className="text-base">Two-Factor Authentication</Label>
-              <p className="text-muted-foreground text-sm">
-                2FA is not available for accounts using only social login. Set a password first to enable 2FA.
-              </p>
-            </div>
-          </div>
-        </div>
-      </>
+      <SettingsSection
+        title="Two-Factor Authentication"
+        description="2FA is not available for accounts using only social login."
+      >
+        <></>
+      </SettingsSection>
     );
   }
 
   return (
-    <>
-      <Separator />
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          {is2FAEnabled
-            ? <ShieldCheckIcon className="text-success size-5" />
-            : <ShieldOffIcon className="text-muted-foreground size-5" />}
-          <div>
-            <Label className="text-base">Two-Factor Authentication</Label>
-            <p className="text-muted-foreground text-sm">
-              {is2FAEnabled
-                ? "Your account is protected with 2FA."
-                : "Add an extra layer of security to your account."}
-            </p>
-          </div>
-        </div>
-
+    <SettingsSection
+      title="Two-Factor Authentication"
+      description={is2FAEnabled
+        ? "Your account is protected with 2FA."
+        : "Add an extra layer of security to your account."}
+    >
+      <div className="space-y-3">
         {is2FAEnabled
           ? <Disable2FADialog />
           : <Enable2FADialog />}
 
-        {is2FAEnabled && (
-          <>
-            <ViewRecoveryCodesDialog />
-          </>
-        )}
+        {is2FAEnabled && <ViewRecoveryCodesDialog />}
       </div>
-    </>
+    </SettingsSection>
   );
 }
 

@@ -42,4 +42,26 @@ export type ModelsQueryResult = {
   totalPages: number;
 };
 
+export type ModelListItem = {
+  id: string;
+  name: string;
+  provider: string;
+  pricing: {
+    prompt: number | null;
+    completion: number | null;
+  } | null;
+  // Fields needed for getModelCapabilities
+  inputModalities: string[];
+  supportedParameters: string[];
+  contextLength: number;
+};
+
+export type ModelsListQueryResult = {
+  models: ModelListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export type { Model };

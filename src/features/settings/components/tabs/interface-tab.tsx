@@ -89,179 +89,170 @@ export function InterfaceTab() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b p-6">
-        <h3 className="text-lg font-semibold">Interface</h3>
-        <p className="text-muted-foreground text-sm">
-          Customize the look and feel of the application.
-        </p>
-      </div>
+      <div className="w-full space-y-8 p-6">
+        <SettingsSection
+          title="Appearance"
+          description="Choose your preferred color scheme."
+        >
+          <SelectionCardItem
+            label="Theme"
+            options={themeOptions}
+            value={settings.theme}
+            onChange={value => save({ theme: value })}
+            layout="grid"
+            columns={3}
+          />
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="mx-auto max-w-md space-y-8">
-          <SettingsSection
-            title="Appearance"
-            description="Choose your preferred color scheme."
-          >
-            <SelectionCardItem
-              label="Theme"
-              options={themeOptions}
-              value={settings.theme}
-              onChange={value => save({ theme: value })}
-              layout="grid"
-              columns={3}
-            />
-
-            <div className="space-y-3">
-              <Label>Accent Color</Label>
-              <div className="flex flex-wrap items-center gap-2">
-                {accentColorOptions.map(option => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => save({ accentColor: option.value })}
-                    className={cn(
-                      `
-                        h-8 w-8 rounded-full border-2 transition-all
-                        hover:scale-110
-                      `,
-                      settings.accentColor === option.value
-                        ? `
-                          border-foreground ring-foreground
-                          ring-offset-background ring-2 ring-offset-2
-                        `
-                        : "border-transparent",
-                    )}
-                    style={{ backgroundColor: option.color }}
-                    title={option.label}
-                    aria-label={option.label}
-                  />
-                ))}
-                <div className="bg-border mx-1 h-6 w-px" />
+          <div className="space-y-3">
+            <Label>Accent Color</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              {accentColorOptions.map(option => (
                 <button
+                  key={option.value}
                   type="button"
-                  onClick={() => save({ accentColor: typeof settings.accentColor === "number" ? settings.accentColor : 135 })}
+                  onClick={() => save({ accentColor: option.value })}
                   className={cn(
                     `
-                      flex h-8 w-8 items-center justify-center rounded-full
-                      border border-dashed transition-all
+                      h-8 w-8 rounded-full border-2 transition-all
                       hover:scale-110
                     `,
-                    typeof settings.accentColor === "number"
+                    settings.accentColor === option.value
                       ? `
                         border-foreground ring-foreground ring-offset-background
                         ring-2 ring-offset-2
                       `
-                      : "border-muted-foreground",
+                      : "border-transparent",
                   )}
-                  title="Custom"
-                  aria-label="Custom color"
-                >
-                  <PaletteIcon className="text-muted-foreground h-4 w-4" />
-                </button>
+                  style={{ backgroundColor: option.color }}
+                  title={option.label}
+                  aria-label={option.label}
+                />
+              ))}
+              <div className="bg-border mx-1 h-6 w-px" />
+              <button
+                type="button"
+                onClick={() => save({ accentColor: typeof settings.accentColor === "number" ? settings.accentColor : 135 })}
+                className={cn(
+                  `
+                    flex h-8 w-8 items-center justify-center rounded-full border
+                    border-dashed transition-all
+                    hover:scale-110
+                  `,
+                  typeof settings.accentColor === "number"
+                    ? `
+                      border-foreground ring-foreground ring-offset-background
+                      ring-2 ring-offset-2
+                    `
+                    : "border-muted-foreground",
+                )}
+                title="Custom"
+                aria-label="Custom color"
+              >
+                <PaletteIcon className="text-muted-foreground h-4 w-4" />
+              </button>
+            </div>
+            {typeof settings.accentColor === "number" && (
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-6 w-6 shrink-0 rounded-full border"
+                  style={{ backgroundColor: hueToHex(localHue ?? settings.accentColor) }}
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={360}
+                  value={localHue ?? settings.accentColor}
+                  onChange={(e) => {
+                    const hue = Number(e.target.value);
+                    setLocalHue(hue);
+                    applyAccentColor(hue);
+                  }}
+                  onPointerUp={async () => {
+                    if (localHue !== null) {
+                      await save({ accentColor: localHue });
+                      setLocalHue(null);
+                    }
+                  }}
+                  className={`
+                    h-2 w-full cursor-pointer appearance-none rounded-full
+                  `}
+                  style={{
+                    background: "linear-gradient(to right, hsl(0 70% 55%), hsl(60 70% 55%), hsl(120 70% 55%), hsl(180 70% 55%), hsl(240 70% 55%), hsl(300 70% 55%), hsl(360 70% 55%))",
+                  }}
+                />
+                <span className="text-muted-foreground w-8 text-xs">
+                  {localHue ?? settings.accentColor}
+                  °
+                </span>
               </div>
-              {typeof settings.accentColor === "number" && (
-                <div className="flex items-center gap-3">
-                  <div
-                    className="h-6 w-6 shrink-0 rounded-full border"
-                    style={{ backgroundColor: hueToHex(localHue ?? settings.accentColor) }}
-                  />
-                  <input
-                    type="range"
-                    min={0}
-                    max={360}
-                    value={localHue ?? settings.accentColor}
-                    onChange={(e) => {
-                      const hue = Number(e.target.value);
-                      setLocalHue(hue);
-                      applyAccentColor(hue);
-                    }}
-                    onPointerUp={async () => {
-                      if (localHue !== null) {
-                        await save({ accentColor: localHue });
-                        setLocalHue(null);
-                      }
-                    }}
-                    className={`
-                      h-2 w-full cursor-pointer appearance-none rounded-full
-                    `}
-                    style={{
-                      background: "linear-gradient(to right, hsl(0 70% 55%), hsl(60 70% 55%), hsl(120 70% 55%), hsl(180 70% 55%), hsl(240 70% 55%), hsl(300 70% 55%), hsl(360 70% 55%))",
-                    }}
-                  />
-                  <span className="text-muted-foreground w-8 text-xs">
-                    {localHue ?? settings.accentColor}
-                    °
-                  </span>
-                </div>
-              )}
-            </div>
-          </SettingsSection>
+            )}
+          </div>
+        </SettingsSection>
 
-          <Separator />
+        <Separator />
 
-          <SettingsSection
-            title="Input & Controls"
-            description="Configure input behavior and keyboard shortcuts."
-          >
-            <div className="space-y-2">
-              <Label htmlFor="inputHeightScale">Input Box Height</Label>
-              <p className="text-muted-foreground text-xs">
-                Control how much the input box expands based on content. "None" keeps it compact, "Lots" expands up to 15 lines.
-              </p>
-              <Slider
-                id="inputHeightScale"
-                type="range"
-                min="0"
-                max="4"
-                step="1"
-                value={settings.inputHeightScale ?? 0}
-                onChange={(e) => {
-                  const newScale = Number.parseInt(e.target.value, 10);
-                  save({ inputHeightScale: newScale });
-                }}
-                labels={["None", "Lots"]}
-              />
-            </div>
-
-            <SelectionCardItem
-              label="Send Message Keyboard Shortcut"
-              description="Choose which keyboard shortcut to use for sending messages."
-              options={sendMessageKeyboardShortcutOptions}
-              value={settings.sendMessageKeyboardShortcut}
-              onChange={value => save({ sendMessageKeyboardShortcut: value })}
-              layout="flex"
+        <SettingsSection
+          title="Input & Controls"
+          description="Configure input behavior and keyboard shortcuts."
+        >
+          <div className="space-y-2">
+            <Label htmlFor="inputHeightScale">Input Box Height</Label>
+            <p className="text-muted-foreground text-xs">
+              Control how much the input box expands based on content. "None" keeps it compact, "Lots" expands up to 15 lines.
+            </p>
+            <Slider
+              id="inputHeightScale"
+              type="range"
+              min="0"
+              max="4"
+              step="1"
+              value={settings.inputHeightScale ?? 0}
+              onChange={(e) => {
+                const newScale = Number.parseInt(e.target.value, 10);
+                save({ inputHeightScale: newScale });
+              }}
+              labels={["None", "Lots"]}
             />
-          </SettingsSection>
+          </div>
 
-          <Separator />
+          <SelectionCardItem
+            label="Send Message Keyboard Shortcut"
+            description="Choose which keyboard shortcut to use for sending messages."
+            options={sendMessageKeyboardShortcutOptions}
+            value={settings.sendMessageKeyboardShortcut}
+            onChange={value => save({ sendMessageKeyboardShortcut: value })}
+            layout="flex"
+          />
+        </SettingsSection>
 
-          <SettingsSection
-            title="New Chat"
-            description="Configure what you see when starting a new conversation."
-          >
-            <SelectionCardItem
-              label="Landing Page Content"
-              options={landingPageOptions}
-              value={settings.landingPageContent}
-              onChange={value => save({ landingPageContent: value })}
-              layout="flex"
-            />
-          </SettingsSection>
+        <Separator />
 
-          <Separator />
+        <SettingsSection
+          title="New Chat"
+          description="Configure what you see when starting a new conversation."
+        >
+          <SelectionCardItem
+            label="Landing Page Content"
+            options={landingPageOptions}
+            value={settings.landingPageContent}
+            onChange={value => save({ landingPageContent: value })}
+            layout="flex"
+          />
+        </SettingsSection>
 
-          <SettingsSection
-            title="Sidebar"
-            description="Configure sidebar appearance."
-          >
-            <ToggleItem
-              label="Disable Sidebar Icons"
-              description="Hide icons next to threads in the sidebar. Hides relevant settings."
-              enabled={settings.showSidebarIcons}
-              onToggle={enabled => save({ showSidebarIcons: enabled })}
-            />
-          </SettingsSection>
-        </div>
+        <Separator />
+
+        <SettingsSection
+          title="Sidebar"
+          description="Configure sidebar appearance."
+        >
+          <ToggleItem
+            label="Disable Sidebar Icons"
+            description="Hide icons next to threads in the sidebar. Hides relevant settings."
+            enabled={settings.showSidebarIcons}
+            onToggle={enabled => save({ showSidebarIcons: enabled })}
+          />
+        </SettingsSection>
       </div>
     </div>
   );
@@ -270,34 +261,27 @@ export function InterfaceTab() {
 function InterfaceTabSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b p-6">
-        <Skeleton className="h-6 w-24" />
-        <Skeleton className="mt-2 h-4 w-64" />
-      </div>
-
-      <div className="flex-1 overflow-auto p-6">
-        <div className="mx-auto max-w-md space-y-6">
-          <div className="space-y-3">
-            <Skeleton className="h-4 w-16" />
-            <div className="grid grid-cols-3 gap-2">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
+      <div className="w-full space-y-6 p-6">
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-16" />
+          <div className="grid grid-cols-3 gap-2">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-9 w-full" />
-          </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-9 w-full" />
+        </div>
 
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-36" />
-            <div className="flex gap-2">
-              <Skeleton className="h-12 w-24" />
-              <Skeleton className="h-12 w-24" />
-              <Skeleton className="h-12 w-24" />
-            </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-36" />
+          <div className="flex gap-2">
+            <Skeleton className="h-12 w-24" />
+            <Skeleton className="h-12 w-24" />
+            <Skeleton className="h-12 w-24" />
           </div>
         </div>
       </div>

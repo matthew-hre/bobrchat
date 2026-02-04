@@ -1,14 +1,7 @@
 "use client";
 
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
-  BrainIcon,
-  FileTextIcon,
-  GripVerticalIcon,
-  ImageIcon,
-  SearchIcon,
-} from "lucide-react";
+import { BrainIcon, FileTextIcon, ImageIcon, SearchIcon } from "lucide-react";
+import { memo } from "react";
 
 import { cn } from "~/lib/utils";
 
@@ -24,81 +17,66 @@ function formatPrice(price: number | null): string {
   return `$${(price * 1000000).toFixed(2)}/1M`;
 }
 
-export function SortableFavoriteModel({
-  model,
-  onRemove,
-}: {
+type ModelListCardProps = {
   model: ModelListItem;
-  onRemove: () => void;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: model.id });
+  isSelected: boolean;
+  toggleModel: (id: string) => void;
+};
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
+export const ModelListCard = memo(({
+  model,
+  isSelected,
+  toggleModel,
+}: ModelListCardProps) => {
   const capabilities = getModelListItemCapabilities(model);
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
+    <button
+      onClick={() => toggleModel(model.id)}
       className={cn(
-        "rounded-lg border p-4 text-left transition-all",
-        isDragging
-          ? "border-primary/50 bg-primary/10 shadow-md"
-          : "border-primary bg-primary/5",
+        `
+          hover:border-primary/50
+          rounded-lg border p-4 text-left transition-all
+        `,
+        isSelected
+          ? `border-primary bg-primary/5`
+          : `
+            border-border
+            hover:bg-muted/50
+          `,
       )}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <button
-          {...attributes}
-          {...listeners}
-          className={cn(
-            `
-              flex shrink-0 cursor-grab items-center justify-center rounded p-1
-              transition-colors
-              active:cursor-grabbing
-            `,
-            isDragging
-              ? "bg-primary/20 text-primary"
-              : `
-                text-muted-foreground
-                hover:text-foreground
-              `,
-          )}
-          type="button"
-        >
-          <GripVerticalIcon className="size-4" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm leading-snug font-semibold">
+      {/* Name and selection indicator */}
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <h3 className="text-sm leading-snug font-semibold">
             {model.name}
           </h3>
-          <p className="text-muted-foreground truncate text-xs">
+          <p className="text-muted-foreground text-xs">
             {model.id}
           </p>
         </div>
-        <button
-          onClick={onRemove}
-          className={`
-            border-primary bg-primary mt-0.5 flex size-5 shrink-0 items-center
-            justify-center rounded border transition-all
-          `}
+        <div
+          className={cn(
+            `
+              mt-0.5 flex size-5 shrink-0 items-center justify-center rounded
+              border transition-all
+            `,
+            isSelected
+              ? `border-primary bg-primary`
+              : `
+                border-muted-foreground/30
+                hover:border-primary/50
+              `,
+          )}
         >
-          <div className="bg-primary-foreground size-2 rounded-[2px]" />
-        </button>
+          {isSelected && (
+            <div className="bg-primary-foreground size-2 rounded-[2px]" />
+          )}
+        </div>
       </div>
 
+      {/* Pricing */}
       <div className="flex gap-4 text-xs">
         <div>
           <span className="text-muted-foreground">
@@ -120,6 +98,7 @@ export function SortableFavoriteModel({
         </div>
       </div>
 
+      {/* Features */}
       <div className="flex flex-wrap gap-2">
         {capabilities.supportsImages && (
           <FeatureBadge icon={ImageIcon} label="Image Upload" />
@@ -137,9 +116,9 @@ export function SortableFavoriteModel({
           <FeatureBadge icon={BrainIcon} label="Reasoning" />
         )}
       </div>
-    </div>
+    </button>
   );
-}
+});
 
 function FeatureBadge({
   icon: Icon,

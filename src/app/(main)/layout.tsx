@@ -1,6 +1,5 @@
 import { HydrationBoundary } from "@tanstack/react-query";
 import { cookies, headers } from "next/headers";
-import { Suspense } from "react";
 
 import { ChatSidebar } from "~/components/sidebar/chat-sidebar";
 import { FloatingSidebarToggle } from "~/components/sidebar/floating-sidebar-toggle";
@@ -8,7 +7,6 @@ import { ThemeInitializer } from "~/components/theme/theme-initializer";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { GlobalDropZoneProvider } from "~/features/attachments/components/global-drop-zone";
 import { auth } from "~/features/auth/lib/auth";
-import { SettingsModalProvider } from "~/features/settings/components/settings-modal-provider";
 import { getUserSettings } from "~/features/settings/queries";
 import { prefetchThreads } from "~/lib/queries/prefetch-threads";
 
@@ -47,9 +45,6 @@ export default async function MainLayout({
             theme={settings?.theme}
             accentColor={settings?.accentColor}
           />
-          <Suspense fallback={null}>
-            <SettingsModalProvider />
-          </Suspense>
         </SidebarProvider>
       </GlobalDropZoneProvider>
     </HydrationBoundary>

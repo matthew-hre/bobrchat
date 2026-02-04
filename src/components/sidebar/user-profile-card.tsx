@@ -40,7 +40,7 @@ export function UserProfileCard({ session }: UserProfileCardProps) {
 
   return (
     <Link
-      href="?settings=profile"
+      href="/settings"
       className={cn(`
         hover:bg-muted/50
         group/user flex cursor-pointer items-center gap-3 p-6 py-4

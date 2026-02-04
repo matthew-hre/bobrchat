@@ -15,45 +15,24 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import {
-  BrainIcon,
-  FileTextIcon,
-  ImageIcon,
-  Loader2,
-  SearchIcon,
-  SlidersHorizontalIcon,
-  SparklesIcon,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { Loader2, SparklesIcon, StarIcon } from "lucide-react";
+import { useCallback, useState } from "react";
 
 import type { CapabilityFilter, SortOrder } from "~/features/models/types";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "~/components/ui/accordion";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import { Skeleton } from "~/components/ui/skeleton";
 import {
-  ModelCard,
+  AvailableModelCard,
   SortableFavoriteModel,
-  useModelsQuery,
+  useInfiniteModelsListQuery,
 } from "~/features/models";
-import { useFavoriteModelsDraft } from "~/features/settings/hooks/use-favorite-models-draft";
-import { useDebouncedValue } from "~/lib/hooks/use-debounced-value";
-import { useInfiniteScroll } from "~/lib/hooks/use-infinite-scroll";
+import { cn } from "~/lib/utils";
 
 import { useApiKeyStatus } from "../../hooks/use-api-status";
+import { useFavoriteModelsDraft } from "../../hooks/use-favorite-models-draft";
+import { ModelsSearchBar } from "./models-search-bar";
+
+type MobileTab = "available" | "favorites";
 
 export function ModelsTab() {
   const { hasKey: hasOpenRouterKey, isLoading: isKeyLoading } = useApiKeyStatus("openrouter");
@@ -61,32 +40,31 @@ export function ModelsTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [capabilityFilters, setCapabilityFilters] = useState<CapabilityFilter[]>([]);
   const [sortOrder, setSortOrder] = useState<SortOrder>("provider-asc");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<MobileTab>("available");
 
-  const debouncedSearch = useDebouncedValue(searchQuery, 300);
-
-  const { data, isLoading } = useModelsQuery({
-    search: debouncedSearch || undefined,
+  const {
+    models,
+    total: totalCount,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteModelsListQuery({
+    search: searchQuery || undefined,
     capabilities: capabilityFilters.length > 0 ? capabilityFilters : undefined,
     sortOrder,
-    pageSize: 500,
+    pageSize: 50,
   });
 
-  const models = useMemo(() => data?.models ?? [], [data?.models]);
-  const totalCount = data?.total ?? 0;
-
-  const { draftIds, draftSet, draftModels, toggle, reorder, isSaving } = useFavoriteModelsDraft();
-
-  const availableResults = useMemo(
-    () => models.filter(m => !draftSet.has(m.id)),
-    [models, draftSet],
-  );
-
-  const { displayedCount, observerRef, hasMore } = useInfiniteScroll({
-    totalCount: availableResults.length,
-    resetKeys: [debouncedSearch, capabilityFilters, sortOrder],
-  });
+  const {
+    draftIds,
+    draftSet,
+    draftModels,
+    toggle,
+    reorder,
+    canAddMore,
+    maxFavorites,
+  } = useFavoriteModelsDraft();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -95,265 +73,245 @@ export function ModelsTab() {
     }),
   );
 
-  const toggleCapabilityFilter = (filter: CapabilityFilter) => {
-    setCapabilityFilters(prev =>
-      prev.includes(filter)
-        ? prev.filter(f => f !== filter)
-        : [...prev, filter],
+  const handleSearchChange = useCallback((search: string) => {
+    setSearchQuery(search);
+  }, []);
+
+  const handleCapabilityFiltersChange = useCallback((filters: CapabilityFilter[]) => {
+    setCapabilityFilters(filters);
+  }, []);
+
+  const handleSortOrderChange = useCallback((order: SortOrder) => {
+    setSortOrder(order);
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id)
+      return;
+
+    const oldIndex = draftIds.indexOf(active.id as string);
+    const newIndex = draftIds.indexOf(over.id as string);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      reorder(oldIndex, newIndex);
+    }
+  }, [draftIds, reorder]);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    const scrollBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+
+    if (scrollBottom < 200 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const renderAllModels = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div
+              key={i}
+              className="border-border space-y-2 rounded-lg border p-4"
+            >
+              <Skeleton className="h-5 w-1/3" />
+              <Skeleton className="h-4 w-1/4" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-6 w-16" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (models.length === 0) {
+      return (
+        <div className={`
+          flex flex-col items-center justify-center py-12 text-center
+        `}
+        >
+          <div className="bg-muted mb-4 rounded-full p-3">
+            <SparklesIcon className="text-muted-foreground size-6" />
+          </div>
+          {!isKeyLoading && !hasOpenRouterKey
+            ? (
+                <>
+                  <h3 className="mb-1 font-medium">No API key configured</h3>
+                  <p className="text-muted-foreground mb-6 text-sm">
+                    Add your OpenRouter API key in the Integrations tab to browse available models.
+                  </p>
+                </>
+              )
+            : (
+                <>
+                  <h3 className="mb-1 font-medium">No models found</h3>
+                  <p className="text-muted-foreground mb-6 text-sm">
+                    No models are available. They will be synced automatically.
+                  </p>
+                </>
+              )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid gap-3">
+        {models.map((model) => {
+          const isSelected = draftSet.has(model.id);
+          return (
+            <AvailableModelCard
+              key={model.id}
+              model={model}
+              isSelected={isSelected}
+              onToggle={toggle}
+              disabled={!canAddMore}
+            />
+          );
+        })}
+        {isFetchingNextPage && (
+          <div className="flex justify-center py-4">
+            <Loader2 className="text-muted-foreground size-5 animate-spin" />
+          </div>
+        )}
+      </div>
     );
   };
 
-  const activeFilterCount = capabilityFilters.length + (sortOrder !== "provider-asc" ? 1 : 0);
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      const oldIndex = draftIds.indexOf(active.id as string);
-      const newIndex = draftIds.indexOf(over.id as string);
-      reorder(oldIndex, newIndex);
+  const renderFavoriteModels = () => {
+    if (draftModels.length === 0) {
+      return (
+        <div className={`
+          flex flex-col items-center justify-center py-12 text-center
+        `}
+        >
+          <div className="bg-muted mb-4 rounded-full p-3">
+            <StarIcon className="text-muted-foreground size-6" />
+          </div>
+          <h3 className="mb-1 font-medium">No favorite models</h3>
+          <p className="text-muted-foreground text-sm">
+            Select models from the left to add them here.
+          </p>
+        </div>
+      );
     }
+
+    return (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={draftIds}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="grid gap-3">
+            {draftModels.map(model => (
+              <SortableFavoriteModel
+                key={model.id}
+                model={model}
+                onRemove={() => toggle(model.id)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    );
   };
 
   return (
-    <div className="flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="border-b p-6">
-        <h3 className="text-lg font-semibold">
-          Models
-          {isSaving && <Loader2 className="ml-2 inline size-4 animate-spin" />}
-        </h3>
-        <p className="text-muted-foreground text-sm">
-          Search and manage your favorite OpenRouter models (max 10)
-        </p>
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Tab Switcher */}
+      <div className="w-full px-6 pt-6">
+        <div className="bg-muted inline-flex w-full gap-1 rounded-lg p-1">
+          <button
+            onClick={() => setMobileTab("available")}
+            className={cn(
+              `
+                flex-1 rounded-md px-3 py-2 text-sm font-medium
+                transition-colors
+              `,
+              mobileTab === "available"
+                ? "bg-background text-foreground shadow-sm"
+                : `
+                  text-muted-foreground
+                  hover:text-foreground
+                `,
+            )}
+          >
+            All Models
+            {totalCount > 0 && (
+              <span className="text-muted-foreground ml-1.5 text-xs">
+                (
+                {models.length}
+                /
+                {totalCount}
+                )
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setMobileTab("favorites")}
+            className={cn(
+              `
+                flex-1 rounded-md px-3 py-2 text-sm font-medium
+                transition-colors
+              `,
+              mobileTab === "favorites"
+                ? "bg-background text-foreground shadow-sm"
+                : `
+                  text-muted-foreground
+                  hover:text-foreground
+                `,
+            )}
+          >
+            Favorites
+            {draftModels.length > 0 && (
+              <span className="text-muted-foreground ml-1.5 text-xs">
+                (
+                {draftModels.length}
+                /
+                {maxFavorites}
+                )
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Search Bar */}
-      {hasOpenRouterKey && (
-        <div className="border-border border-b px-6 py-3">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <SearchIcon className={`
-                text-muted-foreground absolute top-1/2 left-3 size-4
-                -translate-y-1/2
-              `}
-              />
-              <Input
-                placeholder="Search by name, ID, or description..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Button
-              variant={filtersOpen ? "secondary" : "outline"}
-              size="icon"
-              className="relative shrink-0"
-              onClick={() => setFiltersOpen(!filtersOpen)}
-            >
-              <SlidersHorizontalIcon className="size-4" />
-              {activeFilterCount > 0 && (
-                <span className={`
-                  bg-primary text-primary-foreground absolute -top-1 -right-1
-                  flex size-4 items-center justify-center rounded-full text-xs
-                `}
-                >
-                  {activeFilterCount}
-                </span>
-              )}
-            </Button>
-          </div>
-          {filtersOpen && (
-            <div className={`
-              mt-2 flex flex-wrap items-center justify-between gap-2
-            `}
-            >
-              <div className="flex flex-row gap-2">
-                <Button
-                  variant={capabilityFilters.includes("image") ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => toggleCapabilityFilter("image")}
-                >
-                  <ImageIcon className="size-3" />
-                  Image
-                </Button>
-                <Button
-                  variant={capabilityFilters.includes("pdf") ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => toggleCapabilityFilter("pdf")}
-                >
-                  <FileTextIcon className="size-3" />
-                  PDF
-                </Button>
-                <Button
-                  variant={capabilityFilters.includes("search") ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => toggleCapabilityFilter("search")}
-                >
-                  <SearchIcon className="size-3" />
-                  Search
-                </Button>
-                <Button
-                  variant={capabilityFilters.includes("reasoning") ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => toggleCapabilityFilter("reasoning")}
-                >
-                  <BrainIcon className="size-3" />
-                  Reasoning
-                </Button>
-              </div>
-              <Select
-                value={sortOrder}
-                onValueChange={v => setSortOrder(v as SortOrder)}
-              >
-                <SelectTrigger className={`
-                  w-48 gap-1 text-sm
-                  data-[size=default]:h-8
-                `}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="provider-asc">Provider (A-Z)</SelectItem>
-                  <SelectItem value="provider-desc">Provider (Z-A)</SelectItem>
-                  <SelectItem value="model-asc">Model (A-Z)</SelectItem>
-                  <SelectItem value="model-desc">Model (Z-A)</SelectItem>
-                  <SelectItem value="cost-asc">Output Cost (Low)</SelectItem>
-                  <SelectItem value="cost-desc">Output Cost (High)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          <p className="text-muted-foreground mt-2 text-xs">
-            {`${availableResults.length} of ${totalCount} models`}
-          </p>
-        </div>
-      )}
-
-      {/* Favorites Section with Accordion and Drag & Drop */}
-      {draftModels.length > 0 && (
-        <div className="border-border border-b">
-          <Accordion
-            type="single"
-            collapsible
-            value={favoritesOpen ? "favorites" : ""}
-            onValueChange={value => setFavoritesOpen(value === "favorites")}
-          >
-            <AccordionItem value="favorites" className="border-0">
-              <AccordionTrigger className={`
-                hover:bg-muted/30
-                rounded-none px-6 py-3
-              `}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold">
-                    Favorite Models
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    {draftModels.length}
-                    /10
-                  </span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="space-y-2 border-t px-6 py-4">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={draftIds}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {draftModels.map(model => (
-                      <SortableFavoriteModel
-                        key={model.id}
-                        model={model}
-                        onRemove={() => toggle(model.id)}
-                      />
-                    ))}
-                  </SortableContext>
-                </DndContext>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      )}
-
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        {isLoading
-          ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <div
-                    key={i}
-                    className="border-border space-y-2 rounded-lg border p-4"
-                  >
-                    <Skeleton className="h-5 w-1/3" />
-                    <Skeleton className="h-4 w-1/4" />
-                    <div className="flex gap-2">
-                      <Skeleton className="h-6 w-16" />
-                      <Skeleton className="h-6 w-16" />
-                    </div>
-                  </div>
-                ))}
+      <div className="flex min-h-0 flex-1 flex-col">
+        {mobileTab === "available" && (
+          <div className="flex flex-1 flex-col overflow-hidden">
+            {hasOpenRouterKey && (
+              <div className={`
+                bg-background sticky top-0 z-10 shrink-0 px-6 pt-4 pb-2
+              `}
+              >
+                <ModelsSearchBar
+                  onSearchChange={handleSearchChange}
+                  capabilityFilters={capabilityFilters}
+                  onCapabilityFiltersChange={handleCapabilityFiltersChange}
+                  sortOrder={sortOrder}
+                  onSortOrderChange={handleSortOrderChange}
+                  resultCount={models.length}
+                  totalCount={totalCount}
+                />
               </div>
-            )
-          : models.length === 0
-            ? (
-                <div className={`
-                  flex flex-col items-center justify-center py-12 text-center
-                `}
-                >
-                  <div className="bg-muted mb-4 rounded-full p-3">
-                    <SparklesIcon className="text-muted-foreground size-6" />
-                  </div>
-                  {!isKeyLoading && !hasOpenRouterKey
-                    ? (
-                        <>
-                          <h3 className="mb-1 font-medium">No API key configured</h3>
-                          <p className="text-muted-foreground mb-6 text-sm">
-                            Add your OpenRouter API key in the Integrations tab to browse available models.
-                          </p>
-                        </>
-                      )
-                    : (
-                        <>
-                          <h3 className="mb-1 font-medium">No models found</h3>
-                          <p className="text-muted-foreground mb-6 text-sm">
-                            No models are available. They will be synced automatically.
-                          </p>
-                        </>
-                      )}
-                </div>
-              )
-            : availableResults.length === 0
-              ? (
-                  <div className={`
-                    flex flex-col items-center justify-center py-12 text-center
-                  `}
-                  >
-                    <p className="text-muted-foreground text-sm">No models match your search</p>
-                  </div>
-                )
-              : (
-                  <div className="grid gap-3">
-                    {availableResults.slice(0, displayedCount).map((model) => {
-                      const isSelected = draftSet.has(model.id);
-                      return (<ModelCard key={model.id} model={model} isSelected={isSelected} toggleModel={toggle} />);
-                    })}
-                    <div ref={observerRef} className="h-1" />
-                    {hasMore && (
-                      <div className="flex justify-center py-4">
-                        <Loader2 className={`
-                          text-muted-foreground size-5 animate-spin
-                        `}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+            )}
+            <div className="flex-1 overflow-y-auto px-6 pb-6" onScroll={handleScroll}>
+              {renderAllModels()}
+            </div>
+          </div>
+        )}
+        {mobileTab === "favorites" && (
+          <div className="flex-1 overflow-y-auto p-6">
+            {renderFavoriteModels()}
+          </div>
+        )}
       </div>
     </div>
   );
