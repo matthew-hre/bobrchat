@@ -13,6 +13,7 @@ export type GlobalKeyboardShortcutsRefs = {
 export function useGlobalKeyboardShortcuts(refs: GlobalKeyboardShortcutsRefs) {
   const router = useRouter();
   const setModelSelectorOpen = useChatUIStore(s => s.setModelSelectorOpen);
+  const modelSelectorOverride = useChatUIStore(s => s.modelSelectorOverride);
   const { toggleSidebar } = useSidebar();
 
   useEffect(() => {
@@ -41,7 +42,12 @@ export function useGlobalKeyboardShortcuts(refs: GlobalKeyboardShortcutsRefs) {
 
       if (event.key === "m" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
-        setModelSelectorOpen(true);
+        if (modelSelectorOverride) {
+          modelSelectorOverride();
+        }
+        else {
+          setModelSelectorOpen(true);
+        }
         return;
       }
 
@@ -53,5 +59,5 @@ export function useGlobalKeyboardShortcuts(refs: GlobalKeyboardShortcutsRefs) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [refs.searchInputRef, router, setModelSelectorOpen, toggleSidebar]);
+  }, [refs.searchInputRef, router, setModelSelectorOpen, modelSelectorOverride, toggleSidebar]);
 }

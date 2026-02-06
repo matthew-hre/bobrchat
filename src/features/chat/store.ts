@@ -24,6 +24,10 @@ type ChatUIStore = {
   modelSelectorOpen: boolean;
   setModelSelectorOpen: (open: boolean) => void;
 
+  // Override for model selector keybind (e.g., inline editor registers when mounted)
+  modelSelectorOverride: (() => void) | null;
+  setModelSelectorOverride: (fn: (() => void) | null) => void;
+
   // Browser API keys (loaded from localStorage once, not persisted by zustand)
   openrouterKey: string | null;
   parallelKey: string | null;
@@ -70,6 +74,9 @@ export const useChatUIStore = create<ChatUIStore>()(
       // Model selector popover
       modelSelectorOpen: false,
       setModelSelectorOpen: open => set({ modelSelectorOpen: open }),
+
+      modelSelectorOverride: null,
+      setModelSelectorOverride: fn => set({ modelSelectorOverride: fn }),
 
       // Browser API keys (not persisted by zustand, loaded manually from localStorage)
       openrouterKey: null,

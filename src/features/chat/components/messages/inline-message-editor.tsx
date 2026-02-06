@@ -224,6 +224,7 @@ export function InlineMessageEditor({
             selectedModelId={selectedModelId || undefined}
             onSelectModelAction={setSelectedModelId}
             sideOffset={8}
+            useLocalState
           />
 
           {capabilities.supportsReasoning && (

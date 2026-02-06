@@ -18,6 +18,14 @@ import { cn } from "~/lib/utils";
 
 import { Button } from "~/components/ui/button";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "~/components/ui/command";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -32,9 +40,10 @@ type ModelSelectorProps = {
   popoverWidth?: string;
   sideOffset?: number;
   isLoading?: boolean;
+  useLocalState?: boolean;
 };
 
-export function NoModelsToolip({ models, isLoading, children }: { models: Model[], isLoading?: boolean, children: React.ReactNode }) {
+export function NoModelsToolip({ models, isLoading, children }: { models: Model[]; isLoading?: boolean; children: React.ReactNode }) {
   if (isLoading) {
     return children;
   }
@@ -71,18 +80,34 @@ export function ModelSelector({
   popoverWidth = "w-lg",
   sideOffset = 81,
   isLoading = false,
+  useLocalState = false,
 }: ModelSelectorProps) {
-  const modelSelectorOpen = useChatUIStore(s => s.modelSelectorOpen);
-  const setModelSelectorOpen = useChatUIStore(s => s.setModelSelectorOpen);
+  const globalOpen = useChatUIStore(s => s.modelSelectorOpen);
+  const setGlobalOpen = useChatUIStore(s => s.setModelSelectorOpen);
+  const setModelSelectorOverride = useChatUIStore(s => s.setModelSelectorOverride);
+  const [localOpen, setLocalOpen] = React.useState(false);
+
+  const open = useLocalState ? localOpen : globalOpen;
+  const setOpen = useLocalState ? setLocalOpen : setGlobalOpen;
+
+  React.useEffect(() => {
+    if (!useLocalState) return;
+    setModelSelectorOverride(() => setLocalOpen(true));
+    return () => setModelSelectorOverride(null);
+  }, [useLocalState, setModelSelectorOverride]);
+
   const [containerWidth, setContainerWidth] = React.useState<number | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const listRef = React.useRef<HTMLDivElement>(null);
+  const [canScrollUp, setCanScrollUp] = React.useState(false);
+  const [canScrollDown, setCanScrollDown] = React.useState(false);
 
   React.useEffect(() => {
     const form = containerRef.current?.closest("form");
     if (!form) return;
 
     const updateWidth = () => {
-      const newWidth = form.clientWidth;
+      const newWidth = form.clientWidth + 1; // border compensation
       setContainerWidth(prev => (prev === newWidth ? prev : newWidth));
     };
 
@@ -93,11 +118,23 @@ export function ModelSelector({
     return () => resizeObserver.disconnect();
   }, []);
 
+  const updateScrollIndicators = React.useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    setCanScrollUp(el.scrollTop > 8);
+    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 8);
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    requestAnimationFrame(updateScrollIndicators);
+  }, [open, updateScrollIndicators]);
+
   const selectedModel = models.find(m => m.id === selectedModelId);
   const displayName = selectedModel?.name || (isLoading ? "Loading..." : "Select Model");
 
   return (
-    <Popover open={modelSelectorOpen} onOpenChange={setModelSelectorOpen}>
+    <Popover open={open} onOpenChange={setOpen}>
       <div className="relative" ref={containerRef}>
         <NoModelsToolip models={models} isLoading={isLoading}>
           <PopoverTrigger asChild>
@@ -121,7 +158,7 @@ export function ModelSelector({
               </div>
               <ChevronDownIcon
                 size={14}
-                className={cn(`transition-transform shrink-0`, modelSelectorOpen && !isLoading
+                className={cn(`transition-transform shrink-0`, open && !isLoading
                   ? `rotate-180`
                   : "")}
               />
@@ -136,76 +173,91 @@ export function ModelSelector({
         alignOffset={-9}
         sideOffset={sideOffset}
         style={containerWidth ? { width: `${containerWidth}px` } : undefined}
-        className={cn("rounded-none p-2 shadow-none", popoverWidth === "w-full" ? "" : popoverWidth)}
+        className={cn("rounded-none p-0 shadow-none", popoverWidth === "w-full" ? "" : popoverWidth)}
       >
-        <div className="space-y-1">
-          {isLoading || !models || models.length === 0
-            ? (
-              <div className="text-muted-foreground py-4 text-center text-sm">
-                {isLoading ? "Loading models..." : "No models available"}
+        {isLoading || !models || models.length === 0
+          ? (
+            <div className="text-muted-foreground py-4 text-center text-sm">
+              {isLoading ? "Loading models..." : "No models available"}
+            </div>
+          )
+          : (
+            <Command onValueChange={() => requestAnimationFrame(updateScrollIndicators)}>
+              <CommandInput placeholder="Search models..." className="h-12" onValueChange={() => requestAnimationFrame(updateScrollIndicators)} />
+              <div className="relative">
+                {canScrollUp && (
+                  <div className="from-popover pointer-events-none absolute top-0 right-0 left-0 z-10 h-12 bg-linear-to-b to-transparent" />
+                )}
+                <CommandList
+                  ref={listRef}
+                  onScroll={updateScrollIndicators}
+                  className="p-1 "
+                >
+                  <CommandEmpty>No models found.</CommandEmpty>
+                  <CommandGroup>
+                    {models.map((model) => {
+                      const capabilities = getModelCapabilities(model);
+                      return (
+                        <CommandItem
+                          key={model.id}
+                          value={`${model.name} ${model.id}`}
+                          onSelect={() => {
+                            onSelectModelAction(model.id);
+                            setOpen(false);
+                          }}
+                          className={cn(
+                            "h-12 justify-between px-2 py-2",
+                            selectedModelId === model.id
+                              ? "bg-primary/10 text-primary"
+                              : "",
+                          )}
+                        >
+                          <div className="flex-1">
+                            <div className="text-sm font-medium">
+                              {model.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {model.id}
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            {capabilities.supportsImages && (
+                              <span title="Image upload">
+                                <ImageIcon size={14} className="shrink-0" />
+                              </span>
+                            )}
+                            {capabilities.supportsNativePdf && (
+                              <span title="PDF upload (native)">
+                                <FileTextIcon size={14} className="shrink-0" />
+                              </span>
+                            )}
+                            {capabilities.supportsPdf && !capabilities.supportsNativePdf && (
+                              <span title="PDF upload (via OpenRouter)">
+                                <FileTypeCornerIcon size={14} className="shrink-0" />
+                              </span>
+                            )}
+                            {capabilities.supportsReasoning && (
+                              <span title="Reasoning">
+                                <BrainIcon size={14} className="shrink-0" />
+                              </span>
+                            )}
+                            {capabilities.supportsSearch && (
+                              <span title="Search & tools">
+                                <SearchIcon size={14} className="shrink-0" />
+                              </span>
+                            )}
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+                {canScrollDown && (
+                  <div className="from-popover pointer-events-none absolute right-0 bottom-0 left-0 z-10 h-16 bg-linear-to-t to-transparent" />
+                )}
               </div>
-            )
-            : (
-              models.map((model) => {
-                const capabilities = getModelCapabilities(model);
-                return (
-                  <Button
-                    key={model.id}
-                    variant="ghost"
-                    onClick={() => {
-                      onSelectModelAction(model.id);
-                      setModelSelectorOpen(false);
-                    }}
-                    className={cn(`
-                        h-12 w-full justify-between rounded px-2 py-2 text-left
-                        transition-colors
-                      `, selectedModelId === model.id
-                      ? "bg-primary/10 text-primary"
-                      : `
-                          hover:bg-muted hover:text-foreground
-                          text-muted-foreground
-                        `)}
-                  >
-                    <div className="flex-1">
-                      <div className="text-sm font-medium">
-                        {model.name}
-                      </div>
-                      <div className="text-xs opacity-75">
-                        {model.id}
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      {capabilities.supportsImages && (
-                        <span title="Image upload">
-                          <ImageIcon size={14} className="shrink-0" />
-                        </span>
-                      )}
-                      {capabilities.supportsNativePdf && (
-                        <span title="PDF upload (native)">
-                          <FileTextIcon size={14} className="shrink-0" />
-                        </span>
-                      )}
-                      {capabilities.supportsPdf && !capabilities.supportsNativePdf && (
-                        <span title="PDF upload (via OpenRouter)">
-                          <FileTypeCornerIcon size={14} className="shrink-0" />
-                        </span>
-                      )}
-                      {capabilities.supportsReasoning && (
-                        <span title="Reasoning">
-                          <BrainIcon size={14} className="shrink-0" />
-                        </span>
-                      )}
-                      {capabilities.supportsSearch && (
-                        <span title="Search & tools">
-                          <SearchIcon size={14} className="shrink-0" />
-                        </span>
-                      )}
-                    </div>
-                  </Button>
-                );
-              })
-            )}
-        </div>
+            </Command>
+          )}
       </PopoverContent>
     </Popover>
   );

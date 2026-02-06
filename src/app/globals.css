@@ -175,6 +175,11 @@ html.accent-gray.dark {
   --sidebar-ring: oklch(0.65 0.02 260);
 }
 
+/* cmdk spacing */
+div[data-slot="command-group"] > div {
+  @apply space-y-1;
+}
+
 .markdown h1 {
   @apply mt-6 mb-4 text-2xl font-semibold first:mt-0;
 }
