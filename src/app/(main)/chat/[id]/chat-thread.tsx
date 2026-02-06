@@ -11,7 +11,7 @@ import type { ChatUIMessage } from "~/features/chat/types";
 import { ChatMessages } from "~/features/chat/components/chat-messages";
 import { ChatView } from "~/features/chat/components/chat-view";
 import { useChatActions } from "~/features/chat/hooks/use-chat-actions";
-import { THREADS_KEY } from "~/features/chat/hooks/use-threads";
+import { THREADS_KEY, useThreadTitle } from "~/features/chat/hooks/use-threads";
 import { parseAIError } from "~/features/chat/lib/parse-ai-error";
 import { useChatUIStore } from "~/features/chat/store";
 import { getModelCapabilities, useFavoriteModels } from "~/features/models";
@@ -120,6 +120,13 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
       }
     };
   }, [id, setStreamingThreadId, status]);
+
+  const threadTitle = useThreadTitle(id);
+  useEffect(() => {
+    if (threadTitle) {
+      document.title = `${threadTitle} - BobrChat`;
+    }
+  }, [threadTitle]);
 
   // Wrapper around sendMessage that patches toggle values onto the user message
   // so the edit UI can read them before page refresh (DB has these values after reload)
