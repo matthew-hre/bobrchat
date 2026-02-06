@@ -57,6 +57,10 @@ const tabs: TabConfig[] = [
 
 const keyboardShortcuts = [
   { label: "Toggle Sidebar", keys: ["Ctrl", "B"] },
+  { label: "Focus Search", keys: ["/"] },
+  { label: "Model Selector", keys: ["Ctrl", "M"] },
+  { label: "Open Settings", keys: ["Ctrl", ","] },
+  { label: "Unfocus Input", keys: ["Esc"] },
 ];
 
 type SettingsPageProps = {
@@ -81,17 +85,30 @@ export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
     setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
   }, []);
 
+  const scrollTabToCenter = useCallback((tabId: TabId) => {
+    const el = tabsRef.current;
+    if (!el)
+      return;
+    const button = el.querySelector(`[data-tab-id="${tabId}"]`) as HTMLElement | null;
+    if (button) {
+      button.scrollIntoView({ inline: "center", behavior: "smooth", block: "nearest" });
+    }
+  }, []);
+
   useEffect(() => {
     updateScrollState();
+    scrollTabToCenter(activeTab);
     window.addEventListener("resize", updateScrollState);
     return () => window.removeEventListener("resize", updateScrollState);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateScrollState]);
 
   const handleTabChange = useCallback((tab: TabId) => {
     setActiveTab(tab);
     setMobileMenuOpen(false);
     window.history.replaceState(null, "", `/settings?tab=${tab}`);
-  }, []);
+    scrollTabToCenter(tab);
+  }, [scrollTabToCenter]);
 
   const handleSignOut = useCallback(async () => {
     await signOut();
@@ -156,6 +173,7 @@ export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
                     <button
                       key={tab.id}
                       type="button"
+                      data-tab-id={tab.id}
                       onClick={() => handleTabChange(tab.id)}
                       className={cn(
                         `
@@ -365,7 +383,7 @@ function ProfileSidebar({ onSignOut }: { onSignOut: () => void }) {
 
       {/* Keyboard Shortcuts */}
       <div className="px-4 py-4">
-        <div className="bg-muted/50 rounded-lg p-4">
+        <div className="bg-card rounded-lg p-4">
           <h3 className={`
             text-muted-foreground mb-3 text-xs font-semibold tracking-wider
             uppercase

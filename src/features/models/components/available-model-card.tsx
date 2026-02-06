@@ -45,7 +45,7 @@ export const AvailableModelCard = memo(({
           ? "border-primary bg-primary/5"
           : `
             border-border
-            hover:bg-muted/50
+            hover:bg-card
           `,
         disabled && !isSelected && "cursor-not-allowed opacity-50",
       )}

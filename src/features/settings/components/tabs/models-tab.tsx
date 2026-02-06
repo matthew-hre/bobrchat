@@ -226,7 +226,7 @@ export function ModelsTab() {
     <div className="flex h-full flex-col overflow-hidden">
       {/* Tab Switcher */}
       <div className="w-full px-6 pt-6">
-        <div className="bg-muted inline-flex w-full gap-1 rounded-lg p-1">
+        <div className="bg-muted/50 inline-flex w-full gap-1 rounded-lg p-1">
           <button
             onClick={() => setMobileTab("available")}
             className={cn(

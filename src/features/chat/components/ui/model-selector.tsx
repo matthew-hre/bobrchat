@@ -13,6 +13,7 @@ import {
 import * as React from "react";
 
 import { getModelCapabilities } from "~/features/models";
+import { useChatUIStore } from "~/features/chat/store";
 import { cn } from "~/lib/utils";
 
 import { Button } from "~/components/ui/button";
@@ -71,7 +72,8 @@ export function ModelSelector({
   sideOffset = 81,
   isLoading = false,
 }: ModelSelectorProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const modelSelectorOpen = useChatUIStore(s => s.modelSelectorOpen);
+  const setModelSelectorOpen = useChatUIStore(s => s.setModelSelectorOpen);
   const [containerWidth, setContainerWidth] = React.useState<number | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -95,7 +97,7 @@ export function ModelSelector({
   const displayName = selectedModel?.name || (isLoading ? "Loading..." : "Select Model");
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={modelSelectorOpen} onOpenChange={setModelSelectorOpen}>
       <div className="relative" ref={containerRef}>
         <NoModelsToolip models={models} isLoading={isLoading}>
           <PopoverTrigger asChild>
@@ -119,7 +121,7 @@ export function ModelSelector({
               </div>
               <ChevronDownIcon
                 size={14}
-                className={cn(`transition-transform shrink-0`, isOpen && !isLoading
+                className={cn(`transition-transform shrink-0`, modelSelectorOpen && !isLoading
                   ? `rotate-180`
                   : "")}
               />
@@ -152,7 +154,7 @@ export function ModelSelector({
                     variant="ghost"
                     onClick={() => {
                       onSelectModelAction(model.id);
-                      setIsOpen(false);
+                      setModelSelectorOpen(false);
                     }}
                     className={cn(`
                         h-12 w-full justify-between rounded px-2 py-2 text-left

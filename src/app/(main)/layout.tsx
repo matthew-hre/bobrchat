@@ -1,6 +1,7 @@
 import { HydrationBoundary } from "@tanstack/react-query";
 import { cookies, headers } from "next/headers";
 
+import { KeyboardShortcutsProvider } from "~/components/keyboard-shortcuts-provider";
 import { ChatSidebar } from "~/components/sidebar/chat-sidebar";
 import { FloatingSidebarToggle } from "~/components/sidebar/floating-sidebar-toggle";
 import { ThemeInitializer } from "~/components/theme/theme-initializer";
@@ -36,15 +37,17 @@ export default async function MainLayout({
     <HydrationBoundary state={dehydratedState}>
       <GlobalDropZoneProvider>
         <SidebarProvider defaultSidebarWidth={defaultSidebarWidth}>
-          {session && <ChatSidebar session={session} />}
-          {session && <FloatingSidebarToggle />}
-          <main className="w-full">
-            {children}
-          </main>
-          <ThemeInitializer
-            theme={settings?.theme}
-            accentColor={settings?.accentColor}
-          />
+          <KeyboardShortcutsProvider>
+            {session && <ChatSidebar session={session} />}
+            {session && <FloatingSidebarToggle />}
+            <main className="w-full">
+              {children}
+            </main>
+            <ThemeInitializer
+              theme={settings?.theme}
+              accentColor={settings?.accentColor}
+            />
+          </KeyboardShortcutsProvider>
         </SidebarProvider>
       </GlobalDropZoneProvider>
     </HydrationBoundary>

@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import type { Session } from "~/features/auth/lib/auth";
 
+import { useKeyboardShortcutsContext } from "~/components/keyboard-shortcuts-provider";
 import {
   Sidebar,
   SidebarContent,
@@ -81,6 +82,7 @@ type ChatSidebarProps = {
 
 export function ChatSidebar({ session }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const { searchInputRef } = useKeyboardShortcutsContext();
 
   return (
     <Sidebar collapsible="offcanvas">
@@ -122,6 +124,7 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
           `}
           />
           <Input
+            ref={searchInputRef}
             type="text"
             placeholder="Search threads..."
             value={searchQuery}

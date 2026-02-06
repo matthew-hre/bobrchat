@@ -34,8 +34,18 @@ const landingPageOptions = [
 
 const sendMessageKeyboardShortcutOptions = [
   { value: "enter" as const, label: <Kbd>Enter</Kbd> },
-  { value: "ctrlEnter" as const, label: <Kbd>Ctrl + Enter</Kbd> },
-  { value: "shiftEnter" as const, label: <Kbd>Shift + Enter</Kbd> },
+  { value: "ctrlEnter" as const, label: (
+    <span className="flex flex-row gap-1">
+      <Kbd>Ctrl</Kbd>
+      <Kbd>Enter</Kbd>
+    </span>
+  ) },
+  { value: "shiftEnter" as const, label: (
+    <span className="flex flex-row gap-1">
+      <Kbd>Shift</Kbd>
+      <Kbd>Enter</Kbd>
+    </span>
+  ) },
 ];
 
 const accentColorOptions: { value: AccentColorPreset; color: string; label: string }[] = [

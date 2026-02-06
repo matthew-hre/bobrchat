@@ -20,6 +20,10 @@ type ChatUIStore = {
   reasoningLevel: string;
   setReasoningLevel: (level: string) => void;
 
+  // Model selector popover
+  modelSelectorOpen: boolean;
+  setModelSelectorOpen: (open: boolean) => void;
+
   // Browser API keys (loaded from localStorage once, not persisted by zustand)
   openrouterKey: string | null;
   parallelKey: string | null;
@@ -62,6 +66,10 @@ export const useChatUIStore = create<ChatUIStore>()(
 
       reasoningLevel: "none",
       setReasoningLevel: level => set({ reasoningLevel: level }),
+
+      // Model selector popover
+      modelSelectorOpen: false,
+      setModelSelectorOpen: open => set({ modelSelectorOpen: open }),
 
       // Browser API keys (not persisted by zustand, loaded manually from localStorage)
       openrouterKey: null,
