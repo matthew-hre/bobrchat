@@ -129,6 +129,22 @@ export function useCreateThread() {
   });
 }
 
+export function useThreadTitle(threadId: string): string | undefined {
+  const { data } = useInfiniteQuery({
+    queryKey: THREADS_KEY,
+    queryFn: fetchThreads,
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: lastPage => lastPage.nextCursor ?? undefined,
+    staleTime: 30 * 1000,
+    select: (data) => {
+      const thread = data.pages.flatMap(p => p.threads).find(t => t.id === threadId);
+      return thread?.title;
+    },
+  });
+
+  return data;
+}
+
 export function useDeleteThread() {
   const queryClient = useQueryClient();
 

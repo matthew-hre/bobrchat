@@ -28,8 +28,8 @@ export async function generateThreadTitle(message: string, apiKey: string): Prom
       messages: [{ role: "user", content: message }],
     });
 
-    // Clean up the generated text
-    const title = text.trim().replace(/^["']|["']$/g, "");
+    // Clean up the generated text. Use only the first line, trimmed of whitespace and quotes.
+    const title = text.trim().replace(/^["']|["']$/g, "").split("\n")[0];
 
     return title || "New Chat";
   }
