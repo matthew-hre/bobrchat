@@ -20,7 +20,7 @@ export type EncryptedMessage = {
  * Derive encryption key for per-user message encryption.
  * Uses scrypt with ENCRYPTION_SECRET:userId as password and user's salt.
  */
-function deriveUserKey(userId: string, salt: string): Buffer {
+export function deriveUserKey(userId: string, salt: string): Buffer {
   return scryptSync(`${serverEnv.ENCRYPTION_SECRET}:${userId}`, salt, KEY_LENGTH);
 }
 
@@ -57,6 +57,14 @@ export function encryptMessage(content: ChatUIMessage, userId: string, salt: str
  * @throws If decryption fails or JSON is malformed
  */
 export function decryptMessage(encrypted: EncryptedMessage, userId: string, salt: string): ChatUIMessage {
+  const key = deriveUserKey(userId, salt);
+  return decryptMessageWithKey(encrypted, key);
+}
+
+/**
+ * Decrypt a chat message using a pre-derived key (e.g., cached per request).
+ */
+export function decryptMessageWithKey(encrypted: EncryptedMessage, key: Buffer): ChatUIMessage {
   const iv = Buffer.from(encrypted.iv, "hex");
   const data = Buffer.from(encrypted.ciphertext, "hex");
   const tag = Buffer.from(encrypted.authTag, "hex");
@@ -65,7 +73,6 @@ export function decryptMessage(encrypted: EncryptedMessage, userId: string, salt
     throw new Error("Invalid encryption parameters");
   }
 
-  const key = deriveUserKey(userId, salt);
   const decipher = createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(tag);
 

@@ -84,6 +84,18 @@ export async function getSaltForVersion(userId: string, version: number): Promis
   return result[0].salt;
 }
 
+/**
+ * Get all salts for a user, keyed by version.
+ */
+export async function getSaltsForUser(userId: string): Promise<Map<number, string>> {
+  const result = await db
+    .select({ version: keySalts.version, salt: keySalts.salt })
+    .from(keySalts)
+    .where(eq(keySalts.userId, userId));
+
+  return new Map(result.map(row => [row.version, row.salt]));
+}
+
 const ROTATION_BATCH_SIZE = 100;
 
 /**
