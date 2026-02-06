@@ -90,6 +90,7 @@ export function InlineMessageEditor({
     capabilities,
     onValueChange: setContent,
     textareaRef,
+    autoCreateFilesFromPaste: settings?.autoCreateFilesFromPaste ?? true,
   });
 
   React.useEffect(() => {
