@@ -31,7 +31,7 @@ export const ModelCard = memo(({ model, isSelected, toggleModel }: { model: Mode
           ? `border-primary bg-primary/5`
           : `
             border-border
-            hover:bg-muted/50
+            hover:bg-card
           `,
       )}
     >

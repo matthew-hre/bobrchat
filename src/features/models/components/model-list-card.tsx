@@ -42,7 +42,7 @@ export const ModelListCard = memo(({
           ? `border-primary bg-primary/5`
           : `
             border-border
-            hover:bg-muted/50
+            hover:bg-card
           `,
       )}
     >
