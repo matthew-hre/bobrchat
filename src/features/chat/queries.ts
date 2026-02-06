@@ -1,3 +1,5 @@
+import type Buffer from "node:buffer";
+
 import { and, desc, eq, inArray, isNotNull, lt } from "drizzle-orm";
 import { cache } from "react";
 
@@ -8,8 +10,8 @@ import { db } from "~/lib/db";
 import { attachments, messageMetadata, messages, threads } from "~/lib/db/schema/chat";
 import { threadShares } from "~/lib/db/schema/sharing";
 import { serverEnv } from "~/lib/env";
-import { decryptMessage, encryptMessage } from "~/lib/security/encryption";
-import { getKeyMeta, getOrCreateKeyMeta, getSaltForVersion } from "~/lib/security/keys";
+import { decryptMessageWithKey, deriveUserKey, encryptMessage } from "~/lib/security/encryption";
+import { getKeyMeta, getOrCreateKeyMeta, getSaltsForUser } from "~/lib/security/keys";
 
 function cleanReasoningPart(part: unknown): unknown | null {
   if (!part || typeof part !== "object")
@@ -124,7 +126,10 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
   if (thread.length === 0)
     return [];
   const userId = thread[0].userId;
-  const keyMeta = await getKeyMeta(userId);
+  const [keyMeta, saltsByVersion] = await Promise.all([
+    getKeyMeta(userId),
+    getSaltsForUser(userId),
+  ]);
 
   const rows = await db
     .select({
@@ -150,19 +155,22 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
     .where(eq(messages.threadId, threadId))
     .orderBy(messages.createdAt);
 
+  const derivedKeys = new Map<number, Buffer>();
+
   return Promise.all(rows.map(async (row) => {
     let message: ChatUIMessage;
 
     if (row.iv && row.ciphertext && row.authTag && keyMeta) {
-      // Get the salt for this message's specific key version
-      const salt = await getSaltForVersion(userId, row.keyVersion ?? keyMeta.version);
+      const version = row.keyVersion ?? keyMeta.version;
+      const salt = saltsByVersion.get(version);
       if (!salt) {
-        throw new Error(`Missing salt for key version ${row.keyVersion}`);
+        throw new Error(`Missing salt for key version ${version}`);
       }
-      message = decryptMessage(
+      const cachedKey = derivedKeys.get(version) ?? deriveUserKey(userId, salt);
+      derivedKeys.set(version, cachedKey);
+      message = decryptMessageWithKey(
         { iv: row.iv, ciphertext: row.ciphertext, authTag: row.authTag },
-        userId,
-        salt,
+        cachedKey,
       );
     }
     else {
