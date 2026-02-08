@@ -85,7 +85,6 @@ export function ChatInputCapabilities({
         {capabilities.supportsReasoning && (
           <ReasoningButton
             reasoningLevel={reasoningLevel}
-            hasParallelApiKey={hasParallelApiKey}
             isParallelApiLoading={isParallelApiLoading}
             onLevelChange={onReasoningLevelChange}
           />
@@ -206,12 +205,10 @@ export function ChatInputCapabilities({
 
 function ReasoningButton({
   reasoningLevel,
-  hasParallelApiKey,
   isParallelApiLoading,
   onLevelChange,
 }: {
   reasoningLevel: string;
-  hasParallelApiKey: boolean | null;
   isParallelApiLoading: boolean;
   onLevelChange: (level: string) => void;
 }) {
@@ -224,7 +221,6 @@ function ReasoningButton({
               type="button"
               variant="ghost"
               size="sm"
-              disabled={hasParallelApiKey === false}
               className={cn(
                 `
                   hover:text-foreground
@@ -262,9 +258,7 @@ function ReasoningButton({
       </TooltipTrigger>
       <TooltipContent>
         <p>
-          {hasParallelApiKey === false && !isParallelApiLoading
-            ? "Configure your Parallel API key in settings to use reasoning"
-            : `Reasoning level: ${reasoningLevel}`}
+          {`Reasoning level: ${reasoningLevel}`}
         </p>
       </TooltipContent>
     </Tooltip>
