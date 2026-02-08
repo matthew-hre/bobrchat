@@ -247,6 +247,7 @@ function ThreadItemComponent({
           <div className="group/thread relative">
             <Link
               href={`/chat/${id}`}
+              prefetch={false}
               className={cn(
                 `
                   flex items-center gap-2 rounded-md px-2 py-1.5 text-sm
