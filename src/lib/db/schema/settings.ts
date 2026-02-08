@@ -24,6 +24,7 @@ export const userSettings = pgTable(
       autoThreadIcon: false,
       showSidebarIcons: false,
       useOcrForPdfs: false,
+      autoCreateFilesFromPaste: true,
       inputHeightScale: 0,
     } as UserSettingsData),
     encryptedApiKeys: jsonb("encrypted_api_keys").notNull().default({} as EncryptedApiKeysData),
