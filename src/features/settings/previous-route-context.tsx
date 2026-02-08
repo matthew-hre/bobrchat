@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, use, useEffect, useState } from "react";
 
 type PreviousRouteContextType = {
   previousRoute: string;
@@ -22,14 +22,14 @@ export function PreviousRouteProvider({ children }: { children: React.ReactNode 
   }, [pathname]);
 
   return (
-    <PreviousRouteContext.Provider value={{ previousRoute, setPreviousRoute }}>
+    <PreviousRouteContext value={{ previousRoute, setPreviousRoute }}>
       {children}
-    </PreviousRouteContext.Provider>
+    </PreviousRouteContext>
   );
 }
 
 export function usePreviousRoute() {
-  const context = useContext(PreviousRouteContext);
+  const context = use(PreviousRouteContext);
   if (!context) {
     throw new Error("usePreviousRoute must be used within PreviousRouteProvider");
   }

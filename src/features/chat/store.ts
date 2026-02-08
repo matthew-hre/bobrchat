@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import type { PendingFile } from "~/features/chat/components/messages/file-preview";
+
 import { getClientKey, removeClientKey, setClientKey } from "~/lib/api-keys/client";
 
 type ChatUIStore = {
@@ -144,7 +145,8 @@ export const useChatUIStore = create<ChatUIStore>()(
         })),
       clearPendingFiles: () => {
         for (const f of get().pendingFiles) {
-          if (f.url?.startsWith("blob:")) URL.revokeObjectURL(f.url);
+          if (f.url?.startsWith("blob:"))
+            URL.revokeObjectURL(f.url);
         }
         set({ pendingFiles: [] });
       },
