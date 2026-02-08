@@ -205,11 +205,9 @@ export function ChatInputCapabilities({
 
 function ReasoningButton({
   reasoningLevel,
-  isParallelApiLoading,
   onLevelChange,
 }: {
   reasoningLevel: string;
-  isParallelApiLoading: boolean;
   onLevelChange: (level: string) => void;
 }) {
   return (
