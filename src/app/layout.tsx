@@ -8,6 +8,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "~/components/theme/theme-provider";
 import { Toaster } from "~/components/ui/sonner";
+import { PreviousRouteProvider } from "~/features/settings/previous-route-context";
 import { QueryProvider } from "~/lib/queries/query-provider";
 
 const rethinkSans = Rethink_Sans({ subsets: ["latin"], variable: "--font-sans" });
@@ -84,10 +85,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <QueryProvider>
-            <Toaster position="top-right" />
-            {children}
-          </QueryProvider>
+          <PreviousRouteProvider>
+            <QueryProvider>
+              <Toaster position="top-right" />
+              {children}
+            </QueryProvider>
+          </PreviousRouteProvider>
         </ThemeProvider>
       </body>
     </html>

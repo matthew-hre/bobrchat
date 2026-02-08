@@ -28,6 +28,7 @@ import {
 } from "~/components/ui/sheet";
 import { Skeleton } from "~/components/ui/skeleton";
 import { signOut, useSession } from "~/features/auth/lib/auth-client";
+import { usePreviousRoute } from "~/features/settings/previous-route-context";
 import { cn } from "~/lib/utils";
 
 import { AttachmentsTab } from "./tabs/attachments-tab";
@@ -70,6 +71,7 @@ type SettingsPageProps = {
 export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { previousRoute } = usePreviousRoute();
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -297,7 +299,7 @@ export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
                 title="Back to chat"
                 asChild
               >
-                <Link href="/">
+                <Link href={previousRoute}>
                   <ArrowLeftIcon className="size-4" />
                 </Link>
               </Button>
@@ -330,17 +332,7 @@ function ProfileSidebar({ onSignOut }: { onSignOut: () => void }) {
 
       {/* Back to Chat */}
       <div className="p-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-2"
-          asChild
-        >
-          <Link href="/">
-            <ArrowLeftIcon className="size-4" />
-            Back to Chat
-          </Link>
-        </Button>
+        <BackToChatButton />
       </div>
 
       {/* Profile Card */}
@@ -417,6 +409,24 @@ function ProfileSidebar({ onSignOut }: { onSignOut: () => void }) {
         </div>
       </div>
     </aside>
+  );
+}
+
+function BackToChatButton() {
+  const { previousRoute } = usePreviousRoute();
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="gap-2"
+      asChild
+    >
+      <Link href={previousRoute}>
+        <ArrowLeftIcon className="size-4" />
+        Back to Chat
+      </Link>
+    </Button>
   );
 }
 
