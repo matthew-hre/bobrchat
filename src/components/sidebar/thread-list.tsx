@@ -1,8 +1,9 @@
 "use client";
 
+import type { RefCallback } from "react";
+
 import { usePathname } from "next/navigation";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import type { RefCallback } from "react";
 
 import type { GroupedThreads } from "~/features/chat/utils/thread-grouper";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
