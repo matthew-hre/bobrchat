@@ -7,6 +7,7 @@ import type { getModelCapabilities } from "~/features/models";
 
 import { useGlobalDropZone } from "~/features/attachments/components/global-drop-zone";
 import { STORAGE_QUOTA_KEY } from "~/features/attachments/hooks/use-attachments";
+import { useChatUIStore } from "~/features/chat/store";
 import { detectLanguage, getLanguageExtension } from "~/features/chat/utils/detect-language";
 import { validateFilesForModel } from "~/features/models";
 
@@ -28,7 +29,9 @@ export function useFileAttachments({
 }: UseFileAttachmentsProps) {
   const queryClient = useQueryClient();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [pendingFiles, setPendingFiles] = React.useState<PendingFile[]>([]);
+  const pendingFiles = useChatUIStore(s => s.pendingFiles);
+  const setPendingFiles = useChatUIStore(s => s.setPendingFiles);
+  const storeClearPendingFiles = useChatUIStore(s => s.clearPendingFiles);
 
   const uploadFiles = React.useCallback(
     async (filesToUpload: FileList | File[]) => {
@@ -315,16 +318,7 @@ export function useFileAttachments({
     [uploadFiles, capabilities.supportsImages],
   );
 
-  const clearPendingFiles = React.useCallback(() => {
-    setPendingFiles((prev) => {
-      for (const file of prev) {
-        if (file.url.startsWith("blob:")) {
-          URL.revokeObjectURL(file.url);
-        }
-      }
-      return [];
-    });
-  }, []);
+  const clearPendingFiles = storeClearPendingFiles;
 
   return {
     pendingFiles,

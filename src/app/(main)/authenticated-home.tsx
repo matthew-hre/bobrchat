@@ -3,11 +3,11 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { use, useCallback } from "react";
 import { toast } from "sonner";
 
 import type { ChatUIMessage } from "~/features/chat/types";
-import type { LandingPageContentType } from "~/features/settings/types";
+import type { UserSettingsData } from "~/features/settings/types";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { BetaBanner } from "~/features/chat/components/beta-banner";
@@ -15,18 +15,17 @@ import { ChatInput } from "~/features/chat/components/chat-input";
 import { LandingPageContent } from "~/features/chat/components/landing/landing-page-content";
 import { useCreateThread } from "~/features/chat/hooks/use-threads";
 import { useChatUIStore } from "~/features/chat/store";
+import { UserSettingsContext } from "~/features/settings/settings-context";
 
-type AuthenticatedHomeProps = {
-  defaultThreadName: string;
-  defaultThreadIcon: ThreadIcon;
-  landingPageContent: LandingPageContentType;
+const FALLBACK_SETTINGS: Pick<UserSettingsData, "defaultThreadName" | "defaultThreadIcon" | "landingPageContent"> = {
+  defaultThreadName: "New Chat",
+  defaultThreadIcon: "message-circle" as ThreadIcon,
+  landingPageContent: "suggestions",
 };
 
-export function AuthenticatedHome({
-  defaultThreadName,
-  defaultThreadIcon,
-  landingPageContent,
-}: AuthenticatedHomeProps): React.ReactNode {
+export function AuthenticatedHome(): React.ReactNode {
+  const settings = use(UserSettingsContext);
+  const resolvedSettings = settings ?? FALLBACK_SETTINGS;
   const router = useRouter();
   const input = useChatUIStore(state => state.input);
   const setInput = useChatUIStore(state => state.setInput);
@@ -44,7 +43,7 @@ export function AuthenticatedHome({
     router.push(`/chat/${threadId}`);
 
     createThread.mutate(
-      { threadId, title: defaultThreadName, icon: defaultThreadIcon },
+      { threadId, title: resolvedSettings.defaultThreadName, icon: resolvedSettings.defaultThreadIcon },
       {
         onError: (error) => {
           const message = error instanceof Error ? error.message : "Failed to create thread";
@@ -54,14 +53,14 @@ export function AuthenticatedHome({
     );
   };
 
-  const showLandingPage = !input.trim() && landingPageContent !== "blank";
+  const showLandingPage = !input.trim() && resolvedSettings.landingPageContent !== "blank";
 
   return (
     <div className="flex h-full max-h-screen flex-col">
       <BetaBanner />
       <div className="min-h-0 flex-1 overflow-auto">
         <LandingPageContent
-          type={landingPageContent}
+          type={resolvedSettings.landingPageContent}
           isVisible={showLandingPage}
           onSuggestionClickAction={handleSuggestionClick}
         />

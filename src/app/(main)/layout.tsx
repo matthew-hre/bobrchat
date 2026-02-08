@@ -9,6 +9,7 @@ import { SidebarProvider } from "~/components/ui/sidebar";
 import { GlobalDropZoneProvider } from "~/features/attachments/components/global-drop-zone";
 import { auth } from "~/features/auth/lib/auth";
 import { getUserSettings } from "~/features/settings/queries";
+import { UserSettingsProvider } from "~/features/settings/settings-provider";
 import { prefetchThreads } from "~/lib/queries/prefetch-threads";
 
 export default async function MainLayout({
@@ -40,9 +41,11 @@ export default async function MainLayout({
           <KeyboardShortcutsProvider>
             {session && <ChatSidebar session={session} />}
             {session && <FloatingSidebarToggle />}
-            <main className="w-full">
-              {children}
-            </main>
+            <UserSettingsProvider settings={settings}>
+              <main className="w-full">
+                {children}
+              </main>
+            </UserSettingsProvider>
             <ThemeInitializer
               theme={settings?.theme}
               accentColor={settings?.accentColor}

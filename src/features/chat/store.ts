@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import type { PendingFile } from "~/features/chat/components/messages/file-preview";
+
 import { getClientKey, removeClientKey, setClientKey } from "~/lib/api-keys/client";
 
 type ChatUIStore = {
@@ -50,11 +52,16 @@ type ChatUIStore = {
   // Raw markdown toggle (not persisted)
   rawMessageIds: Set<string>;
   toggleRawMessage: (messageId: string) => void;
+
+  // Pending file attachments (not persisted — blob URLs are ephemeral)
+  pendingFiles: PendingFile[];
+  setPendingFiles: (next: PendingFile[] | ((prev: PendingFile[]) => PendingFile[])) => void;
+  clearPendingFiles: () => void;
 };
 
 export const useChatUIStore = create<ChatUIStore>()(
   persist(
-    (set, _get) => ({
+    (set, get) => ({
       // Chat input
       input: "",
       setInput: value => set({ input: value }),
@@ -130,6 +137,19 @@ export const useChatUIStore = create<ChatUIStore>()(
         }
         return { rawMessageIds: next };
       }),
+
+      pendingFiles: [],
+      setPendingFiles: next =>
+        set(state => ({
+          pendingFiles: typeof next === "function" ? next(state.pendingFiles) : next,
+        })),
+      clearPendingFiles: () => {
+        for (const f of get().pendingFiles) {
+          if (f.url?.startsWith("blob:"))
+            URL.revokeObjectURL(f.url);
+        }
+        set({ pendingFiles: [] });
+      },
     }),
     {
       name: "bobrchat-ui",
