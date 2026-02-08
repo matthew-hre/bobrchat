@@ -1,5 +1,7 @@
 "use client";
 
+import type { RefCallback } from "react";
+
 import { usePathname } from "next/navigation";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
@@ -54,32 +56,37 @@ export const ThreadList = memo(({
     setThreadToShare({ id: threadId, title: threadTitle });
   }, []);
 
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [loadMoreEl, setLoadMoreEl] = useState<HTMLDivElement | null>(null);
+  const loadMoreRef: RefCallback<HTMLDivElement> = useCallback((node) => {
+    setLoadMoreEl(node);
+  }, []);
+
+  const isFetchingNextPageRef = useRef(!!isFetchingNextPage);
+  useEffect(() => {
+    isFetchingNextPageRef.current = !!isFetchingNextPage;
+  }, [isFetchingNextPage]);
 
   useEffect(() => {
     if (!hasNextPage || !fetchNextPage)
       return;
+    if (!loadMoreEl)
+      return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNextPage) {
+        if (entries[0].isIntersecting && !isFetchingNextPageRef.current) {
           fetchNextPage();
         }
       },
       { threshold: 0.1 },
     );
 
-    const el = loadMoreRef.current;
-    if (el) {
-      observer.observe(el);
-    }
+    observer.observe(loadMoreEl);
 
     return () => {
-      if (el) {
-        observer.unobserve(el);
-      }
+      observer.disconnect();
     };
-  }, [hasNextPage, fetchNextPage, isFetchingNextPage]);
+  }, [hasNextPage, fetchNextPage, loadMoreEl]);
 
   const renderGroup = (
     title: string,
