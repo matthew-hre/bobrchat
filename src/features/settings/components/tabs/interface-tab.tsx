@@ -76,17 +76,26 @@ export function InterfaceTab() {
   const [localHue, setLocalHue] = useState<number | null>(null);
 
   const save = async (patch: PreferencesUpdate) => {
-    try {
-      await updatePreferences.mutateAsync(patch);
+    const previousTheme = settings?.theme;
+    const previousAccentColor = settings?.accentColor;
 
+    try {
       if (patch.theme) {
         applyTheme(patch.theme);
       }
       if (patch.accentColor) {
         applyAccentColor(patch.accentColor);
       }
+
+      await updatePreferences.mutateAsync(patch);
     }
     catch (error) {
+      if (patch.theme && previousTheme) {
+        applyTheme(previousTheme);
+      }
+      if (patch.accentColor && previousAccentColor) {
+        applyAccentColor(previousAccentColor);
+      }
       console.error("Failed to save preferences:", error);
       const message = error instanceof Error ? error.message : "Failed to save preferences";
       toast.error(message);

@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { cache } from "react";
 
 import type { ApiKeyProvider, EncryptedApiKeysData, UserSettingsData } from "~/features/settings/types";
 
@@ -30,7 +29,7 @@ export type ResolvedUserData = {
   };
 };
 
-const getUserSettingsRow = cache(async (userId: string) => {
+async function getUserSettingsRow(userId: string) {
   const result = await db
     .select({
       settings: userSettings.settings,
@@ -48,7 +47,7 @@ const getUserSettingsRow = cache(async (userId: string) => {
     settings: { ...DEFAULT_SETTINGS, ...(result[0].settings as Partial<UserSettingsData>) },
     encryptedApiKeys: (result[0].encryptedApiKeys ?? {}) as EncryptedApiKeysData,
   };
-});
+}
 
 /**
  * Fetch user settings and resolve API keys in a single DB query.
@@ -102,10 +101,10 @@ export async function getUserSettingsAndKeys(
  * @param userId ID of the user
  * @return {Promise<UserSettingsData>} User settings or default settings if not found
  */
-export const getUserSettings = cache(async (userId: string): Promise<UserSettingsData> => {
+export async function getUserSettings(userId: string): Promise<UserSettingsData> {
   const { settings } = await getUserSettingsRow(userId);
   return settings;
-});
+}
 
 /**
  * Get user settings with metadata (does not include actual API keys)
