@@ -61,10 +61,10 @@ export default async function ChatServer({ params }: ChatServerProps) {
               id: thread.id,
               title: thread.title,
               icon: thread.icon,
-              lastMessageAt: thread.lastMessageAt,
+              lastMessageAt: thread.lastMessageAt?.toISOString() ?? null,
               userId: thread.userId,
-              createdAt: thread.createdAt,
-              updatedAt: thread.updatedAt,
+              createdAt: thread.createdAt.toISOString(),
+              updatedAt: thread.updatedAt.toISOString(),
               isShared: false,
             }
           : null
