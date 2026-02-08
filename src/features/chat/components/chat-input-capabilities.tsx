@@ -85,7 +85,6 @@ export function ChatInputCapabilities({
         {capabilities.supportsReasoning && (
           <ReasoningButton
             reasoningLevel={reasoningLevel}
-            isParallelApiLoading={isParallelApiLoading}
             onLevelChange={onReasoningLevelChange}
           />
         )}
