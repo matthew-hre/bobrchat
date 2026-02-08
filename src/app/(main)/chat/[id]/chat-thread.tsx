@@ -6,6 +6,7 @@ import { DefaultChatTransport } from "ai";
 import { use, useCallback, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
+import type { ThreadFromApi } from "~/features/chat/hooks/use-threads";
 import type { ChatUIMessage } from "~/features/chat/types";
 
 import { ChatMessages } from "~/features/chat/components/chat-messages";
@@ -21,9 +22,10 @@ type ChatThreadProps = {
   initialMessages: ChatUIMessage[];
   initialPendingMessage?: any | null;
   parentThread?: { id: string; title: string } | null;
+  initialThread?: ThreadFromApi | null;
 };
 
-function ChatThread({ params, initialMessages, initialPendingMessage, parentThread }: ChatThreadProps): React.ReactNode {
+function ChatThread({ params, initialMessages, initialPendingMessage, parentThread, initialThread }: ChatThreadProps): React.ReactNode {
   const { id } = use(params);
   const queryClient = useQueryClient();
   const {
@@ -121,7 +123,7 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
     };
   }, [id, setStreamingThreadId, status]);
 
-  const threadTitle = useThreadTitle(id);
+  const threadTitle = useThreadTitle(id, { initialThread });
   useEffect(() => {
     if (threadTitle) {
       document.title = `${threadTitle} - BobrChat`;

@@ -10,7 +10,7 @@ export async function prefetchThreads(userId: string) {
     queryKey: THREADS_KEY,
     queryFn: async ({ pageParam }) => {
       const result = await getThreadsByUserId(userId, {
-        limit: 50,
+        limit: 25,
         cursor: pageParam,
       });
       return result;

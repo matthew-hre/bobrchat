@@ -14,7 +14,7 @@ import { THREADS_KEY } from "~/lib/queries/query-keys";
 
 export { THREADS_KEY };
 
-type ThreadFromApi = {
+export type ThreadFromApi = {
   id: string;
   title: string;
   icon: ThreadIcon | null;
@@ -129,13 +129,23 @@ export function useCreateThread() {
   });
 }
 
-export function useThreadTitle(threadId: string): string | undefined {
+export function useThreadTitle(threadId: string, options: { initialThread?: ThreadFromApi | null } = {}): string | undefined {
+  const { initialThread } = options;
+  const initialData = initialThread
+    ? {
+        pages: [{ threads: [initialThread], nextCursor: null }],
+        pageParams: [undefined],
+      }
+    : undefined;
+
   const { data } = useInfiniteQuery({
     queryKey: THREADS_KEY,
     queryFn: fetchThreads,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: lastPage => lastPage.nextCursor ?? undefined,
     staleTime: 30 * 1000,
+    initialData,
+    refetchOnMount: initialThread ? false : undefined,
     select: (data) => {
       const thread = data.pages.flatMap(p => p.threads).find(t => t.id === threadId);
       return thread?.title;
