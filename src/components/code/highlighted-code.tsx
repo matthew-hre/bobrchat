@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 
 import { normalizeLanguage } from "~/lib/syntax/languages";
-import { cn } from "~/lib/utils";
 import { Prism } from "~/lib/syntax/prism";
+import { cn } from "~/lib/utils";
 
 export function useHighlightedHtml(code: string | null | undefined, language?: string) {
   const lang = normalizeLanguage(language);
@@ -41,13 +41,18 @@ export function HighlightedCode({
         {highlightedHtml
           ? (
               <code
-                className={`language-${lang}`}
+                className={`
+                  language-${lang}
+                `}
                 // eslint-disable-next-line react-dom/no-dangerously-set-innerhtml
                 dangerouslySetInnerHTML={{ __html: highlightedHtml }}
               />
             )
           : (
-              <code className={`language-${lang}`}>
+              <code className={`
+                language-${lang}
+              `}
+              >
                 {code}
               </code>
             )}

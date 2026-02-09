@@ -70,7 +70,10 @@ export function CodeToolbar({
   return (
     <div className={cn("flex items-center gap-1", className)}>
       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onToggleWrap} title="Toggle wrap">
-        <WrapText className={cn("h-3.5 w-3.5", wrap ? "text-foreground" : "text-muted-foreground")} />
+        <WrapText className={cn("h-3.5 w-3.5", wrap
+          ? "text-foreground"
+          : `text-muted-foreground`)}
+        />
         <span className="sr-only">Toggle line wrap</span>
       </Button>
       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => downloadCode(code, downloadFilename)} title="Download">

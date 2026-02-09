@@ -74,8 +74,8 @@ function TextPreviewHeader({
 }) {
   return (
     <div className={`
-      border-border bg-muted/50 flex items-center justify-between border-b
-      px-4 py-2
+      border-border bg-muted/50 flex items-center justify-between border-b px-4
+      py-2
     `}
     >
       <span className="text-muted-foreground truncate text-xs font-medium">
