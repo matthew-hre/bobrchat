@@ -10,6 +10,7 @@ export {
 export { AvailableModelCard } from "./components/available-model-card";
 export { ModelCard } from "./components/model-card";
 export { ModelListCard } from "./components/model-list-card";
+export { ProviderLogo } from "./components/provider-logo";
 export { SortableFavoriteModel } from "./components/sortable-favorite-model";
 
 // Hooks

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
-import { getModelCapabilities } from "~/features/models";
+import { getModelCapabilities, ProviderLogo } from "~/features/models";
 import { useChatUIStore } from "~/features/chat/store";
 import { cn } from "~/lib/utils";
 
@@ -212,14 +212,17 @@ export function ModelSelector({
                               : "",
                           )}
                         >
-                          <div className="flex-1">
-                            <div className="text-sm font-medium">
-                              {model.name}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {model.id}
-                            </div>
-                          </div>
+                           <div className="flex-1">
+                             <div className="flex items-center gap-1">
+                               <ProviderLogo provider={model.id.split("/")[0]} size="sm" />
+                               <div className="text-sm font-medium">
+                                 {model.name}
+                               </div>
+                             </div>
+                             <div className="text-xs text-muted-foreground">
+                               {model.id}
+                             </div>
+                           </div>
                           <div className="flex gap-1">
                             {capabilities.supportsImages && (
                               <span title="Image upload">
