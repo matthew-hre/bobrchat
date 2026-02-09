@@ -3,10 +3,12 @@
 
 import { FileIcon, XIcon } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
+
+import { AttachmentPreviewDialog } from "./attachment-preview-dialog";
 
 export type PendingFile = {
   id: string;
@@ -25,31 +27,43 @@ type FilePreviewProps = {
 };
 
 export function FilePreview({ files, onRemoveAction, className, supportsNativePdf = true }: FilePreviewProps) {
+  const [previewFile, setPreviewFile] = useState<PendingFile | null>(null);
+
   if (files.length === 0) {
     return null;
   }
 
   return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
-      {files.map(file => (
-        <FilePreviewItem
-          key={file.id}
-          file={file}
-          onRemove={() => onRemoveAction(file.id)}
-          supportsNativePdf={supportsNativePdf}
-        />
-      ))}
-    </div>
+    <>
+      <div className={cn("flex flex-wrap gap-2", className)}>
+        {files.map(file => (
+          <FilePreviewItem
+            key={file.id}
+            file={file}
+            onRemove={() => onRemoveAction(file.id)}
+            onPreview={() => setPreviewFile(file)}
+            supportsNativePdf={supportsNativePdf}
+          />
+        ))}
+      </div>
+      <AttachmentPreviewDialog
+        file={previewFile}
+        open={previewFile !== null}
+        onOpenChange={open => !open && setPreviewFile(null)}
+      />
+    </>
   );
 }
 
 function FilePreviewItem({
   file,
   onRemove,
+  onPreview,
   supportsNativePdf,
 }: {
   file: PendingFile;
   onRemove: () => void;
+  onPreview: () => void;
   supportsNativePdf: boolean;
 }) {
   const isImage = file.mediaType.startsWith("image/");
@@ -68,10 +82,20 @@ function FilePreviewItem({
 
   return (
     <div
+      role="button"
+      tabIndex={file.isUploading ? -1 : 0}
+      onClick={file.isUploading ? undefined : onPreview}
+      onKeyDown={(e) => {
+        if (!file.isUploading && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onPreview();
+        }
+      }}
       className={cn(`
         border-border bg-muted/50 group relative flex items-center gap-2 border
-        p-2 pr-8
-      `, file.isUploading && "opacity-50")}
+        p-2 pr-8 text-left
+        hover:bg-muted/80
+      `, file.isUploading ? "opacity-50" : "cursor-pointer")}
     >
       {isImage
         ? (
@@ -126,7 +150,10 @@ function FilePreviewItem({
         type="button"
         variant="ghost"
         size="icon-sm"
-        onClick={onRemove}
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
         disabled={file.isUploading}
         className={`
           absolute top-1 right-1 size-6 opacity-0
@@ -154,15 +181,19 @@ function FilePreviewItem({
   );
 }
 
+type MessageAttachment = { url: string; filename?: string; mediaType?: string };
+
 export function MessageAttachments({
   attachments,
   className,
   showContent = true,
 }: {
-  attachments: Array<{ url: string; filename?: string; mediaType?: string }>;
+  attachments: MessageAttachment[];
   className?: string;
   showContent?: boolean;
 }) {
+  const [previewFile, setPreviewFile] = useState<MessageAttachment | null>(null);
+
   if (attachments.length === 0) {
     return null;
   }
@@ -186,6 +217,10 @@ export function MessageAttachments({
     return match ? match[1].toUpperCase() : null;
   };
 
+  const previewable = previewFile
+    ? { url: previewFile.url, filename: previewFile.filename ?? "File", mediaType: previewFile.mediaType ?? "application/octet-stream" }
+    : null;
+
   if (!showContent) {
     return (
       <div className={cn("mt-2 space-y-2 pb-2", className)}>
@@ -194,11 +229,14 @@ export function MessageAttachments({
             const isImage = attachment.mediaType?.startsWith("image/");
             const langLabel = getLanguageLabel(attachment.filename);
             return (
-              <div
+              <button
+                type="button"
                 key={idx}
+                onClick={() => setPreviewFile(attachment)}
                 className={`
-                  border-card flex items-center gap-2 rounded-md border p-2
-                  shadow
+                  border-card flex cursor-pointer items-center gap-2 rounded-md
+                  border p-2 shadow
+                  hover:bg-card/10
                 `}
               >
                 <FileIcon className="size-4" />
@@ -221,10 +259,15 @@ export function MessageAttachments({
                         {getFileTypeLabel(attachment.mediaType)}
                       </span>
                     )}
-              </div>
+              </button>
             );
           })}
         </div>
+        <AttachmentPreviewDialog
+          file={previewable}
+          open={previewFile !== null}
+          onOpenChange={open => !open && setPreviewFile(null)}
+        />
       </div>
     );
   }
@@ -235,15 +278,14 @@ export function MessageAttachments({
         ? (
             <div className="flex flex-wrap gap-2">
               {images.map((img, idx) => (
-                <Link
+                <button
+                  type="button"
                   key={idx}
-                  href={img.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={() => setPreviewFile(img)}
                   className={`
                     hover:bg-card/10
-                    border-card flex items-center gap-2 rounded-md border p-2
-                    shadow transition-colors
+                    border-card flex cursor-pointer items-center gap-2
+                    rounded-md border p-2 shadow transition-colors
                   `}
                 >
                   <Image
@@ -254,7 +296,7 @@ export function MessageAttachments({
                     className="aspect-square max-h-8 max-w-xs object-cover"
                   />
                   <span className="text-sm">{img.filename || "Attached image"}</span>
-                </Link>
+                </button>
               ))}
             </div>
           )
@@ -262,12 +304,11 @@ export function MessageAttachments({
           ? (
               <div className="flex flex-wrap gap-2">
                 {images.map((img, idx) => (
-                  <Link
+                  <button
+                    type="button"
                     key={idx}
-                    href={img.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block overflow-hidden rounded-lg"
+                    onClick={() => setPreviewFile(img)}
+                    className="block cursor-pointer overflow-hidden rounded-lg"
                   >
                     <Image
                       src={img.url}
@@ -276,7 +317,7 @@ export function MessageAttachments({
                       height={256}
                       className="w-full max-w-xs object-contain"
                     />
-                  </Link>
+                  </button>
                 ))}
               </div>
             )
@@ -287,15 +328,14 @@ export function MessageAttachments({
           {files.map((file, idx) => {
             const langLabel = getLanguageLabel(file.filename);
             return (
-              <Link
+              <button
+                type="button"
                 key={idx}
-                href={file.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={() => setPreviewFile(file)}
                 className={`
                   hover:bg-card/10
-                  border-card flex items-center gap-2 rounded-md border p-2
-                  shadow transition-colors
+                  border-card flex cursor-pointer items-center gap-2 rounded-md
+                  border p-2 shadow transition-colors
                 `}
               >
                 <FileIcon className="text-card size-4" />
@@ -308,11 +348,17 @@ export function MessageAttachments({
                     {langLabel}
                   </span>
                 )}
-              </Link>
+              </button>
             );
           })}
         </div>
       )}
+
+      <AttachmentPreviewDialog
+        file={previewable}
+        open={previewFile !== null}
+        onOpenChange={open => !open && setPreviewFile(null)}
+      />
     </div>
   );
 }
