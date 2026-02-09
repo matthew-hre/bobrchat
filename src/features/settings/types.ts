@@ -39,6 +39,7 @@ export const preferencesSchema = z.object({
   useOcrForPdfs: z.boolean().default(false),
   autoCreateFilesFromPaste: z.boolean().default(true),
   inputHeightScale: z.number().int().min(0).max(4).default(0),
+  hideModelProviderNames: z.boolean().default(false),
 });
 
 /**
@@ -58,6 +59,7 @@ export const preferencesUpdateSchema = z.object({
   useOcrForPdfs: z.boolean().optional(),
   autoCreateFilesFromPaste: z.boolean().optional(),
   inputHeightScale: z.number().int().min(0).max(4).optional(),
+  hideModelProviderNames: z.boolean().optional(),
 });
 
 export type PreferencesInput = z.infer<typeof preferencesSchema>;
@@ -131,6 +133,7 @@ export type UserSettingsData = {
   useOcrForPdfs: boolean;
   autoCreateFilesFromPaste: boolean;
   inputHeightScale: number;
+  hideModelProviderNames?: boolean;
   // List of favorite model IDs from OpenRouter (max 10)
   favoriteModels?: string[];
   // Derived: which providers have a key configured (server can verify server-stored keys,

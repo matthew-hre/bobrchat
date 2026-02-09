@@ -3,9 +3,12 @@ import type { Model } from "@openrouter/sdk/models";
 import { BrainIcon, FileTextIcon, ImageIcon, SearchIcon } from "lucide-react";
 import { memo } from "react";
 
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
+import { formatModelName } from "../utils/format-model-name";
 import { getModelCapabilities } from "../utils/model-capabilities";
+import { ProviderLogo } from "./provider-logo";
 
 function formatPrice(price: number | null): string {
   if (!price)
@@ -16,6 +19,7 @@ function formatPrice(price: number | null): string {
 }
 
 export const ModelCard = memo(({ model, isSelected, toggleModel }: { model: Model; isSelected: boolean; toggleModel: (id: string) => void }) => {
+  const { data: settings } = useUserSettings();
   const capabilities = getModelCapabilities(model);
 
   return (
@@ -38,9 +42,12 @@ export const ModelCard = memo(({ model, isSelected, toggleModel }: { model: Mode
       {/* Name and selection indicator */}
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="flex-1">
-          <h3 className="text-sm leading-snug font-semibold">
-            {model.name}
-          </h3>
+          <div className="mb-1 flex items-center gap-1">
+            <ProviderLogo provider={model.id.split("/")[0]} size="sm" />
+            <h3 className="text-sm leading-snug font-semibold">
+              {formatModelName(model.name, settings?.hideModelProviderNames ?? false)}
+            </h3>
+          </div>
           <p className="text-muted-foreground text-xs">
             {model.id}
           </p>

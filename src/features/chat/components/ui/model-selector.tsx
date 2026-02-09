@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
-import { getModelCapabilities } from "~/features/models";
+import { getModelCapabilities, ProviderLogo, formatModelName } from "~/features/models";
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { useChatUIStore } from "~/features/chat/store";
 import { cn } from "~/lib/utils";
 
@@ -82,6 +83,7 @@ export function ModelSelector({
   isLoading = false,
   useLocalState = false,
 }: ModelSelectorProps) {
+  const { data: settings } = useUserSettings();
   const globalOpen = useChatUIStore(s => s.modelSelectorOpen);
   const setGlobalOpen = useChatUIStore(s => s.setModelSelectorOpen);
   const setModelSelectorOverride = useChatUIStore(s => s.setModelSelectorOverride);
@@ -132,6 +134,7 @@ export function ModelSelector({
 
   const selectedModel = models.find(m => m.id === selectedModelId);
   const displayName = selectedModel?.name || (isLoading ? "Loading..." : "Select Model");
+  const selectedProvider = selectedModel?.id.split("/")[0];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -148,13 +151,16 @@ export function ModelSelector({
             group/model gap-1 overflow-hidden transition-all
           `, `text-muted-foreground`, className)}
             >
+              {selectedProvider && (
+                <ProviderLogo provider={selectedProvider} size="sm" />
+              )}
               <div className={`
                 max-w-32 overflow-hidden whitespace-nowrap truncate
                 transition-all duration-200 text-sm font-medium
                 group-hover/model:ml-1
                 lg:max-w-none lg:group-hover/model:ml-0 lg:ml-0
               `}>
-                {displayName}
+                {formatModelName(displayName, settings?.hideModelProviderNames ?? false)}
               </div>
               <ChevronDownIcon
                 size={14}
@@ -212,14 +218,17 @@ export function ModelSelector({
                               : "",
                           )}
                         >
-                          <div className="flex-1">
-                            <div className="text-sm font-medium">
-                              {model.name}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {model.id}
-                            </div>
-                          </div>
+                           <div className="flex-1">
+                             <div className="flex items-center gap-1">
+                               <ProviderLogo provider={model.id.split("/")[0]} size="sm" />
+                               <div className="text-sm font-medium">
+                                 {formatModelName(model.name, settings?.hideModelProviderNames ?? false)}
+                               </div>
+                             </div>
+                             <div className="text-xs text-muted-foreground">
+                               {model.id}
+                             </div>
+                           </div>
                           <div className="flex gap-1">
                             {capabilities.supportsImages && (
                               <span title="Image upload">

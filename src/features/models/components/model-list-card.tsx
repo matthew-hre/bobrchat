@@ -3,11 +3,14 @@
 import { BrainIcon, FileTextIcon, ImageIcon, SearchIcon } from "lucide-react";
 import { memo } from "react";
 
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
 import type { ModelListItem } from "../types";
 
+import { formatModelName } from "../utils/format-model-name";
 import { getModelListItemCapabilities } from "../utils/model-capabilities";
+import { ProviderLogo } from "./provider-logo";
 
 function formatPrice(price: number | null): string {
   if (!price)
@@ -28,6 +31,7 @@ export const ModelListCard = memo(({
   isSelected,
   toggleModel,
 }: ModelListCardProps) => {
+  const { data: settings } = useUserSettings();
   const capabilities = getModelListItemCapabilities(model);
 
   return (
@@ -49,9 +53,12 @@ export const ModelListCard = memo(({
       {/* Name and selection indicator */}
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="flex-1">
-          <h3 className="text-sm leading-snug font-semibold">
-            {model.name}
-          </h3>
+          <div className="mb-1 flex items-center gap-1">
+            <ProviderLogo provider={model.provider} size="sm" />
+            <h3 className="text-sm leading-snug font-semibold">
+              {formatModelName(model.name, settings?.hideModelProviderNames ?? false)}
+            </h3>
+          </div>
           <p className="text-muted-foreground text-xs">
             {model.id}
           </p>
