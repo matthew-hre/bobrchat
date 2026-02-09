@@ -15,8 +15,6 @@ const PROVIDER_LOGOS: Record<string, string> = {
 };
 
 export function getProviderLogo(provider: string): string | null {
-  console.log("Getting logo for provider:", provider);
-
   return PROVIDER_LOGOS[provider.toLowerCase()] || null;
 }
 

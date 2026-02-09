@@ -3,11 +3,13 @@
 import { BrainIcon, FileTextIcon, ImageIcon, SearchIcon } from "lucide-react";
 import { memo } from "react";
 
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
 import type { ModelListItem } from "../types";
 
 import { getModelListItemCapabilities } from "../utils/model-capabilities";
+import { formatModelName } from "../utils/format-model-name";
 import { ProviderLogo } from "./provider-logo";
 
 function formatPrice(price: number | null): string {
@@ -31,6 +33,7 @@ export const AvailableModelCard = memo(({
   onToggle,
   disabled,
 }: AvailableModelCardProps) => {
+  const { data: settings } = useUserSettings();
   const capabilities = getModelListItemCapabilities(model);
 
   return (
@@ -56,7 +59,7 @@ export const AvailableModelCard = memo(({
            <div className="flex items-center gap-1 mb-1">
              <ProviderLogo provider={model.provider} size="sm" />
              <h3 className="truncate text-sm leading-snug font-semibold">
-               {model.name}
+               {formatModelName(model.name, settings?.hideModelProviderNames ?? false)}
              </h3>
            </div>
            <p className="text-muted-foreground truncate text-xs">

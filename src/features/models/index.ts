@@ -53,3 +53,4 @@ export {
   buildCapabilitiesMap,
   buildModelMetadataMap,
 } from "./utils/model-metadata";
+export { formatModelName } from "./utils/format-model-name";

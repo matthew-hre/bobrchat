@@ -272,6 +272,20 @@ export function InterfaceTab() {
             onToggle={enabled => save({ showSidebarIcons: enabled })}
           />
         </SettingsSection>
+
+        <Separator />
+
+        <SettingsSection
+          title="Models"
+          description="Configure how model names are displayed."
+        >
+          <ToggleItem
+            label="Hide Provider Names"
+            description="Show only model names with logos instead of 'Provider: Model Name'."
+            enabled={settings.hideModelProviderNames ?? false}
+            onToggle={enabled => save({ hideModelProviderNames: enabled })}
+          />
+        </SettingsSection>
       </div>
     </div>
   );

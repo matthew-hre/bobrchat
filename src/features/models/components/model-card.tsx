@@ -3,9 +3,11 @@ import type { Model } from "@openrouter/sdk/models";
 import { BrainIcon, FileTextIcon, ImageIcon, SearchIcon } from "lucide-react";
 import { memo } from "react";
 
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
 import { getModelCapabilities } from "../utils/model-capabilities";
+import { formatModelName } from "../utils/format-model-name";
 import { ProviderLogo } from "./provider-logo";
 
 function formatPrice(price: number | null): string {
@@ -17,6 +19,7 @@ function formatPrice(price: number | null): string {
 }
 
 export const ModelCard = memo(({ model, isSelected, toggleModel }: { model: Model; isSelected: boolean; toggleModel: (id: string) => void }) => {
+  const { data: settings } = useUserSettings();
   const capabilities = getModelCapabilities(model);
 
   return (
@@ -42,7 +45,7 @@ export const ModelCard = memo(({ model, isSelected, toggleModel }: { model: Mode
            <div className="flex items-center gap-1 mb-1">
              <ProviderLogo provider={model.id.split("/")[0]} size="sm" />
              <h3 className="text-sm leading-snug font-semibold">
-               {model.name}
+               {formatModelName(model.name, settings?.hideModelProviderNames ?? false)}
              </h3>
            </div>
            <p className="text-muted-foreground text-xs">
