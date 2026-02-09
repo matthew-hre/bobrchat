@@ -1,6 +1,7 @@
 import { memo } from "react";
 
 import { cn } from "~/lib/utils";
+
 import { getProviderLogo } from "../utils/provider-logos";
 
 type ProviderLogoProps = {
@@ -30,7 +31,10 @@ export const ProviderLogo = memo(({
     <img
       src={logoPath}
       alt={`${provider} logo`}
-      className={cn(sizeMap[size], "invert-0 dark:invert", className)}
+      className={cn(sizeMap[size], `
+        invert-0
+        dark:invert
+      `, className)}
     />
   );
 });

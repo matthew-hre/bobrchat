@@ -8,8 +8,8 @@ import { cn } from "~/lib/utils";
 
 import type { ModelListItem } from "../types";
 
-import { getModelListItemCapabilities } from "../utils/model-capabilities";
 import { formatModelName } from "../utils/format-model-name";
+import { getModelListItemCapabilities } from "../utils/model-capabilities";
 import { ProviderLogo } from "./provider-logo";
 
 function formatPrice(price: number | null): string {
@@ -51,18 +51,18 @@ export const ModelListCard = memo(({
       )}
     >
       {/* Name and selection indicator */}
-       <div className="mb-2 flex items-start justify-between gap-3">
-         <div className="flex-1">
-           <div className="flex items-center gap-1 mb-1">
-             <ProviderLogo provider={model.provider} size="sm" />
-             <h3 className="text-sm leading-snug font-semibold">
-               {formatModelName(model.name, settings?.hideModelProviderNames ?? false)}
-             </h3>
-           </div>
-           <p className="text-muted-foreground text-xs">
-             {model.id}
-           </p>
-         </div>
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <div className="mb-1 flex items-center gap-1">
+            <ProviderLogo provider={model.provider} size="sm" />
+            <h3 className="text-sm leading-snug font-semibold">
+              {formatModelName(model.name, settings?.hideModelProviderNames ?? false)}
+            </h3>
+          </div>
+          <p className="text-muted-foreground text-xs">
+            {model.id}
+          </p>
+        </div>
         <div
           className={cn(
             `

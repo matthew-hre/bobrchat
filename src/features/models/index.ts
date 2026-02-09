@@ -36,6 +36,7 @@ export type {
   SortOrder,
 } from "./types";
 
+export { formatModelName } from "./utils/format-model-name";
 // Utils
 export {
   canUploadFiles,
@@ -53,4 +54,3 @@ export {
   buildCapabilitiesMap,
   buildModelMetadataMap,
 } from "./utils/model-metadata";
-export { formatModelName } from "./utils/format-model-name";
