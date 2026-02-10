@@ -383,12 +383,14 @@ export function AttachmentsTab() {
                           rel="noopener noreferrer"
                           target="_blank"
                           className={`
-                            flex flex-row items-center truncate text-sm
+                            flex flex-row items-center
                             hover:underline
                           `}
                           title={item.filename}
                         >
-                          {item.filename}
+                          <span className="max-w-80 truncate text-sm">
+                            {item.filename}
+                          </span>
                           <ExternalLinkIcon className={`
                             text-muted-foreground ml-1 inline-block size-3
                           `}
