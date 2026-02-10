@@ -1,7 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["pdx1"],
-  "buildCommand": "bash scripts/vercel-build.sh",
   "crons": [
     {
       "path": "/api/cron/sync-models",
