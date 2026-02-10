@@ -13,10 +13,10 @@ import { ChatMessages } from "~/features/chat/components/chat-messages";
 import { ChatView } from "~/features/chat/components/chat-view";
 import { useChatActions } from "~/features/chat/hooks/use-chat-actions";
 import { THREADS_KEY, useThreadTitle } from "~/features/chat/hooks/use-threads";
-import { OPENROUTER_CREDITS_KEY } from "~/features/settings/hooks/use-user-settings";
 import { parseAIError } from "~/features/chat/lib/parse-ai-error";
 import { useChatUIStore } from "~/features/chat/store";
 import { getModelCapabilities, useFavoriteModels } from "~/features/models";
+import { OPENROUTER_CREDITS_KEY } from "~/features/settings/hooks/use-user-settings";
 
 type ChatThreadProps = {
   params: Promise<{ id: string }>;
@@ -112,9 +112,10 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
       if (cost && cost > 0) {
         queryClient.setQueriesData<{ remaining: number }>(
           { queryKey: OPENROUTER_CREDITS_KEY },
-          (old) => old ? { remaining: Math.max(0, old.remaining - cost) } : old,
+          old => old ? { remaining: Math.max(0, old.remaining - cost) } : old,
         );
-      } else {
+      }
+      else {
         queryClient.invalidateQueries({ queryKey: OPENROUTER_CREDITS_KEY });
       }
     },
