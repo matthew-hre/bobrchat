@@ -105,38 +105,6 @@ async function generateDefaultOG(): Promise<Response> {
           fontFamily: "Rethink Sans, sans-serif",
         },
         children: [
-          // Topographic contour lines
-          ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => ({
-            type: "div",
-            props: {
-              style: {
-                position: "absolute",
-                bottom: -180 + i * 42,
-                left: -100,
-                right: -100,
-                height: 380,
-                borderRadius: "50%",
-                border: `${i === 2 ? 2 : 1}px solid ${i === 2 ? colors.primary : colors.foreground}${i === 2 ? "50" : i < 4 ? "18" : "10"}`,
-                display: "flex",
-              },
-            },
-          })),
-          // Secondary contour cluster
-          ...[0, 1, 2, 3, 4, 5].map(i => ({
-            type: "div",
-            props: {
-              style: {
-                position: "absolute",
-                bottom: -260 + i * 48,
-                left: 350,
-                width: 950,
-                height: 480,
-                borderRadius: "50%",
-                border: `${i === 3 ? 2 : 1}px solid ${i === 3 ? colors.primary : colors.foreground}${i === 3 ? "40" : i < 3 ? "15" : "08"}`,
-                display: "flex",
-              },
-            },
-          })),
           // Content
           {
             type: "div",
@@ -262,38 +230,6 @@ async function generateShareOG(env: Env, shareId: string): Promise<Response> {
           fontFamily: "Rethink Sans, sans-serif",
         },
         children: [
-          // Topographic contour lines
-          ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => ({
-            type: "div",
-            props: {
-              style: {
-                position: "absolute",
-                bottom: -180 + i * 42,
-                left: -100,
-                right: -100,
-                height: 380,
-                borderRadius: "50%",
-                border: `${i === 2 ? 2 : 1}px solid ${i === 2 ? colors.muted : colors.foreground}${i === 2 ? "50" : i < 4 ? "18" : "10"}`,
-                display: "flex",
-              },
-            },
-          })),
-          // Secondary contour cluster
-          ...[0, 1, 2, 3, 4, 5].map(i => ({
-            type: "div",
-            props: {
-              style: {
-                position: "absolute",
-                bottom: -260 + i * 48,
-                left: 350,
-                width: 950,
-                height: 480,
-                borderRadius: "50%",
-                border: `${i === 3 ? 2 : 1}px solid ${i === 3 ? colors.primary : colors.foreground}${i === 3 ? "40" : i < 3 ? "15" : "08"}`,
-                display: "flex",
-              },
-            },
-          })),
           // Content
           {
             type: "div",
