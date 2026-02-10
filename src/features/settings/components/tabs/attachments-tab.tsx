@@ -388,8 +388,8 @@ export function AttachmentsTab() {
                           `}
                           title={item.filename}
                         >
-                        <span className="text-sm max-w-80 truncate">
-                          {item.filename}
+                          <span className="max-w-80 truncate text-sm">
+                            {item.filename}
                           </span>
                           <ExternalLinkIcon className={`
                             text-muted-foreground ml-1 inline-block size-3
