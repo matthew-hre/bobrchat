@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["pdx1"],
-  "buildCommand": "git diff --quiet $(git merge-base HEAD origin/main) HEAD -- src/ || bun run build",
+  "buildCommand": "git diff --quiet $VERCEL_GIT_PREVIOUS_SHA HEAD -- src/ || bun run build",
   "crons": [
     {
       "path": "/api/cron/sync-models",
