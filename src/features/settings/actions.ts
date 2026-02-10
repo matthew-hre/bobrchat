@@ -13,6 +13,7 @@ import type { ApiKeyProvider, FavoriteModelsInput, PreferencesUpdate, ProfileUpd
 import {
   deleteApiKey as deleteApiKeyQuery,
   getUserSettings,
+  getUserSettingsAndKeys,
   updateApiKey as updateApiKeyQuery,
   updateUserSettings,
   updateUserSettingsPartial,
@@ -151,6 +152,7 @@ export async function createDefaultUserSettings(userId: string): Promise<UserSet
     landingPageContent: "suggestions",
     sendMessageKeyboardShortcut: "enter",
     inputHeightScale: 0,
+    profileCardWidget: "apiKeyStatus",
   };
 
   await updateUserSettings(userId, defaultSettings);
@@ -238,4 +240,57 @@ export async function deleteAllThreads(): Promise<{ deletedCount: number }> {
     .returning();
 
   return { deletedCount: Array.isArray(result) ? result.length : 0 };
+}
+
+/**
+ * Fetch OpenRouter remaining credits using the SDK.
+ * Fires both apiKeys.getCurrentKeyMetadata() and credits.getCredits() in parallel.
+ * If the key has a spending limit, returns limitRemaining from the key metadata.
+ * Otherwise falls back to total_credits - total_usage from the credits endpoint.
+ */
+export async function getOpenRouterCredits(params?: { openrouterClientKey?: string }) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  const { resolvedKeys } = await getUserSettingsAndKeys(
+    session.user.id,
+    params?.openrouterClientKey ? { openrouter: params.openrouterClientKey } : undefined,
+  );
+
+  const key = resolvedKeys.openrouter;
+  if (!key) {
+    throw new Error("No OpenRouter key configured");
+  }
+
+  const { OpenRouter } = await import("@openrouter/sdk");
+  const openRouter = new OpenRouter({ apiKey: key });
+
+  const [keyMeta, creditsRes] = await Promise.all([
+    openRouter.apiKeys.getCurrentKeyMetadata(),
+    fetch("https://openrouter.ai/api/v1/credits", {
+      headers: { Authorization: `Bearer ${key}` },
+      cache: "no-store",
+    }),
+  ]);
+
+  if (keyMeta.data.limitRemaining !== null) {
+    return { remaining: keyMeta.data.limitRemaining };
+  }
+
+  if (!creditsRes.ok) {
+    throw new Error(`OpenRouter credits request failed (${creditsRes.status})`);
+  }
+
+  const creditsJson = (await creditsRes.json()) as {
+    data: { total_credits: number; total_usage: number };
+  };
+
+  return {
+    remaining: creditsJson.data.total_credits - creditsJson.data.total_usage,
+  };
 }

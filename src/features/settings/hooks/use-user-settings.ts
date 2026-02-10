@@ -61,6 +61,8 @@ export function useUpdateFavoriteModels() {
   });
 }
 
+export const OPENROUTER_CREDITS_KEY = ["openrouterCredits"];
+
 export function useSetApiKey() {
   const queryClient = useQueryClient();
 
@@ -72,8 +74,11 @@ export function useSetApiKey() {
       provider: ApiKeyProvider;
       apiKey: string;
     }) => updateApiKey(provider, apiKey),
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: USER_SETTINGS_KEY });
+      if (variables.provider === "openrouter") {
+        queryClient.invalidateQueries({ queryKey: OPENROUTER_CREDITS_KEY });
+      }
     },
   });
 }
@@ -83,8 +88,11 @@ export function useRemoveApiKey() {
 
   return useMutation({
     mutationFn: (provider: ApiKeyProvider) => deleteApiKey(provider),
-    onSettled: () => {
+    onSettled: (_data, _error, provider) => {
       queryClient.invalidateQueries({ queryKey: USER_SETTINGS_KEY });
+      if (provider === "openrouter") {
+        queryClient.invalidateQueries({ queryKey: OPENROUTER_CREDITS_KEY });
+      }
     },
   });
 }

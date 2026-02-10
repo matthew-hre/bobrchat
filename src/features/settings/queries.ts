@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS: UserSettingsData = {
   autoCreateFilesFromPaste: true,
   sendMessageKeyboardShortcut: "enter",
   inputHeightScale: 0,
+  profileCardWidget: "apiKeyStatus",
 };
 
 export type ResolvedUserData = {

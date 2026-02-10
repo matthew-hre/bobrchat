@@ -10,6 +10,8 @@ export type ApiKeyProvider = "openrouter" | "parallel";
 
 export type LandingPageContentType = "suggestions" | "greeting" | "blank";
 
+export type ProfileCardWidget = "apiKeyStatus" | "openrouterCredits" | "storageQuota";
+
 export const accentColorPresets = ["green", "pink", "cyan", "orange", "yellow", "blue", "gray"] as const;
 export type AccentColorPreset = (typeof accentColorPresets)[number];
 export type AccentColor = AccentColorPreset | number; // preset name or custom hue (0-360)
@@ -40,6 +42,7 @@ export const preferencesSchema = z.object({
   autoCreateFilesFromPaste: z.boolean().default(true),
   inputHeightScale: z.number().int().min(0).max(4).default(0),
   hideModelProviderNames: z.boolean().default(false),
+  profileCardWidget: z.enum(["apiKeyStatus", "openrouterCredits", "storageQuota"]).default("apiKeyStatus"),
 });
 
 /**
@@ -60,6 +63,7 @@ export const preferencesUpdateSchema = z.object({
   autoCreateFilesFromPaste: z.boolean().optional(),
   inputHeightScale: z.number().int().min(0).max(4).optional(),
   hideModelProviderNames: z.boolean().optional(),
+  profileCardWidget: z.enum(["apiKeyStatus", "openrouterCredits", "storageQuota"]).optional(),
 });
 
 export type PreferencesInput = z.infer<typeof preferencesSchema>;
@@ -134,6 +138,7 @@ export type UserSettingsData = {
   autoCreateFilesFromPaste: boolean;
   inputHeightScale: number;
   hideModelProviderNames?: boolean;
+  profileCardWidget: ProfileCardWidget;
   // List of favorite model IDs from OpenRouter (max 10)
   favoriteModels?: string[];
   // Derived: which providers have a key configured (server can verify server-stored keys,

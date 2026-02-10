@@ -1,6 +1,6 @@
 "use client";
 
-import { MonitorIcon, MoonIcon, PaletteIcon, SunIcon } from "lucide-react";
+import { CoinsIcon, HardDriveIcon, KeyIcon, MonitorIcon, MoonIcon, PaletteIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -46,6 +46,12 @@ const sendMessageKeyboardShortcutOptions = [
       <Kbd>Enter</Kbd>
     </span>
   ) },
+];
+
+const profileCardWidgetOptions = [
+  { value: "apiKeyStatus" as const, label: "API Key Status", icon: KeyIcon, description: "Shows which API keys are configured" },
+  { value: "openrouterCredits" as const, label: "OpenRouter Credits", icon: CoinsIcon, description: "Shows remaining OpenRouter credit balance" },
+  { value: "storageQuota" as const, label: "Storage Quota", icon: HardDriveIcon, description: "Shows attachment storage usage" },
 ];
 
 const accentColorOptions: { value: AccentColorPreset; color: string; label: string }[] = [
@@ -270,6 +276,15 @@ export function InterfaceTab() {
             description="Hide icons next to threads in the sidebar. Hides relevant settings."
             enabled={settings.showSidebarIcons}
             onToggle={enabled => save({ showSidebarIcons: enabled })}
+          />
+
+          <SelectionCardItem
+            label="Profile Card Widget"
+            description="Choose what to display below your name in the sidebar."
+            options={profileCardWidgetOptions}
+            value={settings.profileCardWidget}
+            onChange={value => save({ profileCardWidget: value })}
+            layout="flex"
           />
         </SettingsSection>
 
