@@ -16,6 +16,7 @@ import { THREADS_KEY, useThreadTitle } from "~/features/chat/hooks/use-threads";
 import { parseAIError } from "~/features/chat/lib/parse-ai-error";
 import { useChatUIStore } from "~/features/chat/store";
 import { getModelCapabilities, useFavoriteModels } from "~/features/models";
+import { OPENROUTER_CREDITS_KEY } from "~/features/settings/hooks/use-user-settings";
 
 type ChatThreadProps = {
   params: Promise<{ id: string }>;
@@ -104,10 +105,19 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
       const friendlyMessage = parseAIError(error);
       toast.error(friendlyMessage);
     },
-    onFinish: () => {
-      // Refresh the threads list to reflect any automatic renaming
-      // We invalidate on every message finish to be safe, but it's most critical for the first one
+    onFinish: ({ message }) => {
       queryClient.invalidateQueries({ queryKey: THREADS_KEY });
+
+      const cost = (message.metadata as ChatUIMessage["metadata"])?.costUSD?.total;
+      if (cost && cost > 0) {
+        queryClient.setQueriesData<{ remaining: number }>(
+          { queryKey: OPENROUTER_CREDITS_KEY },
+          old => old ? { remaining: Math.max(0, old.remaining - cost) } : old,
+        );
+      }
+      else {
+        queryClient.invalidateQueries({ queryKey: OPENROUTER_CREDITS_KEY });
+      }
     },
   });
 

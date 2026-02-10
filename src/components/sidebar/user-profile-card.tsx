@@ -1,42 +1,38 @@
 "use client";
 
 import BoringAvatar from "boring-avatars";
-import { KeyIcon, LoaderIcon } from "lucide-react";
 import Link from "next/link";
 
 import type { Session } from "~/features/auth/lib/auth";
+import type { ProfileCardWidget } from "~/features/settings/types";
 
-import { useApiKeyStatus } from "~/features/settings/hooks/use-api-status";
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { ApiKeyStatusWidget } from "./widgets/api-key-status-widget";
+import { OpenRouterCreditsWidget } from "./widgets/openrouter-credits-widget";
+import { StorageQuotaWidget } from "./widgets/storage-quota-widget";
 
 type UserProfileCardProps = {
   session: Session;
 };
 
+const widgetComponents: Record<ProfileCardWidget, React.ComponentType> = {
+  apiKeyStatus: ApiKeyStatusWidget,
+  openrouterCredits: OpenRouterCreditsWidget,
+  storageQuota: StorageQuotaWidget,
+};
+
 export function UserProfileCard({ session }: UserProfileCardProps) {
-  const { hasKey: hasOpenRouterKey, isLoading: isOpenRouterLoading } = useApiKeyStatus("openrouter");
-  const { hasKey: hasParallelKey, isLoading: isParallelLoading } = useApiKeyStatus("parallel");
+  const { data: settings } = useUserSettings({ enabled: true });
 
   if (!session) {
     return null;
   }
 
-  const isLoading = isOpenRouterLoading || isParallelLoading;
-
-  const getApiKeyStatus = () => {
-    if (!hasOpenRouterKey && !hasParallelKey) {
-      return "No API Keys Set";
-    }
-    if (hasOpenRouterKey && !hasParallelKey) {
-      return "OpenRouter Key Set";
-    }
-    if (!hasOpenRouterKey && hasParallelKey) {
-      return "No OpenRouter Key Set";
-    }
-    return "All API Keys Set";
-  };
+  const widgetKey = settings?.profileCardWidget ?? "apiKeyStatus";
+  const WidgetComponent = widgetComponents[widgetKey];
 
   return (
     <Link
@@ -67,22 +63,7 @@ export function UserProfileCard({ session }: UserProfileCardProps) {
           {session.user.name}
         </span>
         <span className="text-muted-foreground flex items-center gap-1 text-xs">
-          {isLoading
-            ? (
-                <>
-                  <LoaderIcon className={`
-                    text-muted-foreground size-3 animate-spin
-                  `}
-                  />
-                  Checking API keys...
-                </>
-              )
-            : (
-                <>
-                  <KeyIcon className="text-muted-foreground size-3" />
-                  {getApiKeyStatus()}
-                </>
-              )}
+          <WidgetComponent />
         </span>
       </div>
     </Link>

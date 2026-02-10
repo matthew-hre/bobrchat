@@ -49,6 +49,7 @@ export function SelectionCardItem<T extends string | number>({
 
   return (
     <div className="space-y-3">
+      <div className="space-y-1">
       <Label>
         {label}
         {required && !isLocked && (
@@ -58,6 +59,7 @@ export function SelectionCardItem<T extends string | number>({
       {description && (
         <p className="text-muted-foreground text-xs">{description}</p>
       )}
+      </div>
 
       {isLocked && value !== null ? (
         // Display-only locked state

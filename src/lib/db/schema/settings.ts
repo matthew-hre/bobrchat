@@ -27,6 +27,7 @@ export const userSettings = pgTable(
       autoCreateFilesFromPaste: true,
       inputHeightScale: 0,
       hideModelProviderNames: false,
+      profileCardWidget: "apiKeyStatus",
     } as UserSettingsData),
     encryptedApiKeys: jsonb("encrypted_api_keys").notNull().default({} as EncryptedApiKeysData),
     createdAt: timestamp("created_at").defaultNow().notNull(),
