@@ -23,8 +23,6 @@ type UseFileAttachmentsProps = {
 
 export function useFileAttachments({
   capabilities,
-  onValueChange,
-  textareaRef,
   autoCreateFilesFromPaste = true,
 }: UseFileAttachmentsProps) {
   const queryClient = useQueryClient();
@@ -140,6 +138,7 @@ export function useFileAttachments({
         },
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [capabilities, queryClient],
   );
 
@@ -164,6 +163,7 @@ export function useFileAttachments({
 
       return prev.filter(f => f.id !== id);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePaste = React.useCallback(
@@ -197,7 +197,8 @@ export function useFileAttachments({
       // Check if pasted text is long and should be treated as a file
       if (hasText) {
         const text = e.clipboardData.getData("text/plain");
-        if (!text) return;
+        if (!text)
+          return;
 
         let lineCount = 1;
         for (let i = 0; i < text.length && lineCount <= PASTE_LINE_THRESHOLD; i++) {
