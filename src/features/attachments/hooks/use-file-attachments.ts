@@ -195,59 +195,31 @@ export function useFileAttachments({
       }
 
       // Check if pasted text is long and should be treated as a file
-      // Only convert to file if the model supports file uploads
       if (hasText) {
-        e.preventDefault();
-        for (const item of items) {
-          if (item.kind === "string" && item.type === "text/plain") {
-            item.getAsString((text) => {
-              // Count lines efficiently without creating a huge array
-              let lineCount = 1;
-              for (let i = 0; i < text.length && lineCount <= PASTE_LINE_THRESHOLD; i++) {
-                if (text[i] === "\n")
-                  lineCount++;
-              }
-              const isLongText
-                = text.length > PASTE_TEXT_THRESHOLD
-                  || lineCount > PASTE_LINE_THRESHOLD;
+        const text = e.clipboardData.getData("text/plain");
+        if (!text) return;
 
-              if (isLongText && autoCreateFilesFromPaste) {
-                const language = detectLanguage(text);
-                const extension = getLanguageExtension(language);
-                const filename = `pasted-${Date.now()}.${extension}`;
-
-                const file = new File([text], filename, {
-                  type: "text/plain",
-                });
-
-                uploadFiles([file]);
-              }
-              else {
-                // For short text, insert directly
-                const textarea = textareaRef.current;
-                if (textarea) {
-                  const start = textarea.selectionStart;
-                  const end = textarea.selectionEnd;
-                  const currentValue = textarea.value;
-                  const newValue
-                    = currentValue.slice(0, start)
-                      + text
-                      + currentValue.slice(end);
-                  onValueChange(newValue);
-
-                  // Move cursor after inserted text
-                  setTimeout(() => {
-                    textarea.selectionStart = textarea.selectionEnd
-                      = start + text.length;
-                  }, 0);
-                }
-              }
-            });
-          }
+        let lineCount = 1;
+        for (let i = 0; i < text.length && lineCount <= PASTE_LINE_THRESHOLD; i++) {
+          if (text[i] === "\n")
+            lineCount++;
         }
+        const isLongText
+          = text.length > PASTE_TEXT_THRESHOLD
+            || lineCount > PASTE_LINE_THRESHOLD;
+
+        if (isLongText && autoCreateFilesFromPaste) {
+          e.preventDefault();
+          const language = detectLanguage(text);
+          const extension = getLanguageExtension(language);
+          const filename = `pasted-${Date.now()}.${extension}`;
+          const file = new File([text], filename, { type: "text/plain" });
+          uploadFiles([file]);
+        }
+        // Short text: let the browser handle it natively (preserves undo stack)
       }
     },
-    [uploadFiles, onValueChange, capabilities, textareaRef, autoCreateFilesFromPaste],
+    [uploadFiles, capabilities, autoCreateFilesFromPaste],
   );
 
   const handleAttachClick = React.useCallback(() => {
