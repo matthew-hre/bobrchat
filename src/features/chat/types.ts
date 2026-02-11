@@ -244,4 +244,5 @@ export type ChatUIMessage = UIMessage<MessageMetadata> & {
   stoppedModelId?: string | null;
   searchEnabled?: boolean | null;
   reasoningLevel?: string | null;
+  modelId?: string | null;
 };

@@ -49,12 +49,19 @@ export default async function ChatServer({ params }: ChatServerProps) {
   // The client component (chat-thread.tsx) will retrieve it from sessionStorage.
   const initialPendingMessage: UIMessage | null = null;
 
+  // Derive the last-used model from the most recent user message that has a modelId
+  const lastUsedModelId = initialMessages
+    .filter(m => m.role === "user" && m.modelId)
+    .at(-1)
+    ?.modelId ?? null;
+
   return (
     <ChatThread
       params={Promise.resolve({ id })}
       initialMessages={initialMessages}
       initialPendingMessage={initialPendingMessage}
       parentThread={parentThread}
+      lastUsedModelId={lastUsedModelId}
       initialThread={
         thread
           ? {

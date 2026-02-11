@@ -91,6 +91,7 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
       keyVersion: messages.keyVersion,
       searchEnabled: messages.searchEnabled,
       reasoningLevel: messages.reasoningLevel,
+      modelId: messages.modelId,
       // Metadata from message_metadata table
       metaModel: messageMetadata.model,
       metaInputTokens: messageMetadata.inputTokens,
@@ -156,6 +157,7 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
       id: row.id,
       searchEnabled: row.searchEnabled,
       reasoningLevel: row.reasoningLevel,
+      modelId: row.modelId,
       metadata,
     };
   }));
@@ -170,13 +172,14 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
  * @param options Optional settings
  * @param options.searchEnabled Whether search was enabled for this message
  * @param options.reasoningLevel The reasoning level used for this message
+ * @param options.modelId The model ID used for this message
  * @return {Promise<void>}
  */
 export async function saveMessage(
   threadId: string,
   userId: string,
   message: ChatUIMessage,
-  options?: { searchEnabled?: boolean; reasoningLevel?: string },
+  options?: { searchEnabled?: boolean; reasoningLevel?: string; modelId?: string },
 ): Promise<void> {
   const dateNow = new Date();
 
@@ -205,6 +208,7 @@ export async function saveMessage(
       keyVersion: keyMeta.version,
       searchEnabled: options?.searchEnabled,
       reasoningLevel: options?.reasoningLevel,
+      modelId: options?.modelId,
     });
 
     // Insert metadata for assistant messages (user messages don't have cost/token info)

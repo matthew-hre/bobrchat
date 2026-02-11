@@ -23,17 +23,31 @@ type ChatThreadProps = {
   initialMessages: ChatUIMessage[];
   initialPendingMessage?: any | null;
   parentThread?: { id: string; title: string } | null;
+  lastUsedModelId?: string | null;
   initialThread?: ThreadFromApi | null;
 };
 
-function ChatThread({ params, initialMessages, initialPendingMessage, parentThread, initialThread }: ChatThreadProps): React.ReactNode {
+function ChatThread({ params, initialMessages, initialPendingMessage, parentThread, lastUsedModelId, initialThread }: ChatThreadProps): React.ReactNode {
   const { id } = use(params);
   const queryClient = useQueryClient();
   const {
     clearInput,
     setInput,
     setStreamingThreadId,
+    setSelectedModelId,
   } = useChatUIStore();
+
+  // Rehydrate model selector from thread's last-used model
+  const hasRehydratedModelRef = useRef(false);
+  useEffect(() => {
+    if (hasRehydratedModelRef.current)
+      return;
+    hasRehydratedModelRef.current = true;
+
+    if (lastUsedModelId) {
+      setSelectedModelId(lastUsedModelId);
+    }
+  }, [lastUsedModelId, setSelectedModelId]);
 
   // Handle handoff prompt from sessionStorage
   const hasSetHandoffPromptRef = useRef(false);
