@@ -84,7 +84,8 @@ export function useChatInputController({
 
   React.useLayoutEffect(() => {
     const textarea = textareaRef.current;
-    if (!textarea) return;
+    if (!textarea)
+      return;
 
     const clone = textarea.cloneNode() as HTMLTextAreaElement;
     clone.value = textarea.value;
