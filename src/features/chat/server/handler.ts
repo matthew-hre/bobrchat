@@ -72,7 +72,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
   if (threadId && !isRegeneration) {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role === "user") {
-      saveMessage(threadId, userId, lastMessage, { searchEnabled, reasoningLevel })
+      saveMessage(threadId, userId, lastMessage, { searchEnabled, reasoningLevel, modelId: baseModelId })
         .catch((error) => {
           console.error("Failed to save user message", error);
         });

@@ -13,56 +13,6 @@ import { serverEnv } from "~/lib/env";
 import { decryptMessageWithKey, deriveUserKey, encryptMessage } from "~/lib/security/encryption";
 import { getKeyMeta, getOrCreateKeyMeta, getSaltsForUser } from "~/lib/security/keys";
 
-function cleanReasoningPart(part: unknown): unknown | null {
-  if (!part || typeof part !== "object")
-    return part;
-
-  const p = part as {
-    type?: string;
-    text?: string;
-    providerMetadata?: unknown;
-    [key: string]: unknown;
-  };
-
-  if (p.type !== "reasoning")
-    return part;
-
-  // Strip [REDACTED] from the text (including leading newlines before it)
-  const cleanedText = (p.text || "")
-    .replace(/\n\s*\[REDACTED\]/g, "") // Remove newlines before [REDACTED]
-    .replace(/\[REDACTED\]/g, "") // Remove any remaining [REDACTED]
-    .replace(/\\n/g, "\n") // Unescape literal \n to actual newlines
-    .replace(/\n\s*\n/g, "\n") // Collapse multiple newlines to single
-    .trim();
-
-  // If the cleaned text is empty, filter out this part entirely
-  if (!cleanedText) {
-    return null;
-  }
-
-  // Return cleaned part without providerMetadata (it's junk data)
-  const { providerMetadata, ...rest } = p;
-  return {
-    ...rest,
-    text: cleanedText,
-  };
-}
-
-function filterAndCleanReasoningParts(message: ChatUIMessage): ChatUIMessage {
-  const parts = (message as unknown as { parts?: unknown[] }).parts;
-  if (!Array.isArray(parts))
-    return message;
-
-  const cleanedParts = parts
-    .map(part => cleanReasoningPart(part))
-    .filter(part => part !== null);
-
-  return {
-    ...message,
-    parts: cleanedParts,
-  } as ChatUIMessage;
-}
-
 function extractAttachmentRefs(message: ChatUIMessage): { ids: string[]; storagePaths: string[] } {
   const parts = (message as unknown as { parts?: unknown }).parts;
   if (!Array.isArray(parts))
@@ -141,6 +91,7 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
       keyVersion: messages.keyVersion,
       searchEnabled: messages.searchEnabled,
       reasoningLevel: messages.reasoningLevel,
+      modelId: messages.modelId,
       // Metadata from message_metadata table
       metaModel: messageMetadata.model,
       metaInputTokens: messageMetadata.inputTokens,
@@ -206,6 +157,7 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
       id: row.id,
       searchEnabled: row.searchEnabled,
       reasoningLevel: row.reasoningLevel,
+      modelId: row.modelId,
       metadata,
     };
   }));
@@ -220,13 +172,14 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
  * @param options Optional settings
  * @param options.searchEnabled Whether search was enabled for this message
  * @param options.reasoningLevel The reasoning level used for this message
+ * @param options.modelId The model ID used for this message
  * @return {Promise<void>}
  */
 export async function saveMessage(
   threadId: string,
   userId: string,
   message: ChatUIMessage,
-  options?: { searchEnabled?: boolean; reasoningLevel?: string },
+  options?: { searchEnabled?: boolean; reasoningLevel?: string; modelId?: string },
 ): Promise<void> {
   const dateNow = new Date();
 
@@ -236,12 +189,10 @@ export async function saveMessage(
     throw new Error(`Invalid role: ${message.role}`);
   }
 
-  // Filter out encrypted reasoning parts before saving
-  const filteredMessage = filterAndCleanReasoningParts(message);
-  const { ids: attachmentIds, storagePaths: attachmentStoragePaths } = extractAttachmentRefs(filteredMessage);
+  const { ids: attachmentIds, storagePaths: attachmentStoragePaths } = extractAttachmentRefs(message);
 
   const keyMeta = await getOrCreateKeyMeta(userId);
-  const encrypted = encryptMessage(filteredMessage, userId, keyMeta.salt);
+  const encrypted = encryptMessage(message, userId, keyMeta.salt);
 
   await db.transaction(async (tx) => {
     const messageId = crypto.randomUUID();
@@ -257,11 +208,12 @@ export async function saveMessage(
       keyVersion: keyMeta.version,
       searchEnabled: options?.searchEnabled,
       reasoningLevel: options?.reasoningLevel,
+      modelId: options?.modelId,
     });
 
     // Insert metadata for assistant messages (user messages don't have cost/token info)
-    if (role === "assistant" && filteredMessage.metadata) {
-      const meta = filteredMessage.metadata;
+    if (role === "assistant" && message.metadata) {
+      const meta = message.metadata;
       await tx.insert(messageMetadata).values({
         messageId,
         model: meta.model,
@@ -330,8 +282,7 @@ export async function saveMessages(
   await db.transaction(async (tx) => {
     await tx.insert(messages).values(
       messagesToSave.map((message) => {
-        const filtered = filterAndCleanReasoningParts(message);
-        const encrypted = encryptMessage(filtered, userId, keyMeta.salt);
+        const encrypted = encryptMessage(message, userId, keyMeta.salt);
         return {
           threadId,
           role: message.role,

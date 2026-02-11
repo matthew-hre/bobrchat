@@ -159,9 +159,10 @@ export const ChatMessages = memo(({
 
         if (message.role === "user") {
           const nextMessage = filteredMessages[messageIndex + 1];
-          const previousModelId = nextMessage?.role === "assistant"
-            ? (nextMessage.metadata?.model || nextMessage.stoppedModelId || stoppedAssistantMessageInfoById[nextMessage.id]?.modelId || null)
-            : null;
+          const previousModelId = message.modelId
+            || (nextMessage?.role === "assistant"
+              ? (nextMessage.metadata?.model || nextMessage.stoppedModelId || stoppedAssistantMessageInfoById[nextMessage.id]?.modelId || null)
+              : null);
 
           return (
             <EditableUserMessage

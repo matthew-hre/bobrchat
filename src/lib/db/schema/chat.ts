@@ -53,6 +53,7 @@ export const messages = pgTable(
     keyVersion: integer("key_version"),
     reasoningLevel: text("reasoning_level"),
     searchEnabled: boolean("search_enabled"),
+    modelId: text("model_id"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   table => [index("messages_threadId_idx").on(table.threadId)],
