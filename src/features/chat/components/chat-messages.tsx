@@ -1,16 +1,18 @@
 "use client";
 
+import { AlertCircle, RefreshCwIcon } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 
 import type { ChatUIMessage } from "~/features/chat/types";
 
+import { Button } from "~/components/ui/button";
 import { useChatUIStore } from "~/features/chat/store";
 import {
   isReasoningPart,
   isTextPart,
   isToolPart,
 } from "~/features/chat/types";
-import { extractMessageText, MessageParts, MessagePartsContainer } from "~/features/chat/ui/parts";
+import { extractMessageText, MessageParts, MessagePartsContainer, normalizeReasoningText } from "~/features/chat/ui/parts";
 
 import type { EditedMessagePayload } from "./messages/inline-message-editor";
 
@@ -39,6 +41,24 @@ export const ChatMessages = memo(({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
   const canEditMessages = !isLoading && !isRegenerating && !isEditSubmitting;
+
+  const hasRenderableAssistantContent = (parts: ChatUIMessage["parts"]) => {
+    for (const part of parts) {
+      if (isTextPart(part) && part.text.trim().length > 0) {
+        return true;
+      }
+
+      if (isReasoningPart(part) && normalizeReasoningText(part.text)) {
+        return true;
+      }
+
+      if (isToolPart(part)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
 
   // Filter out duplicate incomplete assistant messages
   // When a response is stopped, there may be two messages with the same tool calls or reasoning -
@@ -186,6 +206,12 @@ export const ChatMessages = memo(({
         const stoppedModelId = message.stoppedModelId as string | null | undefined;
         const isStopped = persistedStopped || !!stoppedInfo;
         const showRaw = rawMessageIds.has(message.id);
+        const metadata = message.metadata;
+        const isEmptyResponse = !!metadata
+          && metadata.inputTokens === 0
+          && metadata.outputTokens === 0
+          && !hasRenderableAssistantContent(message.parts);
+        const showEmptyResponseNotice = isEmptyResponse && !isStopped && !isLoading;
 
         return (
           <div key={message.id} className="group markdown text-base">
@@ -203,6 +229,36 @@ export const ChatMessages = memo(({
                 }}
               />
             </MessagePartsContainer>
+
+            {showEmptyResponseNotice && (
+              <div className={
+                `
+                  border-warning/50 bg-warning/10 text-warning-foreground mt-3
+                  flex items-start gap-3 rounded-md border p-3 text-sm
+                `
+              }
+              >
+                <AlertCircle className="text-warning mt-0.5 h-4 w-4 shrink-0" />
+                <div className="flex-1">
+                  <div className="font-semibold">No response from the model</div>
+                  <div className="text-warning-foreground/80 text-xs">
+                    The provider returned zero tokens. This is likely a model-side issue. Try regenerating the response.
+                  </div>
+                </div>
+                {onRegenerate && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-2"
+                    onClick={() => onRegenerate(message.id)}
+                    disabled={isRegenerating}
+                  >
+                    <RefreshCwIcon className={isRegenerating ? "animate-spin" : ""} size={14} />
+                    Regenerate
+                  </Button>
+                )}
+              </div>
+            )}
 
             {/* TODO: Add mobile support for message metrics - hidden on touch devices */}
             {(message.metadata || isStopped) && (
