@@ -180,7 +180,13 @@ function ThreadItemComponent({
     }
   };
 
+  const isOverLimit = newTitle.length > 80;
+
   const handleRenameSubmit = async () => {
+    if (isOverLimit) {
+      return;
+    }
+
     if (!newTitle.trim() || newTitle === title) {
       setIsRenaming(false);
       setNewTitle(title);
@@ -233,6 +239,7 @@ function ThreadItemComponent({
               px-1 py-0.5 text-sm outline-none
             `,
             "disabled:opacity-50",
+            isOverLimit && "ring-destructive ring-2",
           )}
         />
       </div>

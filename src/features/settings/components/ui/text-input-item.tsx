@@ -1,6 +1,7 @@
-import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
+import { cn } from "~/lib/utils";
 
 export function TextInputItem({
   label,
@@ -8,6 +9,7 @@ export function TextInputItem({
   value,
   placeholder,
   size = "single",
+  maxLength,
   onChange,
   onBlur,
 }: {
@@ -16,9 +18,12 @@ export function TextInputItem({
   value: string;
   placeholder?: string;
   size?: "single" | "multi";
+  maxLength?: number;
   onChange: (value: string) => void;
   onBlur?: () => void;
 }) {
+  const isOverLimit = maxLength !== undefined && value.length > maxLength;
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
@@ -30,6 +35,7 @@ export function TextInputItem({
               onChange={e => onChange(e.target.value)}
               onBlur={onBlur}
               placeholder={placeholder}
+              className={isOverLimit ? "border-destructive focus-visible:ring-destructive" : ""}
             />
           )
         : (
@@ -38,10 +44,19 @@ export function TextInputItem({
               onChange={e => onChange(e.target.value)}
               onBlur={onBlur}
               placeholder={placeholder}
-              className="h-32"
+              className={cn("h-32", isOverLimit && "border-destructive focus-visible:ring-destructive")}
             />
           )}
-      <p className="text-muted-foreground text-xs">{description}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-muted-foreground text-xs">{description}</p>
+        {maxLength !== undefined && isOverLimit && (
+          <p className="text-destructive text-xs">
+            {value.length}
+            /
+            {maxLength}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
