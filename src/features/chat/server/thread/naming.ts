@@ -20,7 +20,7 @@ export async function generateThreadTitle(message: string, apiKey: string): Prom
     const provider = getModelProvider(apiKey);
 
     // Use a fast model for title generation
-    const model = provider("google/gemini-2.5-flash");
+    const model = provider("google/gemini-2.5-flash-lite");
 
     const { text } = await generateText({
       model,
