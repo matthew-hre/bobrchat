@@ -51,9 +51,10 @@ export function ChatBehaviorSection({ settings }: ChatBehaviorSectionProps) {
         description="The default name for new chat threads."
         value={defaultThreadName}
         placeholder="New Chat"
+        maxLength={80}
         onChange={setDefaultThreadName}
         onBlur={() => {
-          if (defaultThreadName !== settings.defaultThreadName) {
+          if (defaultThreadName !== settings.defaultThreadName && defaultThreadName.length <= 80) {
             save({ defaultThreadName });
           }
         }}
