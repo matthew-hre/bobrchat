@@ -34,7 +34,7 @@ export async function generateThreadIcon(message: string, apiKey: string): Promi
 
   try {
     const provider = getModelProvider(apiKey);
-    const model = provider("mistralai/ministral-8b");
+    const model = provider("google/gemini-3-flash-preview");
 
     const iconList = THREAD_ICONS.map(icon => `- ${icon}: ${ICON_DESCRIPTIONS[icon]}`).join("\n");
 

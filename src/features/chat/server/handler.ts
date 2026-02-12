@@ -35,7 +35,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     modelPricing,
   }: ChatRequestBody = await req.json();
 
-  const baseModelId = modelId || "google/gemini-3-flash-preview";
+  const baseModelId = modelId || "google/gemini-2.5-flash";
 
   const [threadStatus, { settings, resolvedKeys }] = await Promise.all([
     threadId ? ensureThreadExists(threadId, userId) : Promise.resolve(null),
