@@ -15,8 +15,9 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import { applyAccentColor } from "~/components/theme/theme-initializer";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import {
@@ -28,6 +29,7 @@ import {
 } from "~/components/ui/sheet";
 import { Skeleton } from "~/components/ui/skeleton";
 import { signOut, useSession } from "~/features/auth/lib/auth-client";
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { usePreviousRoute } from "~/features/settings/previous-route-context";
 import { cn } from "~/lib/utils";
 
@@ -76,9 +78,18 @@ export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const { data: settings } = useUserSettings({ enabled: true });
+
   const tabsRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // Apply accent color before paint to prevent flicker
+  useLayoutEffect(() => {
+    if (settings?.accentColor) {
+      applyAccentColor(settings.accentColor);
+    }
+  }, [settings?.accentColor]);
 
   const updateScrollState = useCallback(() => {
     const el = tabsRef.current;
