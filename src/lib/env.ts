@@ -20,7 +20,7 @@ const schema = {
     OPENROUTER_API_KEY: z.string().optional(),
     CRON_SECRET: z.string().optional(),
     POLAR_ACCESS_TOKEN: z.string().optional(),
-    POLAR_SANDBOX: z.coerce.boolean().optional().default(false),
+    POLAR_SANDBOX: z.string().optional().transform((v) => v === "true"),
     POLAR_WEBHOOK_SECRET: z.string().optional(),
     POLAR_SUCCESS_URL: z.url().optional(),
     POLAR_PLUS_PRODUCT_ID: z.string().optional(),

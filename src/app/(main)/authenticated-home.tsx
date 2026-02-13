@@ -2,9 +2,10 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 
-import { use, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { use } from "react";
 
 import type { ChatUIMessage } from "~/features/chat/types";
 import type { UserSettingsData } from "~/features/settings/types";
