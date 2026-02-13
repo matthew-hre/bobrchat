@@ -62,19 +62,6 @@ const accentColorOptions: { value: AccentColorPreset; color: string; label: stri
   { value: "gray", color: "#888888", label: "Gray" },
 ];
 
-function hueToHex(hue: number): string {
-  const h = hue / 360;
-  const s = 0.7;
-  const l = 0.55;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => {
-    const k = (n + h * 12) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color).toString(16).padStart(2, "0");
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-}
-
 export function InterfaceTab() {
   const { data: settings, isLoading } = useUserSettings({ enabled: true });
   const updatePreferences = useUpdatePreferences();
@@ -180,7 +167,7 @@ export function InterfaceTab() {
               <div className="flex items-center gap-3">
                 <div
                   className="h-6 w-6 shrink-0 rounded-full border"
-                  style={{ backgroundColor: hueToHex(localHue ?? settings.accentColor) }}
+                  style={{ backgroundColor: `oklch(0.72 0.19 ${localHue ?? settings.accentColor})` }}
                 />
                 <input
                   type="range"
@@ -202,7 +189,7 @@ export function InterfaceTab() {
                     h-2 w-full cursor-pointer appearance-none rounded-full
                   `}
                   style={{
-                    background: "linear-gradient(to right, hsl(0 70% 55%), hsl(60 70% 55%), hsl(120 70% 55%), hsl(180 70% 55%), hsl(240 70% 55%), hsl(300 70% 55%), hsl(360 70% 55%))",
+                    background: "linear-gradient(to right, oklch(0.72 0.19 0), oklch(0.72 0.19 60), oklch(0.72 0.19 120), oklch(0.72 0.19 180), oklch(0.72 0.19 240), oklch(0.72 0.19 300), oklch(0.72 0.19 360))",
                   }}
                 />
                 <span className="text-muted-foreground w-8 text-xs">
