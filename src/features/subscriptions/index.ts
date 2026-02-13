@@ -1,5 +1,5 @@
 export { getPolarProductId, getSubscriptionStatus } from "./actions";
-export { PricingCards } from "./components/pricing-cards";
+export { UpgradeDialog } from "./components/upgrade-dialog";
 export { UpgradePromptDialog } from "./components/upgrade-prompt-dialog";
 export { UsageMeter } from "./components/usage-meter";
 export { useSubscription } from "./hooks/use-subscription";

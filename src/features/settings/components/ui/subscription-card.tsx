@@ -1,12 +1,12 @@
 "use client";
 
 import { ExternalLinkIcon, LoaderIcon, SparklesIcon } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import { authClient } from "~/features/auth/lib/auth-client";
+import { UpgradeDialog } from "~/features/subscriptions/components/upgrade-dialog";
 import { UsageMeter } from "~/features/subscriptions/components/usage-meter";
 import { useSubscription } from "~/features/subscriptions/hooks/use-subscription";
 import { cn } from "~/lib/utils";
@@ -15,7 +15,6 @@ const TIER_LABELS: Record<string, { label: string; color: string }> = {
   free: { label: "FREE", color: "text-muted-foreground" },
   beta: { label: "BETA (lifetime)", color: "text-primary font-mono" },
   plus: { label: "PLUS", color: "text-primary" },
-  pro: { label: "PRO", color: "font-bold text-amber-500" },
 };
 
 function formatBytes(bytes: number): string {
@@ -31,6 +30,7 @@ function formatBytes(bytes: number): string {
 export function SubscriptionCard() {
   const { data: subscription, isLoading } = useSubscription();
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const handleManageSubscription = async () => {
     setIsRedirecting(true);
@@ -54,68 +54,73 @@ export function SubscriptionCard() {
   const tierConfig = TIER_LABELS[subscription.tier] || TIER_LABELS.free;
 
   return (
-    <div className="bg-card space-y-4 rounded-lg p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-          Subscription
-        </h3>
-        <div
-          className={cn(
-            "flex items-center text-xs font-medium",
-            tierConfig.color,
-          )}
-        >
-          {tierConfig.label}
+    <>
+      <div className="bg-card space-y-4 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+            Subscription
+          </h3>
+          <div
+            className={cn(
+              "flex items-center text-xs font-medium",
+              tierConfig.color,
+            )}
+          >
+            {tierConfig.label}
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-3">
-        <UsageMeter
-          label="Threads"
-          current={subscription.usage.threads.current}
-          limit={subscription.usage.threads.limit}
-        />
-        <UsageMeter
-          label="Storage"
-          current={subscription.usage.storage.current}
-          limit={subscription.usage.storage.limit}
-          formatValue={formatBytes}
-        />
-      </div>
+        <div className="space-y-3">
+          <UsageMeter
+            label="Threads"
+            current={subscription.usage.threads.current}
+            limit={subscription.usage.threads.limit}
+          />
+          <UsageMeter
+            label="Storage"
+            current={subscription.usage.storage.current}
+            limit={subscription.usage.storage.limit}
+            formatValue={formatBytes}
+          />
+        </div>
 
-      <div className="flex flex-wrap gap-2">
-        {subscription.canUpgrade && (
-          <Button size="sm" className="flex-1" asChild>
-            <Link href="/pricing">
+        <div className="flex flex-wrap gap-2">
+          {subscription.canUpgrade && (
+            <Button
+              size="sm"
+              className="flex-1"
+              onClick={() => setShowUpgrade(true)}
+            >
               <SparklesIcon className="size-3" />
               Upgrade
-            </Link>
-          </Button>
-        )}
-        {subscription.polarCustomerId && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={handleManageSubscription}
-            disabled={isRedirecting}
-          >
-            {isRedirecting
-              ? (
-                  <>
-                    <LoaderIcon className="size-3 animate-spin" />
-                    Redirecting...
-                  </>
-                )
-              : (
-                  <>
-                    <ExternalLinkIcon className="size-3" />
-                    Manage
-                  </>
-                )}
-          </Button>
-        )}
+            </Button>
+          )}
+          {subscription.polarCustomerId && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={handleManageSubscription}
+              disabled={isRedirecting}
+            >
+              {isRedirecting
+                ? (
+                    <>
+                      <LoaderIcon className="size-3 animate-spin" />
+                      Redirecting...
+                    </>
+                  )
+                : (
+                    <>
+                      <ExternalLinkIcon className="size-3" />
+                      Manage
+                    </>
+                  )}
+            </Button>
+          )}
+        </div>
       </div>
-    </div>
+      <UpgradeDialog open={showUpgrade} onOpenChangeAction={setShowUpgrade} />
+    </>
   );
 }

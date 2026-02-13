@@ -208,7 +208,7 @@ export function LandingPage() {
               <AccordionItem value="faq-3">
                 <AccordionTrigger>Can I use providers other than OpenRouter?</AccordionTrigger>
                 <AccordionContent>
-                  Currently, we support OpenRouter for access to dozens of models with one key. We are actively adding support for other providers like Anthropic, OpenAI, and Google Gemini. This will allow you to use your existing credits or tier-status directly with those official APIs.
+                  Currently, we support OpenRouter for access to hundreds of models with one key. We are actively adding support for other providers like Anthropic, OpenAI, and Google Gemini. This will allow you to use your existing credits or tier-status directly with those official APIs.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="faq-4">
@@ -220,25 +220,74 @@ export function LandingPage() {
             </Accordion>
           </div>
 
-          {/* Beta Note */}
-          <div className="mt-16 flex flex-col items-center pt-8 text-center">
+          {/* Pricing */}
+          <div className="mt-20 flex flex-col items-center text-center">
+            <h2 className="text-xl font-semibold">Pricing</h2>
+
             <div className={`
-              bg-primary/10 text-primary rounded-full px-3 py-1 text-xs
-              font-medium
+              border-border/60 mt-8 grid w-full max-w-2xl grid-cols-1 border
+              border-dashed
+              md:grid-cols-2
             `}
             >
-              Beta
+              <div className={`
+                border-border/60 flex flex-col border-b border-dashed p-6
+                text-left
+                md:border-r md:border-b-0
+              `}
+              >
+                <h3 className="font-semibold">Free</h3>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Everything you need to get started.
+                </p>
+                <div className="mt-4 mb-4">
+                  <span className="text-3xl font-bold">$0</span>
+                </div>
+                <ul className="text-muted-foreground space-y-2 text-sm">
+                  <li>100 threads</li>
+                  <li>10 MB storage</li>
+                </ul>
+                <Link href="/auth" className="mt-auto">
+                  <Button variant="outline" className="w-full gap-2">
+                    Get Started
+                    <ArrowRightIcon className="size-4" />
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="bg-primary/5 relative flex flex-col p-6 text-left">
+                <div className={`
+                  bg-primary text-background absolute -top-3 left-6
+                  rounded-full px-3 py-0.5 text-xs font-medium
+                `}
+                >
+                  Recommended
+                </div>
+                <h3 className="font-semibold">Plus</h3>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  For power users who need more.
+                </p>
+                <div className="mt-4 mb-4">
+                  <span className="text-3xl font-bold">$2.99</span>
+                  <span className="text-muted-foreground text-sm">/mo</span>
+                </div>
+                <ul className="text-muted-foreground space-y-2 text-sm">
+                  <li><b>Unlimited</b> threads</li>
+                  <li><b>100 MB</b> storage</li>
+                  <li>Priority support</li>
+                </ul>
+                <Link href="/auth" className="mt-auto pt-6">
+                  <Button className="w-full gap-2">
+                    Get Started
+                    <ArrowRightIcon className="size-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <h2 className="mt-3 text-xl font-semibold">Free while we figure things out</h2>
-            <p className="text-muted-foreground mt-2 max-w-md text-sm">
-              We&apos;re still early. Beta users get 100MB of file uploads and unlimited threads — free. You just pay for your own API usage through OpenRouter.
+            <p className="text-muted-foreground mt-4 max-w-lg text-sm">
+              Both plans include encrypted messages and Bring Your Own Key support.
+              You always pay for your own API usage through OpenRouter.
             </p>
-            <Link href="/auth" className="mt-6">
-              <Button className="gap-2">
-                Try it out
-                <ArrowRightIcon className="size-4" />
-              </Button>
-            </Link>
           </div>
         </div>
       </div>

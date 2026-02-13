@@ -98,7 +98,7 @@ export function AuthenticatedHome(): React.ReactNode {
       </div>
       <UpgradePromptDialog
         open={upgradeDialog.open}
-        onOpenChange={open => setUpgradeDialog(prev => ({ ...prev, open }))}
+        onOpenChangeAction={open => setUpgradeDialog(prev => ({ ...prev, open }))}
         currentUsage={upgradeDialog.currentUsage}
         limit={upgradeDialog.limit}
       />

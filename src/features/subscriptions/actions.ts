@@ -49,7 +49,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   };
 }
 
-export async function getPolarProductId(tier: "plus" | "pro"): Promise<string> {
+export async function getPolarProductId(tier: "plus"): Promise<string> {
   const productId = POLAR_PRODUCT_IDS[tier];
   return productId;
 }

@@ -19,33 +19,26 @@ import { getPolarProductId } from "~/features/subscriptions/actions";
 
 type UpgradePromptDialogProps = {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChangeAction: (open: boolean) => void;
   currentUsage: number;
   limit: number;
 };
 
-const TIER_FEATURES = {
-  plus: {
-    name: "Plus",
-    price: "$2.99/mo",
-    features: ["Unlimited threads", "100 MB storage", "Priority support"],
-  },
-  pro: {
-    name: "Pro",
-    price: "$5.99/mo",
-    features: ["Unlimited threads", "1 GB storage", "Bring your own storage", "Priority support"],
-  },
+const PLUS_FEATURES = {
+  name: "Plus",
+  price: "$2.99/mo",
+  features: ["Unlimited threads", "100 MB storage", "Priority support"],
 };
 
 export function UpgradePromptDialog({
   open,
-  onOpenChange,
+  onOpenChangeAction,
   currentUsage,
   limit,
 }: UpgradePromptDialogProps) {
-  const [isCheckingOut, setIsCheckingOut] = useState<"plus" | "pro" | null>(null);
+  const [isCheckingOut, setIsCheckingOut] = useState<"plus" | null>(null);
 
-  const handleCheckout = async (tier: "plus" | "pro") => {
+  const handleCheckout = async (tier: "plus") => {
     setIsCheckingOut(tier);
     try {
       const productId = await getPolarProductId(tier);
@@ -64,7 +57,7 @@ export function UpgradePromptDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChangeAction}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -85,59 +78,52 @@ export function UpgradePromptDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className={`
-          grid gap-4 py-4
-          sm:grid-cols-2
-        `}
-        >
-          {(["plus", "pro"] as const).map(tier => (
-            <div
-              key={tier}
-              className={`
-                border-border bg-muted/30 flex flex-col rounded-lg border p-4
-              `}
-            >
-              <div className="mb-3">
-                <h3 className="font-semibold">{TIER_FEATURES[tier].name}</h3>
-                <p className="text-primary text-lg font-bold">
-                  {TIER_FEATURES[tier].price}
-                </p>
-              </div>
-              <ul className="mb-4 flex-1 space-y-2 text-sm">
-                {TIER_FEATURES[tier].features.map(feature => (
-                  <li key={feature} className="flex items-center gap-2">
-                    <CheckIcon className="text-primary size-4" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button
-                onClick={() => handleCheckout(tier)}
-                disabled={isCheckingOut !== null}
-                className="w-full"
-              >
-                {isCheckingOut === tier
-                  ? (
-                      "Redirecting..."
-                    )
-                  : (
-                      <>
-                        <SparklesIcon className="size-4" />
-                        Upgrade to
-                        {" "}
-                        {TIER_FEATURES[tier].name}
-                      </>
-                    )}
-              </Button>
+        <div className="mx-auto max-w-xs py-4">
+          <div
+            className={`
+              border-border bg-muted/30 flex flex-col rounded-lg border p-4
+            `}
+          >
+            <div className="mb-3">
+              <h3 className="font-semibold">{PLUS_FEATURES.name}</h3>
+              <p className="text-primary text-lg font-bold">
+                {PLUS_FEATURES.price}
+              </p>
             </div>
-          ))}
+            <ul className="mb-4 flex-1 space-y-2 text-sm">
+              {PLUS_FEATURES.features.map(feature => (
+                <li key={feature} className="flex items-center gap-2">
+                  <CheckIcon className="text-primary size-4" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <Button
+              onClick={() => handleCheckout("plus")}
+              disabled={isCheckingOut !== null}
+              className="w-full"
+            >
+              {isCheckingOut === "plus"
+                ? (
+                    "Redirecting..."
+                  )
+                : (
+                    <>
+                      <SparklesIcon className="size-4" />
+                      Upgrade to
+                      {" "}
+                      {PLUS_FEATURES.name}
+                    </>
+                  )}
+            </Button>
+          </div>
         </div>
 
         <DialogFooter className="sm:justify-between">
           <Button variant="ghost" asChild>
             <Link href="/settings?tab=preferences">Manage threads</Link>
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChangeAction(false)}>
             Maybe later
           </Button>
         </DialogFooter>

@@ -1,5 +1,5 @@
 -- Create subscription tier enum
-CREATE TYPE subscription_tier AS ENUM ('free', 'beta', 'plus', 'pro');
+CREATE TYPE subscription_tier AS ENUM ('free', 'beta', 'plus');
 
 -- Create subscriptions table
 CREATE TABLE IF NOT EXISTS subscriptions (
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 CREATE INDEX subscriptions_userId_idx ON subscriptions(user_id);
 CREATE INDEX subscriptions_polarCustomerId_idx ON subscriptions(polar_customer_id);
 
--- Create user storage configs table (for BYOS - Pro tier)
+-- Create user storage configs table (for BYOS - TODO)
 CREATE TABLE IF NOT EXISTS user_storage_configs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -31,9 +31,3 @@ CREATE TABLE IF NOT EXISTS user_storage_configs (
 );
 
 CREATE INDEX user_storage_configs_userId_idx ON user_storage_configs(user_id);
-
--- Backfill: Create subscription records for existing users (as beta users)
-INSERT INTO subscriptions (user_id, tier)
-SELECT id, 'beta'::subscription_tier
-FROM users
-ON CONFLICT (user_id) DO NOTHING;

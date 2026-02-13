@@ -127,7 +127,7 @@ export const auth = betterAuth({
       ? [
           polar({
             client: polarClient,
-            createCustomerOnSignUp: true,
+            createCustomerOnSignUp: false,
             use: [
               checkout({
                 successUrl: serverEnv.POLAR_SUCCESS_URL!,

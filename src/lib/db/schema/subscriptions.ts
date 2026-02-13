@@ -1,8 +1,8 @@
-import { index, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { users } from "./auth";
 
-export const subscriptionTierEnum = pgEnum("subscription_tier", ["free", "beta", "plus", "pro"]);
+export const subscriptionTierEnum = pgEnum("subscription_tier", ["free", "beta", "plus"]);
 
 export const subscriptions = pgTable(
   "subscriptions",
@@ -13,6 +13,7 @@ export const subscriptions = pgTable(
       .unique()
       .references(() => users.id, { onDelete: "cascade" }),
     tier: subscriptionTierEnum("tier").notNull().default("free"),
+    isLifetimeBeta: boolean("is_lifetime_beta").notNull().default(false),
     polarCustomerId: text("polar_customer_id"),
     polarSubscriptionId: text("polar_subscription_id"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -33,7 +34,6 @@ export const TIER_LIMITS: Record<SubscriptionTier, { threads: number | null; sto
   free: { threads: 100, storageBytes: 10 * 1024 * 1024 },
   beta: { threads: null, storageBytes: 100 * 1024 * 1024 },
   plus: { threads: null, storageBytes: 100 * 1024 * 1024 },
-  pro: { threads: null, storageBytes: 1024 * 1024 * 1024 },
 };
 
 export const userStorageConfigs = pgTable(
