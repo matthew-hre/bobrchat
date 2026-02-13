@@ -8,8 +8,8 @@ import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { db } from "~/lib/db";
 import { attachments, messageMetadata, messages, threads } from "~/lib/db/schema/chat";
-import { subscriptions, TIER_LIMITS } from "~/lib/db/schema/subscriptions";
 import { threadShares } from "~/lib/db/schema/sharing";
+import { subscriptions, TIER_LIMITS } from "~/lib/db/schema/subscriptions";
 import { serverEnv } from "~/lib/env";
 import { decryptMessageWithKey, deriveUserKey, encryptMessage } from "~/lib/security/encryption";
 import { getKeyMeta, getOrCreateKeyMeta, getSaltsForUser } from "~/lib/security/keys";

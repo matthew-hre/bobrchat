@@ -257,8 +257,8 @@ export function LandingPage() {
 
               <div className="bg-primary/5 relative flex flex-col p-6 text-left">
                 <div className={`
-                  bg-primary text-background absolute -top-3 left-6
-                  rounded-full px-3 py-0.5 text-xs font-medium
+                  bg-primary text-background absolute -top-3 left-6 rounded-full
+                  px-3 py-0.5 text-xs font-medium
                 `}
                 >
                   Recommended
@@ -272,8 +272,16 @@ export function LandingPage() {
                   <span className="text-muted-foreground text-sm">/mo</span>
                 </div>
                 <ul className="text-muted-foreground space-y-2 text-sm">
-                  <li><b>Unlimited</b> threads</li>
-                  <li><b>100 MB</b> storage</li>
+                  <li>
+                    <b>Unlimited</b>
+                    {" "}
+                    threads
+                  </li>
+                  <li>
+                    <b>100 MB</b>
+                    {" "}
+                    storage
+                  </li>
                   <li>Priority support</li>
                 </ul>
                 <Link href="/auth" className="mt-auto pt-6">

@@ -141,7 +141,7 @@ export const auth = betterAuth({
                   await syncSubscriptionFromPolarState({
                     userId: state.externalId ?? undefined,
                     polarCustomerId: state.id,
-                    activeSubscriptions: state.activeSubscriptions.map((sub) => ({
+                    activeSubscriptions: state.activeSubscriptions.map(sub => ({
                       id: sub.id,
                       productId: sub.productId,
                     })),

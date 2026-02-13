@@ -1,5 +1,6 @@
 /* eslint-disable node/no-process-env */
 import type { NextConfig } from "next";
+
 import { serverEnv } from "~/lib/env";
 
 const r2PublicUrl = process.env.R2_PUBLIC_URL || "";

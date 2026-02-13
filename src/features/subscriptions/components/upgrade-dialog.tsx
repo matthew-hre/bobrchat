@@ -67,7 +67,8 @@ export function UpgradeDialog({ open, onOpenChangeAction }: UpgradeDialogProps) 
           <div className="mb-2">
             <span className="text-3xl font-bold">{PLUS_FEATURES.price}</span>
             <span className="text-muted-foreground text-sm">
-              /{PLUS_FEATURES.period}
+              /
+              {PLUS_FEATURES.period}
             </span>
           </div>
 
@@ -81,7 +82,11 @@ export function UpgradeDialog({ open, onOpenChangeAction }: UpgradeDialogProps) 
           </ul>
         </div>
 
-        <DialogFooter className="flex-col gap-2 sm:flex-col">
+        <DialogFooter className={`
+          flex-col gap-2
+          sm:flex-col
+        `}
+        >
           <Button
             onClick={handleCheckout}
             disabled={isCheckingOut}
