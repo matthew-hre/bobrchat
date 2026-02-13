@@ -4,7 +4,6 @@ import { Buffer } from "node:buffer";
 
 import { getPdfPageCount } from "~/features/attachments/lib/pdf";
 import { saveFile } from "~/features/attachments/lib/storage";
-import { getUserStorageUsage } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
 import { getStorageQuota } from "~/features/subscriptions";
 import { db } from "~/lib/db";
@@ -74,10 +73,7 @@ export async function POST(req: Request) {
 
     const incomingSize = files.reduce((sum, f) => sum + f.size, 0);
 
-    const [currentUsage, { quota: storageQuota }] = await Promise.all([
-      getUserStorageUsage(session.user.id),
-      getStorageQuota(session.user.id),
-    ]);
+    const { usedBytes: currentUsage, quota: storageQuota } = await getStorageQuota(session.user.id);
 
     if (currentUsage >= storageQuota) {
       return new Response(
@@ -169,6 +165,15 @@ export async function POST(req: Request) {
       });
 
       results.push({ ...uploaded, pageCount, ...(clientId && { clientId }) });
+    }
+
+    const postUploadUsage = await getStorageQuota(session.user.id);
+    if (postUploadUsage.usedBytes > postUploadUsage.quota) {
+      console.warn("[Upload] Storage quota exceeded post-upload", {
+        userId: session.user.id,
+        used: postUploadUsage.usedBytes,
+        quota: postUploadUsage.quota,
+      });
     }
 
     return new Response(

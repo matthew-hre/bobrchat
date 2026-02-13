@@ -1,4 +1,4 @@
-import { boolean, index, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 import { users } from "./auth";
 
@@ -25,6 +25,8 @@ export const subscriptions = pgTable(
   table => [
     index("subscriptions_userId_idx").on(table.userId),
     index("subscriptions_polarCustomerId_idx").on(table.polarCustomerId),
+    uniqueIndex("subscriptions_polar_customer_id_unique").on(table.polarCustomerId),
+    uniqueIndex("subscriptions_polar_subscription_id_unique").on(table.polarSubscriptionId),
   ],
 );
 

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import type { SubscriptionTier } from "~/lib/db/schema/subscriptions";
 
@@ -7,7 +7,7 @@ import { subscriptions, TIER_LIMITS } from "~/lib/db/schema/subscriptions";
 import { serverEnv } from "~/lib/env";
 
 export const POLAR_PRODUCT_IDS = {
-  plus: serverEnv.POLAR_PLUS_PRODUCT_ID ?? "",
+  plus: serverEnv.POLAR_PLUS_PRODUCT_ID,
 } as const;
 
 export async function createUserSubscription(userId: string, tier: SubscriptionTier = "free") {
@@ -52,7 +52,7 @@ export async function setUserTier(userId: string, tier: SubscriptionTier) {
 }
 
 function productIdToTier(productId: string): SubscriptionTier | null {
-  if (productId === POLAR_PRODUCT_IDS.plus)
+  if (POLAR_PRODUCT_IDS.plus && productId === POLAR_PRODUCT_IDS.plus)
     return "plus";
   return null;
 }
@@ -65,67 +65,87 @@ export async function syncSubscriptionFromPolarState(params: {
 }) {
   const { userId, polarCustomerId, activeSubscriptions, isDeleted } = params;
 
-  // Handle customer deletion - look up by polarCustomerId
-  if (isDeleted || !userId) {
-    const existing = await db
-      .select({ isLifetimeBeta: subscriptions.isLifetimeBeta })
-      .from(subscriptions)
-      .where(eq(subscriptions.polarCustomerId, polarCustomerId))
-      .limit(1);
+  await db.transaction(async (tx) => {
+    // Handle customer deletion - look up by polarCustomerId
+    if (isDeleted || !userId) {
+      const existing = await tx
+        .select({ isLifetimeBeta: subscriptions.isLifetimeBeta })
+        .from(subscriptions)
+        .where(eq(subscriptions.polarCustomerId, polarCustomerId))
+        .limit(1);
 
-    await db
-      .update(subscriptions)
-      .set({
-        tier: existing[0]?.isLifetimeBeta ? "beta" : "free",
-        polarCustomerId: null,
-        polarSubscriptionId: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(subscriptions.polarCustomerId, polarCustomerId));
-    return;
-  }
-
-  const existing = await db
-    .select({ isLifetimeBeta: subscriptions.isLifetimeBeta })
-    .from(subscriptions)
-    .where(eq(subscriptions.userId, userId))
-    .limit(1);
-
-  const isLifetimeBeta = existing[0]?.isLifetimeBeta ?? false;
-
-  if (activeSubscriptions.length > 0) {
-    const sub = activeSubscriptions[0];
-    const tier = productIdToTier(sub.productId);
-
-    if (!tier) {
-      console.error("Unrecognized Polar product ID during sync.", {
-        userId,
-        polarCustomerId,
-        productId: sub.productId,
-        subscriptionId: sub.id,
-      });
+      await tx
+        .update(subscriptions)
+        .set({
+          tier: existing[0]?.isLifetimeBeta ? "beta" : "free",
+          polarCustomerId: null,
+          polarSubscriptionId: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(subscriptions.polarCustomerId, polarCustomerId));
       return;
     }
 
-    await db
-      .update(subscriptions)
-      .set({
-        tier,
-        polarCustomerId,
-        polarSubscriptionId: sub.id,
-        updatedAt: new Date(),
-      })
-      .where(eq(subscriptions.userId, userId));
-  }
-  else {
-    await db
-      .update(subscriptions)
-      .set({
-        tier: isLifetimeBeta ? "beta" : "free",
-        polarCustomerId,
-        polarSubscriptionId: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(subscriptions.userId, userId));
-  }
+    await tx.execute(sql`SELECT id FROM subscriptions WHERE user_id = ${userId} FOR UPDATE`);
+
+    const existing = await tx
+      .select({ isLifetimeBeta: subscriptions.isLifetimeBeta })
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId))
+      .limit(1);
+
+    const isLifetimeBeta = existing[0]?.isLifetimeBeta ?? false;
+
+    if (activeSubscriptions.length > 0) {
+      const sub = activeSubscriptions[0];
+      const tier = productIdToTier(sub.productId);
+
+      if (!tier) {
+        console.error("Unrecognized Polar product ID during sync.", {
+          userId,
+          polarCustomerId,
+          productId: sub.productId,
+          subscriptionId: sub.id,
+        });
+        return;
+      }
+
+      await tx
+        .insert(subscriptions)
+        .values({
+          userId,
+          tier,
+          polarCustomerId,
+          polarSubscriptionId: sub.id,
+        })
+        .onConflictDoUpdate({
+          target: subscriptions.userId,
+          set: {
+            tier,
+            polarCustomerId,
+            polarSubscriptionId: sub.id,
+            updatedAt: new Date(),
+          },
+        });
+    }
+    else {
+      await tx
+        .insert(subscriptions)
+        .values({
+          userId,
+          tier: isLifetimeBeta ? "beta" : "free",
+          polarCustomerId,
+          polarSubscriptionId: null,
+        })
+        .onConflictDoUpdate({
+          target: subscriptions.userId,
+          set: {
+            tier: isLifetimeBeta ? "beta" : "free",
+            polarCustomerId,
+            polarSubscriptionId: null,
+            updatedAt: new Date(),
+          },
+        });
+    }
+  });
 }

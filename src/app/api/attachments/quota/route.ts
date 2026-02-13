@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 
-import { getUserStorageUsage } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
 import { getStorageQuota } from "~/features/subscriptions";
 
@@ -13,10 +12,7 @@ export async function GET() {
     });
   }
 
-  const [used, { quota, tier }] = await Promise.all([
-    getUserStorageUsage(session.user.id),
-    getStorageQuota(session.user.id),
-  ]);
+  const { usedBytes: used, quota, tier } = await getStorageQuota(session.user.id);
 
   return new Response(
     JSON.stringify({

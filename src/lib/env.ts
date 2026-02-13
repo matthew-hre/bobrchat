@@ -24,7 +24,6 @@ const schema = {
     POLAR_WEBHOOK_SECRET: z.string().optional(),
     POLAR_SUCCESS_URL: z.url().optional(),
     POLAR_PLUS_PRODUCT_ID: z.string().optional(),
-    POLAR_PRO_PRODUCT_ID: z.string().optional(),
     UPSTASH_REDIS_REST_URL: z.url(),
     UPSTASH_REDIS_REST_TOKEN: z.string(),
   }),

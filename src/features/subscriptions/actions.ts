@@ -49,7 +49,6 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   };
 }
 
-export async function getPolarProductId(tier: "plus"): Promise<string> {
-  const productId = POLAR_PRODUCT_IDS[tier];
-  return productId;
+export async function getPolarProductId(tier: "plus"): Promise<string | undefined> {
+  return POLAR_PRODUCT_IDS[tier];
 }
