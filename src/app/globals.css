@@ -236,6 +236,10 @@ mjx-container[jax="SVG"][display="true"] > svg {
   @apply mx-auto;
 }
 
+.katex-display {
+  @apply text-center my-2;
+}
+
 @media (hover: none) {
   .touch-device-hidden {
     display: none;

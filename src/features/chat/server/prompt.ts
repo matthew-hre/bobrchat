@@ -20,7 +20,7 @@ export function generatePrompt(settings: UserSettingsData): string {
     When writing math:
     - Use $...$ for inline math (e.g., $x^2$)
     - Use $$...$$ for display/block math on its own line
-    - Use \\aligned instead of \\align for multi-line equations
+    - Use \\begin{aligned}...\\end{aligned} for multi-line equations (never use \\align)
     - Use \\text{} for text within math
     - For matrices, use \\begin{pmatrix} or \\begin{bmatrix} with \\\\ between rows
 
