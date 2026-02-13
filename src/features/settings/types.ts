@@ -31,7 +31,7 @@ export const preferencesSchema = z.object({
   defaultThreadName: z
     .string()
     .max(255)
-    .transform(v => v.trim() || "New Chat"),
+    .transform(v => v.trim() || "New Thread"),
   defaultThreadIcon: z.enum(THREAD_ICONS).default("message-circle"),
   landingPageContent: z.enum(["suggestions", "greeting", "blank"]),
   sendMessageKeyboardShortcut: z.enum(["enter", "ctrlEnter", "shiftEnter"]).default("enter"),
@@ -52,7 +52,7 @@ export const preferencesUpdateSchema = z.object({
   theme: z.enum(["light", "dark", "system"]).optional(),
   accentColor: accentColorSchema.optional(),
   customInstructions: z.string().max(5000).optional(),
-  defaultThreadName: z.string().max(255).transform(v => v.trim() || "New Chat").optional(),
+  defaultThreadName: z.string().max(255).transform(v => v.trim() || "New Thread").optional(),
   defaultThreadIcon: z.enum(THREAD_ICONS).optional(),
   landingPageContent: z.enum(["suggestions", "greeting", "blank"]).optional(),
   sendMessageKeyboardShortcut: z.enum(["enter", "ctrlEnter", "shiftEnter"]).optional(),

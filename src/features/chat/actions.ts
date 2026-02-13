@@ -46,7 +46,7 @@ function extractStoragePathsFromThreadMessages(messages: ChatUIMessage[]): strin
 }
 
 /**
- * Creates a new chat thread for the authenticated user (idempotent).
+ * Creates a new thread for the authenticated user (idempotent).
  * Accepts an optional client-generated threadId for optimistic updates.
  *
  * @param options Options for thread creation
@@ -70,7 +70,7 @@ export async function createNewThread(options?: {
 
   const result = await createThreadWithLimitCheck(session.user.id, {
     threadId: options?.threadId,
-    title: options?.title || "New Chat",
+    title: options?.title || "New Thread",
     icon: options?.icon,
   });
 

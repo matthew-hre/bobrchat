@@ -102,7 +102,7 @@ export function useCreateThread() {
       const now = new Date().toISOString();
       const optimisticThread: ThreadFromApi = {
         id: input.threadId,
-        title: input.title || "New Chat",
+        title: input.title || "New Thread",
         icon: input.icon ?? null,
         lastMessageAt: now,
         userId: "",

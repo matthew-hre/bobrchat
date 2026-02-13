@@ -37,7 +37,7 @@ export default function PrivacyPolicy() {
               </p>
               <ul className="text-muted-foreground ml-4 space-y-2">
                 <li>• Email addresses and names</li>
-                <li>• Chat threads and messages</li>
+                <li>• Threads and messages</li>
                 <li>• Uploaded files and images</li>
                 <li>• Account information</li>
               </ul>
@@ -63,7 +63,7 @@ export default function PrivacyPolicy() {
               </p>
               <ul className="text-muted-foreground ml-4 space-y-2">
                 <li>• Individual messages</li>
-                <li>• Entire chat threads</li>
+                <li>• Entire threads</li>
                 <li>• Uploaded files</li>
                 <li>• Your entire account</li>
               </ul>

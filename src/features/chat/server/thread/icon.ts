@@ -7,7 +7,7 @@ import { THREAD_ICONS } from "~/lib/db/schema/chat";
 import { getModelProvider } from "../models";
 
 const ICON_DESCRIPTIONS: Record<ThreadIcon, string> = {
-  "message-circle": "general chat or casual conversation",
+  "message-circle": "general thread or casual conversation",
   "message-square": "formal discussion or Q&A",
   "sparkles": "creative, AI, or magical topics",
   "lightbulb": "ideas, brainstorming, or suggestions",
@@ -20,7 +20,7 @@ const ICON_DESCRIPTIONS: Record<ThreadIcon, string> = {
 };
 
 /**
- * Generates an appropriate icon for a chat thread based on the first user message.
+ * Generates an appropriate icon for a thread based on the first user message.
  * Uses a low-latency model to select the icon quickly.
  *
  * @param message The first message from the user.
@@ -40,7 +40,7 @@ export async function generateThreadIcon(message: string, apiKey: string): Promi
 
     const { text } = await generateText({
       model,
-      system: `Select the most appropriate icon for a chat thread based on the user's message.
+      system: `Select the most appropriate icon for a thread based on the user's message.
 
 Available icons:
 ${iconList}

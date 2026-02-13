@@ -142,7 +142,7 @@ export async function createDefaultUserSettings(userId: string): Promise<UserSet
   const defaultSettings: UserSettingsData = {
     theme: "dark",
     accentColor: "green",
-    defaultThreadName: "New Chat",
+    defaultThreadName: "New Thread",
     defaultThreadIcon: "message-circle",
     autoThreadNaming: false,
     autoThreadIcon: false,

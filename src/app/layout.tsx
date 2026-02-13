@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s | BobrChat",
   },
   description:
-    "BobrChat is a fast, minimal AI chat interface with support for multiple models. Experience seamless conversations with Claude, GPT, and more.",
+    "BobrChat is a fast, minimal AI chat interface with support for multiple models. Experience seamless threads with Claude, GPT, and more.",
   keywords: ["AI chat", "chatbot", "Claude", "GPT", "AI assistant", "bobrchat", "chat interface"],
   authors: [{ name: "BobrChat" }],
   creator: "BobrChat",
@@ -40,14 +40,14 @@ export const metadata: Metadata = {
     siteName: "BobrChat",
     title: "BobrChat - Fast, Minimal AI Chat Interface",
     description:
-      "A fast, minimal AI chat interface with support for multiple models. Experience seamless conversations with Claude, GPT, and more.",
+      "A fast, minimal AI chat interface with support for multiple models. Experience seamless threads with Claude, GPT, and more.",
     images: [{ url: "https://og.bobrchat.com/", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "BobrChat - Fast, Minimal AI Chat Interface",
     description:
-      "A fast, minimal AI chat interface with support for multiple models. Experience seamless conversations with Claude, GPT, and more.",
+      "A fast, minimal AI chat interface with support for multiple models. Experience seamless threads with Claude, GPT, and more.",
     images: ["https://og.bobrchat.com/"],
   },
 };

@@ -470,7 +470,7 @@ export function AttachmentsTab() {
             </DialogTitle>
             <DialogDescription>
               {confirmLinkedCount > 0
-                ? `${confirmLinkedCount} of ${confirmIds.length} selected attachment${confirmIds.length === 1 ? " is" : "s are"} linked to chat history. Deleting will remove file references from those messages. This cannot be undone.`
+                ? `${confirmLinkedCount} of ${confirmIds.length} selected attachment${confirmIds.length === 1 ? " is" : "s are"} linked to thread history. Deleting will remove file references from those messages. This cannot be undone.`
                 : `You are about to delete ${confirmIds.length} attachment${confirmIds.length === 1 ? "" : "s"}. This action cannot be undone.`}
             </DialogDescription>
           </DialogHeader>

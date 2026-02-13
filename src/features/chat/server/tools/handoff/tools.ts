@@ -7,14 +7,14 @@ import type { HandoffToolOutput } from "./types";
 import { createHandoffThread, generateHandoffPrompt } from "./service";
 import { handoffInputSchema } from "./types";
 
-const HANDOFF_DESCRIPTION = `Hand off the conversation to a new thread with focused context. Use this when:
-- The conversation has become long and a fresh start would help
-- The user wants to explore a specific topic from the conversation in depth
+const HANDOFF_DESCRIPTION = `Hand off the thread to a new thread with focused context. Use this when:
+- The thread has become long and a fresh start would help
+- The user wants to explore a specific topic from the thread in depth
 - The user explicitly asks to "hand off" or start a new thread about something
 
 Guidelines:
 - Provide a clear objective describing what the new thread should focus on
-- The new thread will receive a summarized context, not the full conversation
+- The new thread will receive a summarized context, not the full thread
 - The user will be navigated to the new thread automatically`;
 
 export function createHandoffTool(

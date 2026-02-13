@@ -52,7 +52,7 @@ type TabConfig = {
 
 const tabs: TabConfig[] = [
   { id: "interface", label: "Interface", icon: PaletteIcon },
-  { id: "preferences", label: "Chat & AI", icon: SettingsIcon },
+  { id: "preferences", label: "Thread & AI", icon: SettingsIcon },
   { id: "integrations", label: "Integrations", icon: KeyIcon },
   { id: "models", label: "Models", icon: SparklesIcon },
   { id: "attachments", label: "Attachments", icon: PaperclipIcon },
@@ -342,7 +342,7 @@ function ProfileSidebar({ onSignOut }: { onSignOut: () => void }) {
       `}
       />
 
-      {/* Back to Chat */}
+      {/* Back to Thread */}
       <div className="p-4">
         <BackToChatButton />
       </div>
@@ -441,7 +441,7 @@ function BackToChatButton() {
     >
       <Link href={previousRoute}>
         <ArrowLeftIcon className="size-4" />
-        Back to Chat
+        Back to Thread
       </Link>
     </Button>
   );

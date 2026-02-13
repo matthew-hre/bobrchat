@@ -87,7 +87,7 @@ export default async function SharePage({ params }: SharePageProps) {
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-lg font-semibold">{thread.title}</h1>
             <p className="text-muted-foreground text-sm">
-              Shared conversation
+              Shared thread
             </p>
           </div>
           {!isLoggedIn && (
@@ -115,7 +115,7 @@ export default async function SharePage({ params }: SharePageProps) {
       {!isLoggedIn && (
         <footer className="border-t py-8 text-center">
           <p className="text-muted-foreground text-sm">
-            This is a shared conversation from
+            This is a shared thread from
             {" "}
             <Link
               href="/"
@@ -153,7 +153,7 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
   }
 
   const title = `${thread.title} - Shared from BobrChat`;
-  const description = "A shared conversation from BobrChat";
+  const description = "A shared thread from BobrChat";
   const ogImageUrl = `https://og.bobrchat.com/share/${shareId}`;
 
   return {

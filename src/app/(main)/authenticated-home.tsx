@@ -19,7 +19,7 @@ import { UserSettingsContext } from "~/features/settings/settings-context";
 import { UpgradePromptDialog } from "~/features/subscriptions/components/upgrade-prompt-dialog";
 
 const FALLBACK_SETTINGS: Pick<UserSettingsData, "defaultThreadName" | "defaultThreadIcon" | "landingPageContent"> = {
-  defaultThreadName: "New Chat",
+  defaultThreadName: "New Thread",
   defaultThreadIcon: "message-circle" as ThreadIcon,
   landingPageContent: "suggestions",
 };

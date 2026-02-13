@@ -5,7 +5,7 @@ export const handoffInputSchema = z.object({
     .string()
     .max(500)
     .describe(
-      "What the new thread should focus on. Describe the goal or topic for the handed-off conversation.",
+      "What the new thread should focus on. Describe the goal or topic for the handed-off thread.",
     ),
 });
 
