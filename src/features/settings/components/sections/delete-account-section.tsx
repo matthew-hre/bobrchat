@@ -35,7 +35,7 @@ export function DeleteAccountSection() {
             </Button>
           )}
           title="Delete Account"
-          description="This action cannot be undone. All your data, including chats, settings, and preferences will be permanently deleted."
+          description="This action cannot be undone. All your data, including threads, settings, and preferences will be permanently deleted."
           icon={TriangleAlertIcon}
           confirmationType="text"
           confirmText="DELETE"

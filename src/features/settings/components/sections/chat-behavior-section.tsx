@@ -43,14 +43,14 @@ export function ChatBehaviorSection({ settings }: ChatBehaviorSectionProps) {
 
   return (
     <SettingsSection
-      title="Chat Behavior"
-      description="Configure how chats behave."
+      title="Thread Behavior"
+      description="Configure how threads behave."
     >
       <TextInputItem
         label="Default Thread Name"
-        description="The default name for new chat threads."
+        description="The default name for new threads."
         value={defaultThreadName}
-        placeholder="New Chat"
+        placeholder="New Thread"
         maxLength={80}
         onChange={setDefaultThreadName}
         onBlur={() => {
@@ -63,7 +63,7 @@ export function ChatBehaviorSection({ settings }: ChatBehaviorSectionProps) {
       {!settings.showSidebarIcons && (
         <IconSelectItem
           label="Default Thread Icon"
-          description="The default icon for new chat threads."
+          description="The default icon for new threads."
           value={defaultThreadIcon}
           onChange={(icon) => {
             setDefaultThreadIcon(icon);
@@ -76,7 +76,7 @@ export function ChatBehaviorSection({ settings }: ChatBehaviorSectionProps) {
 
       <ToggleItem
         label="Automatic Thread Renaming"
-        description="Automatically generate a short title for new conversations."
+        description="Automatically generate a short title for new threads."
         enabled={settings.autoThreadNaming}
         onToggle={enabled => save({ autoThreadNaming: enabled })}
       />
@@ -84,7 +84,7 @@ export function ChatBehaviorSection({ settings }: ChatBehaviorSectionProps) {
       {!settings.showSidebarIcons && (
         <ToggleItem
           label="Automatic Thread Icon"
-          description="Automatically select a relevant icon based on conversation content."
+          description="Automatically select a relevant icon based on thread content."
           enabled={settings.autoThreadIcon}
           onToggle={enabled => save({ autoThreadIcon: enabled })}
         />
@@ -92,7 +92,7 @@ export function ChatBehaviorSection({ settings }: ChatBehaviorSectionProps) {
 
       <TextInputItem
         label="Custom Instructions"
-        description="These instructions will be included in every conversation."
+        description="These instructions will be included in every thread."
         value={customInstructions}
         placeholder="Add any custom instructions for the AI assistant..."
         size="multi"

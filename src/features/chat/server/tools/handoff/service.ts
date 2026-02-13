@@ -9,15 +9,15 @@ import { getModelProvider } from "../../models";
 
 const HANDOFF_MODEL = "google/gemini-2.5-flash";
 
-const HANDOFF_SYSTEM_PROMPT = `You are a context summarizer. Your job is to read a conversation and the user's handoff request, then generate a focused prompt for a new conversation thread.
+const HANDOFF_SYSTEM_PROMPT = `You are a context summarizer. Your job is to read a thread and the user's handoff request, then generate a focused prompt for a new thread.
 
 The prompt you generate should:
-1. Provide essential context from the previous conversation (key decisions, conclusions, relevant details)
-2. Clearly state what the new conversation should focus on
+1. Provide essential context from the previous thread (key decisions, conclusions, relevant details)
+2. Clearly state what the new thread should focus on
 3. Include any specific requirements or constraints mentioned
 4. Be concise but complete - the new thread should not need to reference the old one
 5. NOT include entire files or large code blocks - use excerpts or descriptions instead
-6. Be written as if the user is starting a fresh conversation with a new assistant
+6. Be written as if the user is starting a fresh thread with a new assistant
 
 Format the prompt naturally, as if the user wrote it themselves. Do not include meta-commentary about what you're doing.`;
 
@@ -67,7 +67,7 @@ export async function generateHandoffPrompt(
     messages: [
       {
         role: "user",
-        content: `Here is the conversation so far:
+        content: `Here is the thread so far:
 
 ---
 ${conversationContext}
@@ -75,7 +75,7 @@ ${conversationContext}
 
 The user wants to hand off to a new thread with this objective: "${objective}"
 
-Generate a focused prompt for the new conversation that captures the essential context and clearly states what should be discussed next.`,
+Generate a focused prompt for the new thread that captures the essential context and clearly states what should be discussed next.`,
       },
     ],
   });

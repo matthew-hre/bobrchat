@@ -74,7 +74,7 @@ export function UpgradePromptDialog({
             {limit}
             {" "}
             threads on the free plan.
-            Upgrade to continue creating new conversations.
+            Upgrade to continue creating new threads.
           </DialogDescription>
         </DialogHeader>
 

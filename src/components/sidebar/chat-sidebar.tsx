@@ -108,7 +108,7 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
               variant="ghost"
               size="icon-sm"
               className="size-7"
-              title="New chat"
+              title="new thread"
               asChild
             >
               <Link href="/">

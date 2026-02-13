@@ -106,7 +106,7 @@ export function ShareThreadDialog({
           <DialogDescription>
             Share "
             {threadTitle}
-            " via a public link. Anyone with the link can view this conversation.
+            " via a public link. Anyone with the link can view this thread.
           </DialogDescription>
         </DialogHeader>
 

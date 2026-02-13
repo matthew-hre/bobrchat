@@ -41,7 +41,7 @@ export function DataManagementSection() {
   return (
     <SettingsSection
       title="Data Management"
-      description="Manage your chat data and history."
+      description="Manage your thread data and history."
     >
       <div className="space-y-4">
         <div className="space-y-2">
@@ -53,14 +53,14 @@ export function DataManagementSection() {
               </Button>
             )}
             title="Rotate Encryption Key"
-            description="This will generate a new encryption key and re-encrypt all your chat messages. This may take a moment."
+            description="This will generate a new encryption key and re-encrypt all your thread messages. This may take a moment."
             icon={KeyRoundIcon}
             confirmLabel="Rotate Key"
             loadingLabel="Rotating..."
             onConfirm={handleRotateKey}
           />
           <p className="text-muted-foreground text-xs">
-            Rotate encryption key and re-encrypt chat messages.
+            Rotate encryption key and re-encrypt thread messages.
           </p>
         </div>
 
@@ -73,7 +73,7 @@ export function DataManagementSection() {
               </Button>
             )}
             title="Delete All Threads"
-            description="This will permanently delete all your chat threads and messages. This action cannot be undone."
+            description="This will permanently delete all your threads and messages. This action cannot be undone."
             icon={Trash2Icon}
             confirmLabel="Delete All Threads"
             loadingLabel="Deleting..."
@@ -81,7 +81,7 @@ export function DataManagementSection() {
             variant="destructive"
           />
           <p className="text-muted-foreground text-xs">
-            Permanently delete all your chat history.
+            Permanently delete all your thread history.
           </p>
         </div>
       </div>

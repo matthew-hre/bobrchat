@@ -240,8 +240,8 @@ export function InterfaceTab() {
         <Separator />
 
         <SettingsSection
-          title="New Chat"
-          description="Configure what you see when starting a new conversation."
+          title="New Thread"
+          description="Configure what you see when starting a new thread."
         >
           <SelectionCardItem
             label="Landing Page Content"

@@ -251,7 +251,7 @@ export async function saveMessage(
       }
     }
 
-    // Update thread's lastMessageAt (conversation engagement time)
+    // Update thread's lastMessageAt (thread engagement time)
     // Includes userId in WHERE clause to enforce ownership at the DB layer
     await tx
       .update(threads)
@@ -296,7 +296,7 @@ export async function saveMessages(
       }),
     );
 
-    // Update thread's lastMessageAt (conversation engagement time)
+    // Update thread's lastMessageAt (thread engagement time)
     await tx
       .update(threads)
       .set({ lastMessageAt: dateNow, updatedAt: dateNow })
@@ -320,7 +320,7 @@ export async function createThread(
 ): Promise<string> {
   const now = new Date();
   const threadId = options?.threadId ?? crypto.randomUUID();
-  const title = options?.title || "New Chat";
+  const title = options?.title || "New Thread";
 
   await db
     .insert(threads)
@@ -373,7 +373,7 @@ export async function createThreadWithLimitCheck(
 
     const now = new Date();
     const threadId = options?.threadId ?? crypto.randomUUID();
-    const title = options?.title || "New Chat";
+    const title = options?.title || "New Thread";
 
     await tx
       .insert(threads)
@@ -422,7 +422,7 @@ export async function ensureThreadExists(
   await db.insert(threads).values({
     id: threadId,
     userId,
-    title: title || "New Chat",
+    title: title || "New Thread",
     lastMessageAt: now,
   });
 

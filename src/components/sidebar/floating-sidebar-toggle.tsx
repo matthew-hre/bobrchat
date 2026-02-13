@@ -41,8 +41,8 @@ export function FloatingSidebarToggle() {
           hover:bg-muted
           dark:hover:bg-muted
         `}
-        title="New Thread"
-        aria-label="New Thread"
+        title="new thread"
+        aria-label="new thread"
         asChild
       >
         <Link href="/">
