@@ -12,7 +12,25 @@ import { cn } from "~/lib/utils";
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
   const tokens = marked.lexer(markdown);
-  return tokens.map(token => token.raw);
+  const blocks: string[] = [];
+
+  for (const token of tokens) {
+    const parts = token.raw.split(/(^\$\$[\s\S]*?\$\$$)/m);
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed)
+        continue;
+      const displayMatch = trimmed.match(/^\$\$([\s\S]*?)\$\$$/);
+      if (displayMatch) {
+        blocks.push(`$$\n${displayMatch[1].trim()}\n$$`);
+      }
+      else {
+        blocks.push(trimmed);
+      }
+    }
+  }
+
+  return blocks;
 }
 
 const MemoizedMarkdownBlock = memo(
