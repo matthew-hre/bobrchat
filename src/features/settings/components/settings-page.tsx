@@ -37,6 +37,7 @@ import { IntegrationsTab } from "./tabs/integrations-tab";
 import { InterfaceTab } from "./tabs/interface-tab";
 import { ModelsTab } from "./tabs/models-tab";
 import { PreferencesTab } from "./tabs/preferences-tab";
+import { SubscriptionCard } from "./ui/subscription-card";
 import { UserAvatar } from "./ui/user-avatar";
 
 type TabId = "interface" | "preferences" | "integrations" | "models" | "attachments" | "auth";
@@ -373,8 +374,13 @@ function ProfileSidebar({ onSignOut }: { onSignOut: () => void }) {
             )}
       </div>
 
+      {/* Subscription Card */}
+      <div className="px-4 py-2">
+        <SubscriptionCard />
+      </div>
+
       {/* Keyboard Shortcuts */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-2">
         <div className="bg-card rounded-lg p-4">
           <h3 className={`
             text-muted-foreground mb-3 text-xs font-semibold tracking-wider

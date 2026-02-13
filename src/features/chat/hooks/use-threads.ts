@@ -76,12 +76,24 @@ export function useThreads(options: { enabled?: boolean } = {}) {
   };
 }
 
+export type ThreadLimitError = {
+  error: string;
+  code: "THREAD_LIMIT_EXCEEDED";
+  currentUsage: number;
+  limit: number;
+};
+
 export function useCreateThread() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: CreateThreadInput) =>
-      createNewThread({ threadId: input.threadId, title: input.title, icon: input.icon }),
+    mutationFn: async (input: CreateThreadInput) => {
+      const result = await createNewThread({ threadId: input.threadId, title: input.title, icon: input.icon });
+      if ("error" in result) {
+        throw result;
+      }
+      return result.threadId;
+    },
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: THREADS_KEY });
 

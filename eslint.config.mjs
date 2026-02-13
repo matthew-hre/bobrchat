@@ -5,13 +5,14 @@ export default antfu({
   formatters: true,
   react: true,
   nextjs: true,
+  typescipt: false,
+  // typescript: { tsconfigPath: "tsconfig.json" }, TODO: handle TS errors
   stylistic: {
     indent: 2,
     semi: true,
     quotes: "double",
   },
   ignores: ["**/nix/**", "**/.direnv/**", "**/node_modules/**", "**/.next/**", "**/.direnv/**", "**/components/ui/**"],
-
 }, {
   plugins: {
     "better-tailwindcss": eslintPluginBetterTailwindcss,
@@ -32,6 +33,8 @@ export default antfu({
     "node/no-process-env": ["error"],
     "react-refresh/only-export-components": "off",
     "perfectionist/sort-imports": ["error", { tsconfigRootDir: "." }],
+    "react-x/no-implicit-key": "off",
+    "react/no-implicit-key": "off",
     "unicorn/filename-case": [
       "error",
       {

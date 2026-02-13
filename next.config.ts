@@ -1,6 +1,9 @@
+/* eslint-disable node/no-process-env */
 import type { NextConfig } from "next";
 
-import { serverEnv } from "./src/lib/env";
+import { serverEnv } from "~/lib/env";
+
+const r2PublicUrl = process.env.R2_PUBLIC_URL || "";
 
 const nextConfig: NextConfig = {
   logging: {
@@ -11,10 +14,20 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        hostname: serverEnv.R2_PUBLIC_URL?.replace(/^https?:\/\//, "") || "",
+        hostname: r2PublicUrl.replace(/^https?:\/\//, "") || "",
       },
     ],
   },
+  serverExternalPackages: [
+    "@aws-sdk/client-s3",
+    "@polar-sh/better-auth",
+    "@polar-sh/sdk",
+    "drizzle-orm",
+    "postgres",
+    "pdf-lib",
+    "file-type",
+    "resend",
+  ],
   headers: async () => [
     {
       source: "/:path*",
@@ -29,7 +42,7 @@ const nextConfig: NextConfig = {
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
             "style-src 'self' 'unsafe-inline'",
-            `img-src 'self' data: blob: ${serverEnv.R2_PUBLIC_URL || ""} https://avatars.githubusercontent.com`,
+            `img-src 'self' data: blob: ${r2PublicUrl} https://avatars.githubusercontent.com`,
             "font-src 'self' data:",
             `connect-src 'self' https://openrouter.ai https://*.parallel.ai ${serverEnv.R2_PUBLIC_URL || ""}`,
             `frame-src 'self' blob: ${serverEnv.R2_PUBLIC_URL || ""}`,

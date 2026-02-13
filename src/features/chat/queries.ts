@@ -1,6 +1,6 @@
 import type Buffer from "node:buffer";
 
-import { and, desc, eq, inArray, isNotNull, lt } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNotNull, lt, sql } from "drizzle-orm";
 import { cache } from "react";
 
 import type { ChatUIMessage } from "~/features/chat/types";
@@ -9,6 +9,7 @@ import type { ThreadIcon } from "~/lib/db/schema/chat";
 import { db } from "~/lib/db";
 import { attachments, messageMetadata, messages, threads } from "~/lib/db/schema/chat";
 import { threadShares } from "~/lib/db/schema/sharing";
+import { subscriptions, TIER_LIMITS } from "~/lib/db/schema/subscriptions";
 import { serverEnv } from "~/lib/env";
 import { decryptMessageWithKey, deriveUserKey, encryptMessage } from "~/lib/security/encryption";
 import { getKeyMeta, getOrCreateKeyMeta, getSaltsForUser } from "~/lib/security/keys";
@@ -333,6 +334,60 @@ export async function createThread(
     .onConflictDoNothing({ target: threads.id });
 
   return threadId;
+}
+
+export async function createThreadWithLimitCheck(
+  userId: string,
+  options?: { threadId?: string; title?: string; icon?: ThreadIcon },
+): Promise<
+  | { ok: true; threadId: string }
+  | { ok: false; reason: string; currentUsage: number; limit: number }
+> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT id FROM subscriptions WHERE user_id = ${userId} FOR UPDATE`);
+
+    const subRow = await tx
+      .select({ tier: subscriptions.tier })
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId))
+      .limit(1);
+
+    const tier = subRow[0]?.tier ?? "free";
+    const threadLimit = TIER_LIMITS[tier].threads;
+
+    const threadCountResult = await tx
+      .select({ count: count() })
+      .from(threads)
+      .where(eq(threads.userId, userId));
+
+    const currentCount = threadCountResult[0]?.count ?? 0;
+
+    if (threadLimit !== null && currentCount >= threadLimit) {
+      return {
+        ok: false as const,
+        reason: `You've reached your limit of ${threadLimit} threads. Delete some threads or upgrade to continue.`,
+        currentUsage: currentCount,
+        limit: threadLimit,
+      };
+    }
+
+    const now = new Date();
+    const threadId = options?.threadId ?? crypto.randomUUID();
+    const title = options?.title || "New Chat";
+
+    await tx
+      .insert(threads)
+      .values({
+        id: threadId,
+        userId,
+        title,
+        icon: options?.icon,
+        lastMessageAt: now,
+      })
+      .onConflictDoNothing({ target: threads.id });
+
+    return { ok: true as const, threadId };
+  });
 }
 
 /**
