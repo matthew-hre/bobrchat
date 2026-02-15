@@ -23,6 +23,7 @@ export function generatePrompt(settings: UserSettingsData): string {
     - Use \\begin{aligned}...\\end{aligned} for multi-line equations (never use \\align)
     - Use \\text{} for text within math
     - For matrices, use \\begin{pmatrix} or \\begin{bmatrix} with \\\\ between rows
+    - Escape dollar signs that are not math (e.g., write \\$25 for currency)
 
     ${customInstructions
       ? `# User Instructions:

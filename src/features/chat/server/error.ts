@@ -1,4 +1,4 @@
-import { APICallError, RetryError } from "ai";
+import { APICallError, NoSuchToolError, RetryError } from "ai";
 
 type OpenRouterErrorMetadata = {
   raw?: string;
@@ -38,9 +38,17 @@ const STATUS_CODE_MESSAGES: Record<number, string> = {
 };
 
 export function formatProviderError(error: unknown): string {
+  if (typeof error === "string") {
+    return error;
+  }
+
   // Unwrap RetryError to get the underlying APICallError
   if (RetryError.isInstance(error)) {
     return formatProviderError(error.lastError);
+  }
+
+  if (NoSuchToolError.isInstance(error)) {
+    return `The model tried to call an unavailable tool. Please try again.`;
   }
 
   if (!APICallError.isInstance(error)) {
