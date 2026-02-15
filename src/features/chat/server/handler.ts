@@ -1,3 +1,5 @@
+import { NoSuchToolError } from "ai";
+
 import type { ChatUIMessage } from "~/features/chat/types";
 
 import { ensureThreadExists, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
@@ -145,7 +147,9 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     sendSources: true,
     sendReasoning: true,
     onError: (error) => {
-      console.error("Chat stream error", error);
+      if (!NoSuchToolError.isInstance(error)) {
+        console.error("Chat stream error", error);
+      }
       return formatProviderError(error);
     },
     // TODO: Re-enable consumeStream when we can afford the CPU overhead of draining streams.

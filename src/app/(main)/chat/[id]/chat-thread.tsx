@@ -117,6 +117,8 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
     experimental_throttle: 75,
     onError: (error) => {
       const friendlyMessage = parseAIError(error);
+      if (/unavailable tool/i.test(friendlyMessage))
+        return;
       toast.error(friendlyMessage);
     },
     onFinish: ({ message }) => {
