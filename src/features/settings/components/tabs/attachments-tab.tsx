@@ -112,6 +112,7 @@ function FilePreview({ url, mediaType, filename }: { url: string; mediaType: str
         width={32}
         height={32}
         className="size-8 rounded object-cover"
+        unoptimized
       />
     );
   }

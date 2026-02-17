@@ -1,7 +1,6 @@
 "use client";
 
 import { FileIcon, Loader2, XIcon } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { CodeToolbar } from "~/components/code/code-toolbar";
@@ -30,8 +29,13 @@ type AttachmentPreviewDialogProps = {
 };
 
 function extractAttachmentId(url: string): string | null {
-  const match = url.match(/uploads\/([a-f0-9-]+)\./);
-  return match ? match[1] : null;
+  // New API URL format: /api/attachments/file?id=UUID
+  const apiMatch = url.match(/[?&]id=([a-f0-9-]+)/);
+  if (apiMatch)
+    return apiMatch[1];
+  // Legacy R2 URL format: uploads/UUID.ext
+  const r2Match = url.match(/uploads\/([a-f0-9-]+)\./);
+  return r2Match ? r2Match[1] : null;
 }
 
 function useFileContent(url: string) {
@@ -171,13 +175,11 @@ function TextPreview({
 function ImagePreview({ url, filename }: { url: string; filename: string }) {
   return (
     <div className="flex items-center justify-center">
-      <Image
+      {/* eslint-disable-next-line next/no-img-element */}
+      <img
         src={url}
         alt={filename}
-        width={800}
-        height={800}
         className="max-h-[70vh] w-auto rounded object-contain"
-        unoptimized
       />
     </div>
   );
