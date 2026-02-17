@@ -9,6 +9,8 @@ import { getStorageQuota } from "~/features/subscriptions";
 import { db } from "~/lib/db";
 import { attachments } from "~/lib/db/schema/chat";
 import { rateLimitResponse, uploadRateLimit } from "~/lib/rate-limit";
+import { deriveUserKey, encryptBuffer } from "~/lib/security/encryption";
+import { getOrCreateKeyMeta } from "~/lib/security/keys";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = new Set([
@@ -53,6 +55,9 @@ export async function POST(req: Request) {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  const keyMeta = await getOrCreateKeyMeta(session.user.id);
+  const encryptionKey = deriveUserKey(session.user.id, keyMeta.salt);
 
   const { success, reset } = await uploadRateLimit.limit(session.user.id);
   if (!success) {
@@ -137,16 +142,12 @@ export async function POST(req: Request) {
         continue;
       }
 
-      const contentDisposition
-        = (preferredMime.startsWith("image/") && preferredMime !== "image/svg+xml")
-          || preferredMime === "application/pdf"
-          ? "inline"
-          : "attachment";
+      const encryptedBuffer = encryptBuffer(buffer, encryptionKey);
 
       const uploaded = await saveFile(file, {
-        buffer,
-        contentTypeOverride: preferredMime,
-        contentDisposition,
+        buffer: encryptedBuffer,
+        contentTypeOverride: "application/octet-stream",
+        contentDisposition: "attachment",
       });
 
       const pageCount = preferredMime === "application/pdf"
@@ -157,14 +158,22 @@ export async function POST(req: Request) {
         id: uploaded.id,
         userId: session.user.id,
         filename: uploaded.filename,
-        mediaType: uploaded.mediaType,
+        mediaType: preferredMime,
         size: uploaded.size,
         storagePath: uploaded.storagePath,
         pageCount,
+        keyVersion: keyMeta.version,
+        isEncrypted: true,
         messageId: null,
       });
 
-      results.push({ ...uploaded, pageCount, ...(clientId && { clientId }) });
+      results.push({
+        ...uploaded,
+        url: `/api/attachments/file?id=${uploaded.id}`,
+        mediaType: preferredMime,
+        pageCount,
+        ...(clientId && { clientId }),
+      });
     }
 
     const postUploadUsage = await getStorageQuota(session.user.id);

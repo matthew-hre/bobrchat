@@ -28,6 +28,7 @@ export async function GET(req: Request) {
     .select({
       storagePath: attachments.storagePath,
       mediaType: attachments.mediaType,
+      filename: attachments.filename,
       userId: attachments.userId,
       keyVersion: attachments.keyVersion,
       isEncrypted: attachments.isEncrypted,
@@ -42,23 +43,29 @@ export async function GET(req: Request) {
 
   const raw = await getFileBuffer(attachment.storagePath);
 
-  let content: string;
+  let body = raw;
   if (attachment.isEncrypted && isEncryptedBuffer(raw)) {
     const salt = await getSaltForVersion(attachment.userId, attachment.keyVersion ?? 1);
     if (!salt) {
       return new Response("Decryption key not found", { status: 500 });
     }
     const key = deriveUserKey(attachment.userId, salt);
-    content = decryptBuffer(raw, key).toString("utf-8");
+    body = decryptBuffer(raw, key);
   }
   else {
-    content = raw.toString("utf-8");
+    body = raw;
   }
 
-  return new Response(content, {
+  const isInline
+    = (attachment.mediaType.startsWith("image/") && attachment.mediaType !== "image/svg+xml")
+      || attachment.mediaType === "application/pdf";
+
+  return new Response(new Uint8Array(body), {
     headers: {
       "Content-Type": attachment.mediaType,
+      "Content-Disposition": `${isInline ? "inline" : "attachment"}; filename="${attachment.filename}"`,
       "Cache-Control": "private, max-age=3600",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }
