@@ -87,6 +87,64 @@ export function decryptMessageWithKey(encrypted: EncryptedMessage, key: Buffer):
   }
 }
 
+// ── Attachment (binary buffer) encryption ────────────────────────────────
+const ATTACHMENT_MAGIC = Buffer.from("BCA1");
+const ATTACHMENT_VERSION = 1;
+const ATTACHMENT_HEADER_LENGTH = ATTACHMENT_MAGIC.length + 1 + IV_LENGTH + TAG_LENGTH; // 4+1+16+16 = 37
+
+/**
+ * Encrypt a binary buffer using AES-256-GCM.
+ * Returns a single buffer: MAGIC(4) | version(1) | iv(16) | authTag(16) | ciphertext(N)
+ */
+export function encryptBuffer(plaintext: Buffer, key: Buffer): Buffer {
+  const iv = randomBytes(IV_LENGTH);
+  const cipher = createCipheriv(ALGORITHM, key, iv);
+
+  const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+
+  const header = Buffer.alloc(5);
+  ATTACHMENT_MAGIC.copy(header);
+  header[4] = ATTACHMENT_VERSION;
+
+  return Buffer.concat([header, iv, authTag, encrypted]);
+}
+
+/**
+ * Decrypt a binary buffer that was encrypted with encryptBuffer.
+ * Expects format: MAGIC(4) | version(1) | iv(16) | authTag(16) | ciphertext(N)
+ */
+export function decryptBuffer(data: Buffer, key: Buffer): Buffer {
+  if (data.length < ATTACHMENT_HEADER_LENGTH) {
+    throw new Error("Encrypted data too short");
+  }
+
+  if (!data.subarray(0, 4).equals(ATTACHMENT_MAGIC)) {
+    throw new Error("Invalid encryption magic header");
+  }
+
+  const version = data[4];
+  if (version !== ATTACHMENT_VERSION) {
+    throw new Error(`Unsupported encryption version: ${version}`);
+  }
+
+  const iv = data.subarray(5, 5 + IV_LENGTH);
+  const authTag = data.subarray(5 + IV_LENGTH, 5 + IV_LENGTH + TAG_LENGTH);
+  const ciphertext = data.subarray(ATTACHMENT_HEADER_LENGTH);
+
+  const decipher = createDecipheriv(ALGORITHM, key, iv);
+  decipher.setAuthTag(authTag);
+
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+}
+
+/**
+ * Check if a buffer starts with the encrypted attachment magic header.
+ */
+export function isEncryptedBuffer(data: Buffer): boolean {
+  return data.length >= ATTACHMENT_MAGIC.length && data.subarray(0, 4).equals(ATTACHMENT_MAGIC);
+}
+
 /**
  * Derive encryption key for API key encryption (global, not per-user).
  * Uses ENCRYPTION_SECRET with ENCRYPTION_SALT.

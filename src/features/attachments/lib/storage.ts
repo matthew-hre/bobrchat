@@ -90,3 +90,32 @@ export async function getFileContent(storagePath: string): Promise<string> {
 
   return response.Body?.transformToString() ?? "";
 }
+
+export async function saveFileBuffer(storagePath: string, buffer: Buffer): Promise<void> {
+  const client = getR2Client();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: serverEnv.R2_BUCKET_NAME,
+      Key: storagePath,
+      Body: buffer,
+      ContentType: "application/octet-stream",
+      ContentDisposition: "attachment",
+    }),
+  );
+}
+
+export async function getFileBuffer(storagePath: string): Promise<Buffer> {
+  const client = getR2Client();
+  const response = await client.send(
+    new GetObjectCommand({
+      Bucket: serverEnv.R2_BUCKET_NAME,
+      Key: storagePath,
+    }),
+  );
+
+  const bytes = await response.Body?.transformToByteArray();
+  if (!bytes) {
+    throw new Error("Empty response body from storage");
+  }
+  return Buffer.from(bytes);
+}
