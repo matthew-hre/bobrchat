@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 
-import { getFileBuffer, saveFileBuffer } from "~/features/attachments/lib/storage";
+import { deleteFile, getFileBuffer, saveFileBuffer } from "~/features/attachments/lib/storage";
 import { db } from "~/lib/db";
 import { attachments, messages, threads } from "~/lib/db/schema";
 import { keys, keySalts } from "~/lib/db/schema/keys";
@@ -223,11 +223,18 @@ export async function rotateKey(userId: string): Promise<void> {
         const newKey = deriveUserKey(userId, newSalt);
         const reEncrypted = encryptBuffer(plaintext, newKey);
 
-        await saveFileBuffer(att.storagePath, reEncrypted);
+        // Write to a new path first, then update DB, then clean up old file.
+        // This avoids a corrupted state if the DB update fails after overwriting.
+        const ext = att.storagePath.includes(".") ? att.storagePath.slice(att.storagePath.lastIndexOf(".")) : "";
+        const newPath = `uploads/${crypto.randomUUID()}${ext}`;
+        const oldPath = att.storagePath;
+
+        await saveFileBuffer(newPath, reEncrypted);
         await db
           .update(attachments)
-          .set({ keyVersion: newVersion })
+          .set({ keyVersion: newVersion, storagePath: newPath })
           .where(eq(attachments.id, att.id));
+        await deleteFile(oldPath).catch(() => {});
       }
     }
 
