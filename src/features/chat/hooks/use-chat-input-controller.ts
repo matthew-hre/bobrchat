@@ -140,7 +140,6 @@ export function useChatInputController({
 
       const fileUIParts = attachments.pendingFiles.map(f => ({
         type: "file" as const,
-        id: f.id,
         url: f.url,
         storagePath: f.storagePath,
         mediaType: f.mediaType,
@@ -156,7 +155,15 @@ export function useChatInputController({
       attachments.clearPendingFiles();
       textareaRef.current?.focus();
     },
-    [isLoading, onStop, canSend, attachments, sendMessage, value, setInput],
+    [
+      isLoading,
+      onStop,
+      canSend,
+      attachments,
+      sendMessage,
+      value,
+      setInput,
+    ],
   );
 
   const onKeyDown = React.useCallback(

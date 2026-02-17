@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import type { PendingFile } from "~/features/chat/components/messages/file-preview";
+import type { FileUIPart } from "~/features/chat/types";
 
 import { getClientKey, removeClientKey, setClientKey } from "~/lib/api-keys/client";
 
@@ -45,6 +46,10 @@ type ChatUIStore = {
   streamingThreadId: string | null;
   setStreamingThreadId: (threadId: string | null) => void;
 
+  // Last sent user message id for retry banners (not persisted)
+  lastSendMessageId: string | null;
+  setLastSendMessageId: (messageId: string | null) => void;
+
   // Messages stopped by the user (not persisted)
   stoppedAssistantMessageInfoById: Record<string, { modelId: string | null }>;
   markAssistantMessageStopped: (messageId: string, modelId: string | null) => void;
@@ -57,6 +62,10 @@ type ChatUIStore = {
   pendingFiles: PendingFile[];
   setPendingFiles: (next: PendingFile[] | ((prev: PendingFile[]) => PendingFile[])) => void;
   clearPendingFiles: () => void;
+
+  // Ephemeral retry payload for failed sends (not persisted)
+  lastSendPayload: { text: string; files?: Array<FileUIPart & { id?: string; storagePath?: string }> } | null;
+  setLastSendPayload: (payload: { text: string; files?: Array<FileUIPart & { id?: string; storagePath?: string }> } | null) => void;
 };
 
 export const useChatUIStore = create<ChatUIStore>()(
@@ -118,6 +127,9 @@ export const useChatUIStore = create<ChatUIStore>()(
       streamingThreadId: null,
       setStreamingThreadId: threadId => set({ streamingThreadId: threadId }),
 
+      lastSendMessageId: null,
+      setLastSendMessageId: messageId => set({ lastSendMessageId: messageId }),
+
       stoppedAssistantMessageInfoById: {},
       markAssistantMessageStopped: (messageId, modelId) => set(state => ({
         stoppedAssistantMessageInfoById: {
@@ -150,6 +162,9 @@ export const useChatUIStore = create<ChatUIStore>()(
         }
         set({ pendingFiles: [] });
       },
+
+      lastSendPayload: null,
+      setLastSendPayload: payload => set({ lastSendPayload: payload }),
     }),
     {
       name: "bobrchat-ui",

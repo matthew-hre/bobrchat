@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, RefreshCwIcon } from "lucide-react";
+import Link from "next/link";
 import { memo } from "react";
 
 import type { ChatUIMessage } from "~/features/chat/types";
@@ -41,6 +42,10 @@ type AssistantMessageProps = {
   searchEnabled: boolean;
   onRegenerate?: (messageId: string) => void;
   isRegenerating?: boolean;
+  creditError?: { messageId: string } | null;
+  onRetryCreditError?: () => void;
+  onDismissCreditError?: () => void;
+  onOpenModelSelector?: () => void;
 };
 
 export const AssistantMessage = memo(({
@@ -50,6 +55,10 @@ export const AssistantMessage = memo(({
   searchEnabled,
   onRegenerate,
   isRegenerating,
+  creditError,
+  onRetryCreditError,
+  onDismissCreditError,
+  onOpenModelSelector,
 }: AssistantMessageProps) => {
   const stoppedInfo = useChatUIStore(state => state.stoppedAssistantMessageInfoById[message.id]);
   const showRaw = useChatUIStore(state => state.rawMessageIds.has(message.id));
@@ -65,6 +74,7 @@ export const AssistantMessage = memo(({
     && metadata.outputTokens === 0
     && !hasRenderableAssistantContent(message.parts);
   const showEmptyResponseNotice = isEmptyResponse && !isStopped && !isLoading;
+  const showCreditErrorNotice = !!creditError;
 
   return (
     <div className="group markdown text-base">
@@ -110,6 +120,61 @@ export const AssistantMessage = memo(({
               Regenerate
             </Button>
           )}
+        </div>
+      )}
+
+      {showCreditErrorNotice && (
+        <div className={
+          `
+            border-warning/50 bg-warning/10 text-warning-foreground mt-3
+            flex flex-wrap items-start gap-3 rounded-md border p-3 text-sm
+          `
+        }
+        >
+          <AlertCircle className="text-warning mt-0.5 h-4 w-4 shrink-0" />
+          <div className="min-w-[200px] flex-1">
+            <div className="font-semibold">Insufficient credits</div>
+            <div className="text-warning-foreground/80 text-xs">
+              Your OpenRouter balance is too low to complete this response.
+              {" "}
+              Add credits or switch to a cheaper model, then retry.
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={onRetryCreditError}
+            >
+              Retry
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={onOpenModelSelector}
+            >
+              Switch model
+            </Button>
+            <Button asChild variant="outline" size="sm" className="h-8">
+              <Link
+                href="/settings?tab=integrations"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Add credits
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8"
+              onClick={onDismissCreditError}
+            >
+              Dismiss
+            </Button>
+          </div>
         </div>
       )}
 
