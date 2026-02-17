@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
-import { getFileBuffer } from "~/features/attachments/lib/storage";
+import { getFileBuffer, getFileStream } from "~/features/attachments/lib/storage";
 import { auth } from "~/features/auth/lib/auth";
 import { db } from "~/lib/db";
 import { attachments } from "~/lib/db/schema/chat";
@@ -41,31 +41,31 @@ export async function GET(req: Request) {
     return new Response("Attachment not found", { status: 404 });
   }
 
-  const raw = await getFileBuffer(attachment.storagePath);
-
-  let body = raw;
-  if (attachment.isEncrypted && isEncryptedBuffer(raw)) {
-    const salt = await getSaltForVersion(attachment.userId, attachment.keyVersion ?? 1);
-    if (!salt) {
-      return new Response("Decryption key not found", { status: 500 });
-    }
-    const key = deriveUserKey(attachment.userId, salt);
-    body = decryptBuffer(raw, key);
-  }
-  else {
-    body = raw;
-  }
-
   const isInline
     = (attachment.mediaType.startsWith("image/") && attachment.mediaType !== "image/svg+xml")
       || attachment.mediaType === "application/pdf";
 
-  return new Response(new Uint8Array(body), {
-    headers: {
-      "Content-Type": attachment.mediaType,
-      "Content-Disposition": `${isInline ? "inline" : "attachment"}; filename="${attachment.filename}"`,
-      "Cache-Control": "private, max-age=3600",
-      "X-Content-Type-Options": "nosniff",
-    },
-  });
+  const responseHeaders = {
+    "Content-Type": attachment.mediaType,
+    "Content-Disposition": `${isInline ? "inline" : "attachment"}; filename="${attachment.filename}"`,
+    "Cache-Control": "private, max-age=3600",
+    "X-Content-Type-Options": "nosniff",
+  };
+
+  if (attachment.isEncrypted) {
+    const raw = await getFileBuffer(attachment.storagePath);
+    if (isEncryptedBuffer(raw)) {
+      const salt = await getSaltForVersion(attachment.userId, attachment.keyVersion ?? 1);
+      if (!salt) {
+        return new Response("Decryption key not found", { status: 500 });
+      }
+      const key = deriveUserKey(attachment.userId, salt);
+      const decrypted = decryptBuffer(raw, key);
+      return new Response(new Uint8Array(decrypted), { headers: responseHeaders });
+    }
+    return new Response(new Uint8Array(raw), { headers: responseHeaders });
+  }
+
+  const stream = await getFileStream(attachment.storagePath);
+  return new Response(stream, { headers: responseHeaders });
 }

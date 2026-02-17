@@ -1,4 +1,7 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import type { Readable } from "node:stream";
+
+import { DeleteObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 import { Buffer } from "node:buffer";
 import path from "node:path";
 
@@ -47,15 +50,17 @@ export async function saveFile(
   const contentType = options?.contentTypeOverride ?? file.type;
   const disposition = options?.contentDisposition ?? "inline";
 
-  await client.send(
-    new PutObjectCommand({
+  const upload = new Upload({
+    client,
+    params: {
       Bucket: serverEnv.R2_BUCKET_NAME,
       Key: key,
       Body: buffer,
       ContentType: contentType,
       ContentDisposition: `${disposition}; filename="${file.name}"`,
-    }),
-  );
+    },
+  });
+  await upload.done();
 
   const publicUrl = `${serverEnv.R2_PUBLIC_URL}/${key}`;
 
@@ -93,15 +98,17 @@ export async function getFileContent(storagePath: string): Promise<string> {
 
 export async function saveFileBuffer(storagePath: string, buffer: Buffer): Promise<void> {
   const client = getR2Client();
-  await client.send(
-    new PutObjectCommand({
+  const upload = new Upload({
+    client,
+    params: {
       Bucket: serverEnv.R2_BUCKET_NAME,
       Key: storagePath,
       Body: buffer,
       ContentType: "application/octet-stream",
       ContentDisposition: "attachment",
-    }),
-  );
+    },
+  });
+  await upload.done();
 }
 
 export async function getFileBuffer(storagePath: string): Promise<Buffer> {
@@ -118,4 +125,38 @@ export async function getFileBuffer(storagePath: string): Promise<Buffer> {
     throw new Error("Empty response body from storage");
   }
   return Buffer.from(bytes);
+}
+
+export async function getFileStream(storagePath: string): Promise<ReadableStream> {
+  const client = getR2Client();
+  const response = await client.send(
+    new GetObjectCommand({
+      Bucket: serverEnv.R2_BUCKET_NAME,
+      Key: storagePath,
+    }),
+  );
+
+  const body = response.Body;
+  if (!body) {
+    throw new Error("Empty response body from storage");
+  }
+
+  if (typeof (body as Readable).pipe === "function") {
+    return readableToWebStream(body as Readable);
+  }
+
+  return body.transformToWebStream();
+}
+
+function readableToWebStream(nodeStream: Readable): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    start(controller) {
+      nodeStream.on("data", (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)));
+      nodeStream.on("end", () => controller.close());
+      nodeStream.on("error", err => controller.error(err));
+    },
+    cancel() {
+      nodeStream.destroy();
+    },
+  });
 }
