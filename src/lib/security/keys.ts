@@ -1,11 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 
+import { getFileBuffer, saveFileBuffer } from "~/features/attachments/lib/storage";
 import { db } from "~/lib/db";
-import { messages, threads } from "~/lib/db/schema";
+import { attachments, messages, threads } from "~/lib/db/schema";
 import { keys, keySalts } from "~/lib/db/schema/keys";
 
-import { decryptMessage, encryptMessage } from "./encryption";
+import { decryptBuffer, decryptMessage, deriveUserKey, encryptBuffer, encryptMessage, isEncryptedBuffer } from "./encryption";
 
 export type KeyMeta = { salt: string; version: number };
 
@@ -186,6 +187,48 @@ export async function rotateKey(userId: string): Promise<void> {
             .where(eq(messages.id, msg.id));
         }
       });
+    }
+
+    // Re-encrypt all encrypted attachments with the new key
+    const allAttachments = await db
+      .select({
+        id: attachments.id,
+        storagePath: attachments.storagePath,
+        keyVersion: attachments.keyVersion,
+        isEncrypted: attachments.isEncrypted,
+      })
+      .from(attachments)
+      .where(eq(attachments.userId, userId));
+
+    for (let i = 0; i < allAttachments.length; i += ROTATION_BATCH_SIZE) {
+      const batch = allAttachments.slice(i, i + ROTATION_BATCH_SIZE);
+
+      for (const att of batch) {
+        if (!att.isEncrypted)
+          continue;
+        if (att.keyVersion === newVersion)
+          continue;
+
+        const attSalt = await getSaltForVersion(userId, att.keyVersion ?? oldMeta.version);
+        if (!attSalt) {
+          throw new Error(`Missing salt for version ${att.keyVersion} during attachment rotation`);
+        }
+
+        const raw = await getFileBuffer(att.storagePath);
+        if (!isEncryptedBuffer(raw))
+          continue;
+
+        const oldKey = deriveUserKey(userId, attSalt);
+        const plaintext = decryptBuffer(raw, oldKey);
+        const newKey = deriveUserKey(userId, newSalt);
+        const reEncrypted = encryptBuffer(plaintext, newKey);
+
+        await saveFileBuffer(att.storagePath, reEncrypted);
+        await db
+          .update(attachments)
+          .set({ keyVersion: newVersion })
+          .where(eq(attachments.id, att.id));
+      }
     }
 
     // Mark rotation complete
