@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon, SearchIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -36,14 +36,14 @@ function ThreadListSkeleton() {
   );
 }
 
-function ThreadListContent({ searchQuery }: { searchQuery: string }) {
+function ThreadListContent({ searchQuery, showArchived }: { searchQuery: string; showArchived: boolean }) {
   const {
     data: groupedThreads,
     isLoading: threadsLoading,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useThreads();
+  } = useThreads({ archived: showArchived });
 
   const { groupedThreads: filteredGrouped, flatResults, isSearching } = useFilteredThreads(
     groupedThreads,
@@ -59,6 +59,7 @@ function ThreadListContent({ searchQuery }: { searchQuery: string }) {
       <ThreadList
         flatResults={flatResults}
         isSearching
+        isArchived={showArchived}
       />
     );
   }
@@ -67,6 +68,7 @@ function ThreadListContent({ searchQuery }: { searchQuery: string }) {
     return (
       <ThreadList
         groupedThreads={filteredGrouped}
+        isArchived={showArchived}
         hasNextPage={hasNextPage}
         fetchNextPage={fetchNextPage}
         isFetchingNextPage={isFetchingNextPage}
@@ -83,6 +85,7 @@ type ChatSidebarProps = {
 
 export function ChatSidebar({ session }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
   const { searchInputRef } = useKeyboardShortcutsContext();
 
   return (
@@ -118,35 +121,49 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
             <SidebarTrigger />
           </div>
         </div>
-        <div className="relative px-3 pb-2">
-          <SearchIcon className={`
-            text-muted-foreground pointer-events-none absolute top-4 left-5
-            size-4 -translate-y-1/2
-          `}
-          />
-          <Input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Search threads..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="h-8 pr-8 pl-8"
-          />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="absolute top-4 right-4 size-6 -translate-y-1/2"
-              onClick={() => setSearchQuery("")}
-            >
-              <XIcon className="size-3" />
-            </Button>
-          )}
+        <div className="flex items-center gap-1 px-3 pb-2">
+          <div className="relative flex-1">
+            <SearchIcon className={`
+              text-muted-foreground pointer-events-none absolute top-1/2 left-2
+              size-4 -translate-y-1/2
+            `}
+            />
+            <Input
+              ref={searchInputRef}
+              type="text"
+              placeholder={showArchived ? "Search archived..." : "Search threads..."}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="h-8 pr-8 pl-8"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="absolute top-1/2 right-1 size-6 -translate-y-1/2"
+                onClick={() => setSearchQuery("")}
+              >
+                <XIcon className="size-3" />
+              </Button>
+            )}
+          </div>
+          <Button
+            variant={showArchived ? "secondary" : "ghost"}
+            size="icon-sm"
+            className="size-8 shrink-0"
+            title={showArchived ? "Show active threads" : "Show archived threads"}
+            onClick={() => {
+              setShowArchived(prev => !prev);
+              setSearchQuery("");
+            }}
+          >
+            <ArchiveIcon className="size-4" />
+          </Button>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <ThreadListContent searchQuery={searchQuery} />
+          <ThreadListContent searchQuery={searchQuery} showArchived={showArchived} />
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-0">
