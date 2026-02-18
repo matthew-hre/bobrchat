@@ -187,6 +187,14 @@ function ThreadItemComponent({
     try {
       await archiveThreadMutation.mutateAsync({ threadId: id, archive: !isArchived });
       toast.success(isArchived ? "Thread unarchived" : "Thread archived");
+      if (!isArchived) {
+        const currentChatId = pathname.startsWith("/chat/")
+          ? pathname.split("/chat/")[1]
+          : null;
+        if (currentChatId === id) {
+          router.push("/");
+        }
+      }
     }
     catch (error) {
       console.error("Failed to archive thread:", error);
