@@ -8,7 +8,7 @@ import type { ThreadIcon } from "~/lib/db/schema/chat";
 import { deleteFile } from "~/features/attachments/lib/storage";
 import { deleteUserAttachmentsByIds, getThreadStats, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
-import { createThreadWithLimitCheck, deleteMessagesAfterCount, deleteThreadById, getMessagesByThreadId, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
+import { archiveThreadById, createThreadWithLimitCheck, deleteMessagesAfterCount, deleteThreadById, getMessagesByThreadId, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
 import { generateThreadIcon, generateThreadTitle } from "~/features/chat/server/thread";
 import { getShareByThreadId, revokeThreadShare, upsertThreadShare } from "~/features/chat/sharing-queries";
 import { resolveKey } from "~/lib/api-keys/server";
@@ -209,6 +209,29 @@ export async function setThreadIcon(threadId: string, icon: ThreadIcon): Promise
   }
 
   const updated = await updateThreadIcon(threadId, session.user.id, icon);
+  if (!updated) {
+    throw new Error("Thread not found or unauthorized");
+  }
+}
+
+/**
+ * Archives or unarchives a thread for the authenticated user.
+ * Ownership is verified atomically by the archiveThreadById query.
+ *
+ * @param threadId ID of the thread to archive/unarchive
+ * @param archive True to archive, false to unarchive
+ * @return {Promise<void>}
+ */
+export async function archiveThread(threadId: string, archive: boolean): Promise<void> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  const updated = await archiveThreadById(threadId, session.user.id, archive);
   if (!updated) {
     throw new Error("Thread not found or unauthorized");
   }
