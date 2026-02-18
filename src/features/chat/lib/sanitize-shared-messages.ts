@@ -6,12 +6,17 @@ import { isFilePart } from "~/features/chat/types";
 
 /**
  * Sanitizes a file part by removing internal fields (id, storagePath)
- * while keeping SDK-required fields (url, mediaType).
+ * and rewriting the URL to use the share attachment API route.
  */
-function sanitizeFilePart(part: AppFileUIPart): FileUIPart {
+function sanitizeFilePart(part: AppFileUIPart, shareId?: string): FileUIPart {
+  let url = part.url;
+  if (shareId && part.id) {
+    url = `/api/share/${shareId}/attachment?id=${part.id}`;
+  }
+
   return {
     type: "file",
-    url: part.url,
+    url,
     mediaType: part.mediaType,
     ...(part.filename !== undefined && { filename: part.filename }),
   };
@@ -19,12 +24,8 @@ function sanitizeFilePart(part: AppFileUIPart): FileUIPart {
 
 export function sanitizeMessagesForSharing(
   messages: ChatUIMessage[],
-  options: { showAttachments: boolean },
+  options: { showAttachments: boolean; shareId?: string },
 ): ChatUIMessage[] {
-  if (options.showAttachments) {
-    return messages;
-  }
-
   return messages.map((message) => {
     if (!message.parts) {
       return message;
@@ -32,7 +33,7 @@ export function sanitizeMessagesForSharing(
 
     const sanitizedParts = message.parts.map((part) => {
       if (isFilePart(part)) {
-        return sanitizeFilePart(part as AppFileUIPart);
+        return sanitizeFilePart(part as AppFileUIPart, options.showAttachments ? options.shareId : undefined);
       }
       return part;
     });

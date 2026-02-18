@@ -97,6 +97,8 @@ export const attachments = pgTable(
     size: bigint("size", { mode: "number" }).notNull(),
     storagePath: text("storage_path").notNull(),
     pageCount: integer("page_count"),
+    keyVersion: integer("key_version"),
+    isEncrypted: boolean("is_encrypted").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   table => [

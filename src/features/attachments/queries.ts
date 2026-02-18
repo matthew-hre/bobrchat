@@ -3,7 +3,6 @@ import { Buffer } from "node:buffer";
 
 import { db } from "~/lib/db";
 import { attachments, messageMetadata, messages } from "~/lib/db/schema/chat";
-import { serverEnv } from "~/lib/env";
 
 import type { AttachmentListItem, AttachmentOrder, AttachmentTypeFilter, Cursor } from "./types";
 
@@ -146,7 +145,7 @@ export async function listUserAttachments(params: {
     return {
       ...rest,
       isLinked: messageId !== null,
-      url: `${serverEnv.R2_PUBLIC_URL}/${r.storagePath}`,
+      url: `/api/attachments/file?id=${r.id}`,
     };
   });
 
@@ -255,6 +254,8 @@ export type AttachmentRecord = {
   storagePath: string;
   mediaType: string;
   filename: string;
+  keyVersion: number | null;
+  isEncrypted: boolean;
 };
 
 export async function getAttachmentsByIds(
@@ -271,6 +272,8 @@ export async function getAttachmentsByIds(
       storagePath: attachments.storagePath,
       mediaType: attachments.mediaType,
       filename: attachments.filename,
+      keyVersion: attachments.keyVersion,
+      isEncrypted: attachments.isEncrypted,
     })
     .from(attachments)
     .where(and(eq(attachments.userId, userId), inArray(attachments.id, uniqueIds)));

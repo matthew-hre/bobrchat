@@ -1,8 +1,10 @@
 import type { AppFileUIPart, ChatUIMessage } from "~/features/chat/types";
 
-import { getFileContent } from "~/features/attachments/lib/storage";
+import { getFileBuffer } from "~/features/attachments/lib/storage";
 import { getAttachmentsByIds, getPdfPageCountsByStoragePaths } from "~/features/attachments/queries";
 import { isFilePart, isTextPart } from "~/features/chat/types";
+import { decryptBuffer, deriveUserKey, isEncryptedBuffer } from "~/lib/security/encryption";
+import { getSaltForVersion } from "~/lib/security/keys";
 
 function isTextFile(mediaType: string): boolean {
   return (
@@ -70,7 +72,19 @@ export async function processMessageFiles(
       }
 
       try {
-        const content = await getFileContent(attachment.storagePath);
+        const raw = await getFileBuffer(attachment.storagePath);
+        let content: string;
+        if (attachment.isEncrypted && isEncryptedBuffer(raw)) {
+          const salt = await getSaltForVersion(userId, attachment.keyVersion ?? 1);
+          if (!salt) {
+            throw new Error(`Missing salt for key version ${attachment.keyVersion}`);
+          }
+          const key = deriveUserKey(userId, salt);
+          content = decryptBuffer(raw, key).toString("utf-8");
+        }
+        else {
+          content = raw.toString("utf-8");
+        }
         return {
           msgIndex,
           partIndex,

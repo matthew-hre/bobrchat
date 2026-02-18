@@ -106,6 +106,7 @@ function FilePreviewItem({
                 width={32}
                 height={32}
                 className="size-full object-cover"
+                unoptimized
               />
             </div>
           )
@@ -294,6 +295,7 @@ export function MessageAttachments({
                     width={32}
                     height={32}
                     className="aspect-square max-h-8 max-w-xs object-cover"
+                    unoptimized
                   />
                   <span className="text-sm">{img.filename || "Attached image"}</span>
                 </button>
@@ -316,6 +318,7 @@ export function MessageAttachments({
                       width={256}
                       height={256}
                       className="w-full max-w-xs object-contain"
+                      unoptimized
                     />
                   </button>
                 ))}

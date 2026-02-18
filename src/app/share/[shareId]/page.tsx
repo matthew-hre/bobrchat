@@ -75,6 +75,7 @@ export default async function SharePage({ params }: SharePageProps) {
 
   const sanitizedMessages = sanitizeMessagesForSharing(messages, {
     showAttachments: share.showAttachments,
+    shareId,
   });
 
   return (
