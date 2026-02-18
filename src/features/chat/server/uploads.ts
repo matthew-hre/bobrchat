@@ -30,6 +30,7 @@ export async function processMessageFiles(
   userId: string,
 ): Promise<ChatUIMessage[]> {
   const allTextFileParts: Array<{ msgIndex: number; partIndex: number; part: AppFileUIPart }> = [];
+  const allBinaryFileParts: Array<{ msgIndex: number; partIndex: number; part: AppFileUIPart }> = [];
 
   for (let msgIndex = 0; msgIndex < messages.length; msgIndex++) {
     const msg = messages[msgIndex];
@@ -42,24 +43,27 @@ export async function processMessageFiles(
         continue;
 
       const filePart = part as AppFileUIPart;
-      if (!isTextFile(filePart.mediaType))
-        continue;
-
       if (!filePart.id) {
         if (filePart.storagePath)
           console.warn(`File part has storagePath but no id, skipping for security: ${filePart.storagePath}`);
         continue;
       }
 
-      allTextFileParts.push({ msgIndex, partIndex, part: filePart });
+      if (!isTextFile(filePart.mediaType))
+        allBinaryFileParts.push({ msgIndex, partIndex, part: filePart });
+      else
+        allTextFileParts.push({ msgIndex, partIndex, part: filePart });
     }
   }
 
-  if (allTextFileParts.length === 0) {
+  if (allTextFileParts.length === 0 && allBinaryFileParts.length === 0) {
     return messages;
   }
 
-  const attachmentIds = allTextFileParts.map(({ part }) => part.id!);
+  const attachmentIds = [
+    ...allTextFileParts.map(({ part }) => part.id!),
+    ...allBinaryFileParts.map(({ part }) => part.id!),
+  ];
   const ownedAttachments = await getAttachmentsByIds(userId, attachmentIds);
   const attachmentMap = new Map(ownedAttachments.map(a => [a.id, a]));
 
@@ -102,6 +106,51 @@ export async function processMessageFiles(
     }),
   );
 
+  const binaryUpdates = await Promise.all(
+    allBinaryFileParts.map(async ({ msgIndex, partIndex, part }) => {
+      const attachment = attachmentMap.get(part.id!);
+      if (!attachment) {
+        console.warn(`Attachment ${part.id} not found or not owned by user ${userId}`);
+        return {
+          msgIndex,
+          partIndex,
+          dataUrl: null,
+          filename: part.filename ?? "file",
+        };
+      }
+
+      try {
+        const raw = await getFileBuffer(attachment.storagePath);
+        let buffer = raw;
+        if (attachment.isEncrypted && isEncryptedBuffer(raw)) {
+          const salt = await getSaltForVersion(userId, attachment.keyVersion ?? 1);
+          if (!salt) {
+            throw new Error(`Missing salt for key version ${attachment.keyVersion}`);
+          }
+          const key = deriveUserKey(userId, salt);
+          buffer = decryptBuffer(raw, key);
+        }
+
+        const dataUrl = `data:${attachment.mediaType};base64,${buffer.toString("base64")}`;
+        return {
+          msgIndex,
+          partIndex,
+          dataUrl,
+          filename: attachment.filename,
+        };
+      }
+      catch (error) {
+        console.error(`Failed to fetch file content for ${attachment.filename}:`, error);
+        return {
+          msgIndex,
+          partIndex,
+          dataUrl: null,
+          filename: attachment.filename,
+        };
+      }
+    }),
+  );
+
   const contentsByMessage = new Map<number, Array<{ partIndex: number; content: string | null }>>();
   for (const fc of fileContents) {
     if (!contentsByMessage.has(fc.msgIndex)) {
@@ -110,32 +159,60 @@ export async function processMessageFiles(
     contentsByMessage.get(fc.msgIndex)!.push({ partIndex: fc.partIndex, content: fc.content });
   }
 
-  return messages.map((msg, msgIndex) => {
-    const msgContents = contentsByMessage.get(msgIndex);
-    if (!msgContents || !msg.parts) {
-      return msg;
+  const binaryUpdatesByMessage = new Map<number, Map<number, string>>();
+  for (const update of binaryUpdates) {
+    if (!update.dataUrl) {
+      if (!contentsByMessage.has(update.msgIndex)) {
+        contentsByMessage.set(update.msgIndex, []);
+      }
+      contentsByMessage.get(update.msgIndex)!.push({
+        partIndex: update.partIndex,
+        content: `\n\n[Failed to load attachment: ${update.filename}]\n`,
+      });
+      continue;
     }
 
-    const indicesToRemove = new Set(msgContents.map(c => c.partIndex));
-    const newParts = msg.parts.filter((_, index) => !indicesToRemove.has(index));
+    if (!binaryUpdatesByMessage.has(update.msgIndex)) {
+      binaryUpdatesByMessage.set(update.msgIndex, new Map());
+    }
+    binaryUpdatesByMessage.get(update.msgIndex)!.set(update.partIndex, update.dataUrl);
+  }
 
-    const textContent = msgContents
+  return messages.map((msg, msgIndex) => {
+    const msgContents = contentsByMessage.get(msgIndex);
+    const msgBinaryUpdates = binaryUpdatesByMessage.get(msgIndex);
+    if (!msgContents || !msg.parts) {
+      if (!msgBinaryUpdates || !msg.parts) {
+        return msg;
+      }
+    }
+
+    const indicesToRemove = new Set(msgContents?.map(c => c.partIndex) ?? []);
+    let updatedParts = msg.parts.map((part, index) => {
+      const dataUrl = msgBinaryUpdates?.get(index);
+      if (!dataUrl)
+        return part;
+      return { ...part, url: dataUrl };
+    });
+    updatedParts = updatedParts.filter((_, index) => !indicesToRemove.has(index));
+
+    const textContent = (msgContents ?? [])
       .filter(c => c.content !== null)
       .sort((a, b) => a.partIndex - b.partIndex)
       .map(c => c.content)
       .join("");
 
     if (!textContent) {
-      return { ...msg, parts: newParts };
+      return { ...msg, parts: updatedParts };
     }
 
-    const lastPart = newParts[newParts.length - 1];
+    const lastPart = updatedParts[updatedParts.length - 1];
     if (lastPart && isTextPart(lastPart)) {
       const updatedLast = { ...lastPart, text: lastPart.text + textContent };
-      return { ...msg, parts: [...newParts.slice(0, -1), updatedLast] };
+      return { ...msg, parts: [...updatedParts.slice(0, -1), updatedLast] };
     }
 
-    return { ...msg, parts: [...newParts, { type: "text" as const, text: textContent }] };
+    return { ...msg, parts: [...updatedParts, { type: "text" as const, text: textContent }] };
   });
 }
 
