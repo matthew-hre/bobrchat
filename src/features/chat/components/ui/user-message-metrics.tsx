@@ -3,6 +3,7 @@
 import { CheckIcon, CopyIcon, EditIcon } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useCopyToClipboard } from "~/lib/hooks";
 import { cn } from "~/lib/utils";
 
@@ -31,30 +32,38 @@ export function UserMessageMetrics({ content, onEdit }: UserMessageMetricsProps)
         `,
       )}
     >
-      {/* Edit Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        disabled={!onEdit}
-        onClick={onEdit}
-        title="Edit message"
-        className="h-6 w-6 p-0"
-      >
-        <EditIcon className="h-3.5 w-3.5" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={!onEdit}
+            onClick={onEdit}
+            className="h-6 w-6 p-0"
+          >
+            <EditIcon className="h-3.5 w-3.5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Edit</TooltipContent>
+      </Tooltip>
 
-      {/* Copy Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleCopy}
-        title="Copy message content"
-        className="h-6 w-6 p-0"
-      >
-        {copied
-          ? <CheckIcon className="h-3.5 w-3.5" />
-          : <CopyIcon className="h-3.5 w-3.5" />}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopy}
+            className="h-6 w-6 p-0"
+          >
+            {copied
+              ? <CheckIcon className="h-3.5 w-3.5" />
+              : <CopyIcon className="h-3.5 w-3.5" />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {copied ? "Copied" : "Copy"}
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 }

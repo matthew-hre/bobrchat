@@ -96,17 +96,23 @@ export function MessageMetrics({
             "group-hover:pointer-events-auto group-hover:opacity-100",
           )}
         >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopy}
-            title="Copy message content"
-            className="h-6 w-6 p-0"
-          >
-            {copied
-              ? <CheckIcon className="h-3.5 w-3.5" />
-              : <CopyIcon className="h-3.5 w-3.5" />}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+                className="h-6 w-6 p-0"
+              >
+                {copied
+                  ? <CheckIcon className="h-3.5 w-3.5" />
+                  : <CopyIcon className="h-3.5 w-3.5" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {copied ? "Copied" : "Copy"}
+            </TooltipContent>
+          </Tooltip>
 
           <Tooltip>
             <TooltipTrigger asChild>
@@ -114,7 +120,6 @@ export function MessageMetrics({
                 variant="ghost"
                 size="sm"
                 onClick={() => toggleRawMessage(messageId)}
-                title={showRaw ? "Show formatted" : "Show raw markdown"}
                 className={cn("h-6 w-6 p-0", showRaw && "text-primary")}
               >
                 <TextSelectIcon className="h-3.5 w-3.5" />
@@ -125,16 +130,20 @@ export function MessageMetrics({
             </TooltipContent>
           </Tooltip>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRetry}
-            disabled={isRetrying}
-            title="Regenerate response"
-            className="h-6 w-6 p-0"
-          >
-            <RefreshCwIcon className={cn("h-3.5 w-3.5", isRetrying && "animate-spin")} />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRetry}
+                disabled={isRetrying}
+                className="h-6 w-6 p-0"
+              >
+                <RefreshCwIcon className={cn("h-3.5 w-3.5", isRetrying && "animate-spin")} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Regenerate</TooltipContent>
+          </Tooltip>
 
           <div className="flex items-center gap-2 pl-1">
             {model && <span className="font-medium">{model}</span>}
@@ -172,17 +181,23 @@ export function MessageMetrics({
         `,
       )}
     >
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleCopy}
-        title="Copy message content"
-        className="h-6 w-6 p-0"
-      >
-        {copied
-          ? <CheckIcon className="h-3.5 w-3.5" />
-          : <CopyIcon className="h-3.5 w-3.5" />}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopy}
+            className="h-6 w-6 p-0"
+          >
+            {copied
+              ? <CheckIcon className="h-3.5 w-3.5" />
+              : <CopyIcon className="h-3.5 w-3.5" />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {copied ? "Copied" : "Copy"}
+        </TooltipContent>
+      </Tooltip>
 
       <Tooltip>
         <TooltipTrigger asChild>
@@ -190,7 +205,6 @@ export function MessageMetrics({
             variant="ghost"
             size="sm"
             onClick={() => toggleRawMessage(messageId)}
-            title={showRaw ? "Show formatted" : "Show raw markdown"}
             className={cn("h-6 w-6 p-0", showRaw && "text-primary")}
           >
             <TextSelectIcon className="h-3.5 w-3.5" />
@@ -201,16 +215,20 @@ export function MessageMetrics({
         </TooltipContent>
       </Tooltip>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onRetry}
-        disabled={isRetrying}
-        title="Regenerate response"
-        className="h-6 w-6 p-0"
-      >
-        <RefreshCwIcon className={cn("h-3.5 w-3.5", isRetrying && "animate-spin")} />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRetry}
+            disabled={isRetrying}
+            className="h-6 w-6 p-0"
+          >
+            <RefreshCwIcon className={cn("h-3.5 w-3.5", isRetrying && "animate-spin")} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Regenerate</TooltipContent>
+      </Tooltip>
 
       <div className="flex items-center gap-2 pl-1">
         {model && <span className="font-medium">{model}</span>}
