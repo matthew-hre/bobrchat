@@ -8,11 +8,11 @@ import { useMemo } from "react";
 import type { GroupedThreads } from "~/features/chat/utils/thread-grouper";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
-import { createNewThread, deleteThread, fetchThreadStats, regenerateThreadIcon, regenerateThreadName, renameThread, setThreadIcon } from "~/features/chat/actions";
+import { archiveThread, createNewThread, deleteThread, fetchThreadStats, regenerateThreadIcon, regenerateThreadName, renameThread, setThreadIcon } from "~/features/chat/actions";
 import { groupThreadsByDate } from "~/features/chat/utils/thread-grouper";
-import { THREADS_KEY } from "~/lib/queries/query-keys";
+import { ARCHIVED_THREADS_KEY, THREADS_KEY } from "~/lib/queries/query-keys";
 
-export { THREADS_KEY };
+export { ARCHIVED_THREADS_KEY, THREADS_KEY };
 
 export type ThreadFromApi = {
   id: string;
@@ -36,10 +36,13 @@ type CreateThreadInput = {
   icon?: ThreadIcon;
 };
 
-async function fetchThreads({ pageParam }: { pageParam: string | undefined }): Promise<ThreadsResponse> {
+async function fetchThreads({ pageParam, archived }: { pageParam: string | undefined; archived?: boolean }): Promise<ThreadsResponse> {
   const params = new URLSearchParams({ limit: "50" });
   if (pageParam) {
     params.set("cursor", pageParam);
+  }
+  if (archived) {
+    params.set("archived", "true");
   }
   const response = await fetch(`/api/threads?${params.toString()}`);
   if (!response.ok)
@@ -47,10 +50,12 @@ async function fetchThreads({ pageParam }: { pageParam: string | undefined }): P
   return response.json();
 }
 
-export function useThreads(options: { enabled?: boolean } = {}) {
+export function useThreads(options: { enabled?: boolean; archived?: boolean } = {}) {
+  const queryKey = options.archived ? ARCHIVED_THREADS_KEY : THREADS_KEY;
+
   const query = useInfiniteQuery({
-    queryKey: THREADS_KEY,
-    queryFn: fetchThreads,
+    queryKey,
+    queryFn: ({ pageParam }) => fetchThreads({ pageParam, archived: options.archived }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: lastPage => lastPage.nextCursor ?? undefined,
     staleTime: 30 * 1000,
@@ -280,6 +285,19 @@ export function useRegenerateThreadIcon() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: THREADS_KEY });
+    },
+  });
+}
+
+export function useArchiveThread() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ threadId, archive }: { threadId: string; archive: boolean }) =>
+      archiveThread(threadId, archive),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: THREADS_KEY });
+      queryClient.invalidateQueries({ queryKey: ARCHIVED_THREADS_KEY });
     },
   });
 }

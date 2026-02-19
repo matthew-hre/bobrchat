@@ -34,6 +34,7 @@ export const threads = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
+    archivedAt: timestamp("archived_at"),
   },
   table => [index("threads_userId_idx").on(table.userId), index("threads_userId_lastMessageAt_idx").on(table.userId, table.lastMessageAt)],
 );

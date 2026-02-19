@@ -32,7 +32,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "~/components/ui/context-menu";
-import { useDeleteThread, useRegenerateThreadIcon, useRegenerateThreadName, useRenameThread, useThreadStats, useUpdateThreadIcon } from "~/features/chat/hooks/use-threads";
+import { useArchiveThread, useDeleteThread, useRegenerateThreadIcon, useRegenerateThreadName, useRenameThread, useThreadStats, useUpdateThreadIcon } from "~/features/chat/hooks/use-threads";
 import { useChatUIStore } from "~/features/chat/store";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { THREAD_ICONS } from "~/lib/db/schema/chat";
@@ -72,6 +72,7 @@ type ThreadItemProps = {
   icon?: ThreadIcon | null;
   isActive: boolean;
   isShared?: boolean;
+  isArchived?: boolean;
   onDeleteClick?: (threadId: string, threadTitle: string) => void;
   onShareClick?: (threadId: string, threadTitle: string) => void;
 };
@@ -96,6 +97,7 @@ function ThreadItemComponent({
   icon,
   isActive,
   isShared,
+  isArchived,
   onDeleteClick,
   onShareClick,
 }: ThreadItemProps) {
@@ -110,6 +112,7 @@ function ThreadItemComponent({
   const regenerateThreadNameMutation = useRegenerateThreadName();
   const regenerateThreadIconMutation = useRegenerateThreadIcon();
   const updateIconMutation = useUpdateThreadIcon();
+  const archiveThreadMutation = useArchiveThread();
 
   const currentIcon = icon ?? "message-circle";
   const IconComponent = ICON_COMPONENTS[currentIcon];
@@ -177,6 +180,25 @@ function ThreadItemComponent({
     catch (error) {
       console.error("Failed to regenerate thread icon:", error);
       toast.error("Failed to regenerate thread icon");
+    }
+  };
+
+  const handleArchiveClick = async () => {
+    try {
+      await archiveThreadMutation.mutateAsync({ threadId: id, archive: !isArchived });
+      toast.success(isArchived ? "Thread unarchived" : "Thread archived");
+      if (!isArchived) {
+        const currentChatId = pathname.startsWith("/chat/")
+          ? pathname.split("/chat/")[1]
+          : null;
+        if (currentChatId === id) {
+          router.push("/");
+        }
+      }
+    }
+    catch (error) {
+      console.error("Failed to archive thread:", error);
+      toast.error("Failed to archive thread");
     }
   };
 
@@ -379,6 +401,9 @@ function ThreadItemComponent({
         )}
         <ContextMenuItem onClick={() => onShareClick?.(id, title)}>
           {isShared ? "Manage Share" : "Share"}
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleArchiveClick} disabled={archiveThreadMutation.isPending}>
+          {isArchived ? "Unarchive" : "Archive"}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem

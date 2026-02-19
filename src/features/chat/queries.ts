@@ -1,6 +1,6 @@
 import type Buffer from "node:buffer";
 
-import { and, count, desc, eq, inArray, isNotNull, lt, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import { cache } from "react";
 
 import type { ChatUIMessage } from "~/features/chat/types";
@@ -471,18 +471,22 @@ export const getParentThread = cache(async (threadId: string) => {
  * Get paginated threads for a user, sorted by last message (most recent first)
  *
  * @param userId ID of the user
- * @param options Options for pagination
+ * @param options Options for pagination and filtering
  * @param options.limit Number of threads to fetch (default 50)
  * @param options.cursor Cursor for pagination (lastMessageAt of last thread from previous page)
+ * @param options.archived Whether to fetch archived threads (default false)
  * @return {Promise<{ threads: any[]; nextCursor: string | null }>}
  */
 export async function getThreadsByUserId(
   userId: string,
-  options: { limit?: number; cursor?: string } = {},
+  options: { limit?: number; cursor?: string; archived?: boolean } = {},
 ) {
-  const { limit = 50, cursor } = options;
+  const { limit = 50, cursor, archived = false } = options;
 
-  const conditions = [eq(threads.userId, userId)];
+  const conditions = [
+    eq(threads.userId, userId),
+    archived ? isNotNull(threads.archivedAt) : isNull(threads.archivedAt),
+  ];
 
   if (cursor) {
     const cursorDate = new Date(cursor);
@@ -568,6 +572,24 @@ export async function updateThreadIcon(threadId: string, userId: string, icon: T
   const result = await db
     .update(threads)
     .set({ icon, updatedAt: new Date() })
+    .where(and(eq(threads.id, threadId), eq(threads.userId, userId)))
+    .returning();
+  return result.length > 0;
+}
+
+/**
+ * Archive or unarchive a thread by ID.
+ * Verifies ownership by requiring userId in the WHERE clause.
+ *
+ * @param threadId ID of the thread
+ * @param userId ID of the user who owns the thread
+ * @param archive True to archive, false to unarchive
+ * @return {Promise<boolean>} True if updated, false if not found or not owned
+ */
+export async function archiveThreadById(threadId: string, userId: string, archive: boolean): Promise<boolean> {
+  const result = await db
+    .update(threads)
+    .set({ archivedAt: archive ? new Date() : null, updatedAt: new Date() })
     .where(and(eq(threads.id, threadId), eq(threads.userId, userId)))
     .returning();
   return result.length > 0;

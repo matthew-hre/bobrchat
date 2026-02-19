@@ -19,6 +19,7 @@ type ThreadListProps = {
   groupedThreads?: GroupedThreads;
   flatResults?: Array<{ id: string; title: string; icon?: ThreadIcon | null }>;
   isSearching?: boolean;
+  isArchived?: boolean;
   hasNextPage?: boolean;
   fetchNextPage?: () => void;
   isFetchingNextPage?: boolean;
@@ -28,6 +29,7 @@ export const ThreadList = memo(({
   groupedThreads,
   flatResults,
   isSearching,
+  isArchived,
   hasNextPage,
   fetchNextPage,
   isFetchingNextPage,
@@ -113,6 +115,7 @@ export const ThreadList = memo(({
               icon={thread.icon}
               isActive={currentChatId === thread.id}
               isShared={thread.isShared}
+              isArchived={isArchived}
               onDeleteClick={handleDeleteClick}
               onShareClick={handleShareClick}
             />
@@ -153,6 +156,7 @@ export const ThreadList = memo(({
                         title={thread.title}
                         icon={thread.icon}
                         isActive={currentChatId === thread.id}
+                        isArchived={isArchived}
                         onDeleteClick={handleDeleteClick}
                         onShareClick={handleShareClick}
                       />
