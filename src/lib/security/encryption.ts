@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer";
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 import type { ChatUIMessage } from "~/features/chat/types";
 
@@ -9,6 +9,7 @@ const ALGORITHM = "aes-256-gcm";
 const KEY_LENGTH = 32;
 const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
+const PBKDF2_ITERATIONS = 100_000;
 
 export type EncryptedMessage = {
   iv: string;
@@ -16,24 +17,46 @@ export type EncryptedMessage = {
   authTag: string;
 };
 
-/**
- * Derive encryption key for per-user message encryption.
- * Uses scrypt with ENCRYPTION_SECRET:userId as password and user's salt.
- */
-export function deriveUserKey(userId: string, salt: string): Buffer {
-  return scryptSync(`${serverEnv.ENCRYPTION_SECRET}:${userId}`, salt, KEY_LENGTH);
+const keyCache = new Map<string, Buffer>();
+
+// PBKDF2-SHA256 via Web Crypto (async, off main thread in Workers)
+async function pbkdf2DeriveKey(password: string, salt: string): Promise<Buffer> {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: enc.encode(salt),
+      iterations: PBKDF2_ITERATIONS,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    KEY_LENGTH * 8,
+  );
+  return Buffer.from(bits);
 }
 
-/**
- * Encrypt a chat message using per-user key derivation.
- *
- * @param content The message content to encrypt
- * @param userId The user's ID (part of key derivation)
- * @param salt The user's unique salt
- * @returns Encrypted message components (iv, ciphertext, authTag as hex strings)
- */
-export function encryptMessage(content: ChatUIMessage, userId: string, salt: string): EncryptedMessage {
-  const key = deriveUserKey(userId, salt);
+// Per-user key: PBKDF2(ENCRYPTION_SECRET:userId, salt). Cached per isolate.
+export async function deriveUserKey(userId: string, salt: string): Promise<Buffer> {
+  const cacheKey = `${userId}:${salt}`;
+  const cached = keyCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  const key = await pbkdf2DeriveKey(`${serverEnv.ENCRYPTION_SECRET}:${userId}`, salt);
+  keyCache.set(cacheKey, key);
+  return key;
+}
+
+// Encrypt a chat message with per-user key derivation.
+export async function encryptMessage(content: ChatUIMessage, userId: string, salt: string): Promise<EncryptedMessage> {
+  const key = await deriveUserKey(userId, salt);
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGORITHM, key, iv);
 
@@ -47,23 +70,13 @@ export function encryptMessage(content: ChatUIMessage, userId: string, salt: str
   };
 }
 
-/**
- * Decrypt a chat message using per-user key derivation.
- *
- * @param encrypted The encrypted message components
- * @param userId The user's ID (part of key derivation)
- * @param salt The user's unique salt
- * @returns The decrypted message content
- * @throws If decryption fails or JSON is malformed
- */
-export function decryptMessage(encrypted: EncryptedMessage, userId: string, salt: string): ChatUIMessage {
-  const key = deriveUserKey(userId, salt);
+// Decrypt a chat message with per-user key derivation.
+export async function decryptMessage(encrypted: EncryptedMessage, userId: string, salt: string): Promise<ChatUIMessage> {
+  const key = await deriveUserKey(userId, salt);
   return decryptMessageWithKey(encrypted, key);
 }
 
-/**
- * Decrypt a chat message using a pre-derived key (e.g., cached per request).
- */
+// Decrypt with a pre-derived key (skips key derivation).
 export function decryptMessageWithKey(encrypted: EncryptedMessage, key: Buffer): ChatUIMessage {
   const iv = Buffer.from(encrypted.iv, "hex");
   const data = Buffer.from(encrypted.ciphertext, "hex");
@@ -92,10 +105,7 @@ const ATTACHMENT_MAGIC = Buffer.from("BCA1");
 const ATTACHMENT_VERSION = 1;
 const ATTACHMENT_HEADER_LENGTH = ATTACHMENT_MAGIC.length + 1 + IV_LENGTH + TAG_LENGTH; // 4+1+16+16 = 37
 
-/**
- * Encrypt a binary buffer using AES-256-GCM.
- * Returns a single buffer: MAGIC(4) | version(1) | iv(16) | authTag(16) | ciphertext(N)
- */
+// AES-256-GCM. Wire format: MAGIC(4) | version(1) | iv(16) | authTag(16) | ciphertext(N)
 export function encryptBuffer(plaintext: Buffer, key: Buffer): Buffer {
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGORITHM, key, iv);
@@ -110,10 +120,7 @@ export function encryptBuffer(plaintext: Buffer, key: Buffer): Buffer {
   return Buffer.concat([header, iv, authTag, encrypted]);
 }
 
-/**
- * Decrypt a binary buffer that was encrypted with encryptBuffer.
- * Expects format: MAGIC(4) | version(1) | iv(16) | authTag(16) | ciphertext(N)
- */
+// Inverse of encryptBuffer.
 export function decryptBuffer(data: Buffer, key: Buffer): Buffer {
   if (data.length < ATTACHMENT_HEADER_LENGTH) {
     throw new Error("Encrypted data too short");
@@ -138,34 +145,28 @@ export function decryptBuffer(data: Buffer, key: Buffer): Buffer {
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 }
 
-/**
- * Check if a buffer starts with the encrypted attachment magic header.
- */
+// Check for encrypted attachment magic header.
 export function isEncryptedBuffer(data: Buffer): boolean {
   return data.length >= ATTACHMENT_MAGIC.length && data.subarray(0, 4).equals(ATTACHMENT_MAGIC);
 }
 
-/**
- * Derive encryption key for API key encryption (global, not per-user).
- * Uses ENCRYPTION_SECRET with ENCRYPTION_SALT.
- */
-function getApiKeyEncryptionKey(): Buffer {
-  return scryptSync(serverEnv.ENCRYPTION_SECRET, serverEnv.ENCRYPTION_SALT, KEY_LENGTH);
+const API_KEY_CACHE_KEY = "__api_key_encryption__";
+
+// Global key for API key encryption. Cached per isolate.
+async function getApiKeyEncryptionKey(): Promise<Buffer> {
+  const cached = keyCache.get(API_KEY_CACHE_KEY);
+  if (cached) {
+    return cached;
+  }
+  const key = await pbkdf2DeriveKey(serverEnv.ENCRYPTION_SECRET, serverEnv.ENCRYPTION_SALT);
+  keyCache.set(API_KEY_CACHE_KEY, key);
+  return key;
 }
 
-/**
- * Encrypt a sensitive value (e.g., API key) using global encryption.
- *
- * Uses AES-256-GCM with:
- * - 16-byte random IV (unique per encryption)
- * - 16-byte auth tag for tamper detection
- *
- * @param plaintext The value to encrypt
- * @returns Encrypted value in "hex(iv):hex(ciphertext):hex(authTag)" format
- */
-export function encryptValue(plaintext: string): string {
+// Encrypt a value with the global key. Returns "hex(iv):hex(ciphertext):hex(authTag)".
+export async function encryptValue(plaintext: string): Promise<string> {
   const iv = randomBytes(IV_LENGTH);
-  const cipher = createCipheriv(ALGORITHM, getApiKeyEncryptionKey(), iv);
+  const cipher = createCipheriv(ALGORITHM, await getApiKeyEncryptionKey(), iv);
 
   let encrypted = cipher.update(plaintext, "utf8", "hex");
   encrypted += cipher.final("hex");
@@ -175,14 +176,8 @@ export function encryptValue(plaintext: string): string {
   return `${iv.toString("hex")}:${encrypted}:${authTag.toString("hex")}`;
 }
 
-/**
- * Decrypt a sensitive value (e.g., API key).
- *
- * @param encrypted The encrypted value in "hex(iv):hex(ciphertext):hex(authTag)" format
- * @returns Decrypted plaintext
- * @throws If decryption fails (invalid key, corrupted data, or tampered data)
- */
-export function decryptValue(encrypted: string): string {
+// Inverse of encryptValue.
+export async function decryptValue(encrypted: string): Promise<string> {
   const parts = encrypted.split(":");
   if (parts.length !== 3) {
     throw new Error("Invalid encrypted value format");
@@ -198,7 +193,7 @@ export function decryptValue(encrypted: string): string {
     throw new Error("Invalid encryption parameters");
   }
 
-  const decipher = createDecipheriv(ALGORITHM, getApiKeyEncryptionKey(), iv);
+  const decipher = createDecipheriv(ALGORITHM, await getApiKeyEncryptionKey(), iv);
   decipher.setAuthTag(authTag);
 
   let decrypted = decipher.update(encryptedData, undefined, "utf8");

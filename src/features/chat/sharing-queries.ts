@@ -79,7 +79,7 @@ async function getOgPreviewData(
       try {
         const salt = await getSaltForVersion(userId, row.keyVersion ?? keyMeta.version);
         if (salt) {
-          decrypted = decryptMessage(
+          decrypted = await decryptMessage(
             { iv: row.iv, ciphertext: row.ciphertext, authTag: row.authTag },
             userId,
             salt,

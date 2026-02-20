@@ -118,7 +118,7 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
       if (!salt) {
         throw new Error(`Missing salt for key version ${version}`);
       }
-      const cachedKey = derivedKeys.get(version) ?? deriveUserKey(userId, salt);
+      const cachedKey = derivedKeys.get(version) ?? await deriveUserKey(userId, salt);
       derivedKeys.set(version, cachedKey);
       message = decryptMessageWithKey(
         { iv: row.iv, ciphertext: row.ciphertext, authTag: row.authTag },
@@ -193,7 +193,7 @@ export async function saveMessage(
   const { ids: attachmentIds, storagePaths: attachmentStoragePaths } = extractAttachmentRefs(message);
 
   const keyMeta = await getOrCreateKeyMeta(userId);
-  const encrypted = encryptMessage(message, userId, keyMeta.salt);
+  const encrypted = await encryptMessage(message, userId, keyMeta.salt);
 
   await db.transaction(async (tx) => {
     const messageId = crypto.randomUUID();
@@ -282,8 +282,8 @@ export async function saveMessages(
 
   await db.transaction(async (tx) => {
     await tx.insert(messages).values(
-      messagesToSave.map((message) => {
-        const encrypted = encryptMessage(message, userId, keyMeta.salt);
+      await Promise.all(messagesToSave.map(async (message) => {
+        const encrypted = await encryptMessage(message, userId, keyMeta.salt);
         return {
           threadId,
           role: message.role,
@@ -293,7 +293,7 @@ export async function saveMessages(
           authTag: encrypted.authTag,
           keyVersion: keyMeta.version,
         };
-      }),
+      })),
     );
 
     // Update thread's lastMessageAt (thread engagement time)
