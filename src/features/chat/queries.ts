@@ -498,7 +498,7 @@ export async function getThreadsByUserId(
 
   if (tagIds && tagIds.length > 0) {
     conditions.push(
-      sql`EXISTS (SELECT 1 FROM thread_tags tt WHERE tt.thread_id = ${threads.id} AND tt.user_id = ${userId} AND tt.tag_id = ANY(${tagIds}))`,
+      sql`EXISTS (SELECT 1 FROM thread_tags tt WHERE tt.thread_id = ${threads.id} AND tt.user_id = ${userId} AND tt.tag_id = ANY(${sql`ARRAY[${sql.join(tagIds.map(id => sql`${id}::uuid`), sql`, `)}]`}))`,
     );
   }
 
