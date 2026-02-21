@@ -126,9 +126,10 @@ function ThreadItemComponent({
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [tooltipOpen, setTooltipOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { data: stats, isLoading: statsLoading } = useThreadStats(menuOpen ? id : null);
+  const { data: stats, isLoading: statsLoading } = useThreadStats(menuOpen || tooltipOpen ? id : null);
 
   const performDirectDelete = async () => {
     try {
@@ -276,7 +277,7 @@ function ThreadItemComponent({
 
   return (
     <ContextMenu onOpenChange={setMenuOpen}>
-      <ThreadTooltip title={title} isShared={isShared}>
+      <ThreadTooltip title={title} isShared={isShared} tags={threadTags} stats={stats} statsLoading={statsLoading} onOpenChange={setTooltipOpen}>
         <ContextMenuTrigger>
 
           <div className="group/thread relative">
@@ -354,39 +355,6 @@ function ThreadItemComponent({
       </ThreadTooltip>
 
       <ContextMenuContent>
-        <div className="text-muted-foreground px-2 py-1.5 text-xs">
-          {statsLoading
-            ? "Loading..."
-            : stats
-              ? (
-                  <>
-                    <div>
-                      {stats.messageCount}
-                      {" "}
-                      messages
-                      {stats.attachmentCount > 0 && (
-                        <>
-                          {" · "}
-                          {stats.attachmentCount}
-                          {" "}
-                          files (
-                          {formatBytes(stats.attachmentSize)}
-                          )
-                        </>
-                      )}
-                    </div>
-                    {stats.totalCost > 0 && (
-                      <div>
-                        {formatCost(stats.totalCost)}
-                        {" "}
-                        spent
-                      </div>
-                    )}
-                  </>
-                )
-              : "—"}
-        </div>
-        <ContextMenuSeparator />
         <ContextMenuItem onClick={handleRenameClick} disabled={regenerateThreadNameMutation.isPending}>
           Rename
         </ContextMenuItem>
@@ -481,9 +449,19 @@ function ThreadItemComponent({
   );
 };
 
-function ThreadTooltip({ title, isShared, children }: { title: string; isShared?: boolean; children: React.ReactNode }) {
+type ThreadTooltipProps = {
+  title: string;
+  isShared?: boolean;
+  tags?: Array<{ id: string; name: string; color: string }>;
+  stats?: { messageCount: number; attachmentCount: number; attachmentSize: number; totalCost: number } | null;
+  statsLoading?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children: React.ReactNode;
+};
+
+function ThreadTooltip({ title, isShared, tags, stats, statsLoading, onOpenChange, children }: ThreadTooltipProps) {
   return (
-    <Tooltip delayDuration={1000}>
+    <Tooltip delayDuration={1000} onOpenChange={onOpenChange}>
       <TooltipTrigger asChild>
         <div>
           {children}
@@ -497,6 +475,51 @@ function ThreadTooltip({ title, isShared, children }: { title: string; isShared?
       >
         {title}
         {isShared && <span className="text-muted-foreground"> (shared)</span>}
+        <div className="text-muted-foreground text-xs">
+          {statsLoading
+            ? "Loading..."
+            : stats
+              ? (
+                  <>
+                    {stats.messageCount}
+                    {" "}
+                    messages
+                    {stats.attachmentCount > 0 && (
+                      <>
+                        {" · "}
+                        {stats.attachmentCount}
+                        {" "}
+                        files (
+                        {formatBytes(stats.attachmentSize)}
+                        )
+                      </>
+                    )}
+                    {stats.totalCost > 0 && (
+                      <>
+                        {" · "}
+                        {formatCost(stats.totalCost)}
+                      </>
+                    )}
+                  </>
+                )
+              : null}
+        </div>
+        {tags && tags.length > 0 && (
+          <div className="mt-1 flex max-w-40 flex-wrap gap-1">
+            {tags.map(tag => (
+              <span
+                key={tag.id}
+                className="rounded px-1.5 py-0.5 text-[10px] font-medium leading-none"
+                style={{
+                  backgroundColor: `color-mix(in srgb, ${tag.color} 15%, transparent)`,
+                  color: tag.color,
+                }}
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
       </TooltipContent>
     </Tooltip>
   );
