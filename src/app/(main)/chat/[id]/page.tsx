@@ -73,6 +73,7 @@ export default async function ChatServer({ params }: ChatServerProps) {
               createdAt: thread.createdAt.toISOString(),
               updatedAt: thread.updatedAt.toISOString(),
               isShared: false,
+              tags: [],
             }
           : null
       }
