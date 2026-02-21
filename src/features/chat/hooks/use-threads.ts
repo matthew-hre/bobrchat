@@ -23,6 +23,7 @@ export type ThreadFromApi = {
   createdAt: string;
   updatedAt: string;
   isShared: boolean;
+  tags: Array<{ id: string; name: string; color: string }>;
 };
 
 type ThreadsResponse = {
@@ -36,7 +37,7 @@ type CreateThreadInput = {
   icon?: ThreadIcon;
 };
 
-async function fetchThreads({ pageParam, archived }: { pageParam: string | undefined; archived?: boolean }): Promise<ThreadsResponse> {
+async function fetchThreads({ pageParam, archived, tagIds }: { pageParam: string | undefined; archived?: boolean; tagIds?: string[] }): Promise<ThreadsResponse> {
   const params = new URLSearchParams({ limit: "50" });
   if (pageParam) {
     params.set("cursor", pageParam);
@@ -44,18 +45,23 @@ async function fetchThreads({ pageParam, archived }: { pageParam: string | undef
   if (archived) {
     params.set("archived", "true");
   }
+  if (tagIds && tagIds.length > 0) {
+    params.set("tagIds", tagIds.join(","));
+  }
   const response = await fetch(`/api/threads?${params.toString()}`);
   if (!response.ok)
     throw new Error("Failed to fetch threads");
   return response.json();
 }
 
-export function useThreads(options: { enabled?: boolean; archived?: boolean } = {}) {
-  const queryKey = options.archived ? ARCHIVED_THREADS_KEY : THREADS_KEY;
+export function useThreads(options: { enabled?: boolean; archived?: boolean; tagIds?: string[] } = {}) {
+  const queryKey = options.tagIds?.length
+    ? [...THREADS_KEY, "tagged", ...options.tagIds.slice().sort()]
+    : options.archived ? ARCHIVED_THREADS_KEY : THREADS_KEY;
 
   const query = useInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam }) => fetchThreads({ pageParam, archived: options.archived }),
+    queryFn: ({ pageParam }) => fetchThreads({ pageParam, archived: options.archived, tagIds: options.tagIds }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: lastPage => lastPage.nextCursor ?? undefined,
     staleTime: 30 * 1000,
@@ -114,6 +120,7 @@ export function useCreateThread() {
         createdAt: now,
         updatedAt: now,
         isShared: false,
+        tags: [],
       };
 
       queryClient.setQueryData<InfiniteData<ThreadsResponse>>(THREADS_KEY, (old) => {

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { memo } from "react";
 
 import { cn } from "~/lib/utils";
@@ -28,9 +29,11 @@ export const ProviderLogo = memo(({
   }
 
   return (
-    <img
+    <Image
       src={logoPath}
       alt={`${provider} logo`}
+      width={24}
+      height={24}
       className={cn(sizeMap[size], `
         invert-0
         dark:invert

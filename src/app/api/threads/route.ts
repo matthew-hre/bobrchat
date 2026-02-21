@@ -18,8 +18,10 @@ export async function GET(request: NextRequest) {
   const limit = Number.parseInt(searchParams.get("limit") ?? "50", 10);
   const cursor = searchParams.get("cursor") ?? undefined;
   const archived = searchParams.get("archived") === "true";
+  const tagIdsParam = searchParams.get("tagIds");
+  const tagIds = tagIdsParam ? tagIdsParam.split(",").filter(Boolean) : undefined;
 
-  const result = await getThreadsByUserId(session.user.id, { limit, cursor, archived });
+  const result = await getThreadsByUserId(session.user.id, { limit, cursor, archived, tagIds });
 
   return Response.json(result);
 }

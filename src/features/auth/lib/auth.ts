@@ -34,7 +34,7 @@ export const auth = betterAuth({
   trustedOrigins: [serverEnv.BETTER_AUTH_URL],
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    requireEmailVerification: process.env.NODE_ENV !== "development",
     sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
       await sendEmail({
         to: user.email,
