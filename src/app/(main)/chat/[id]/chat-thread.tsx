@@ -195,7 +195,7 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
         ? message.files
         : undefined;
       setLastSendPayload({
-        text: "text" in message ? message.text : "",
+        text: "text" in message && typeof message.text === "string" ? message.text : "",
         files: fileParts,
       });
     }
@@ -301,7 +301,7 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
     }));
 
     const nextMessage = {
-      ...(lastSendPayload.text ? { text: lastSendPayload.text } : {}),
+      text: lastSendPayload.text,
       ...(files && files.length > 0 ? { files } : {}),
     };
 
