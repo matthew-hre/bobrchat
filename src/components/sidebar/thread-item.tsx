@@ -32,6 +32,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "~/components/ui/context-menu";
+import { useTags, useTagThread, useUntagThread } from "~/features/chat/hooks/use-tags";
 import { useArchiveThread, useDeleteThread, useRegenerateThreadIcon, useRegenerateThreadName, useRenameThread, useThreadStats, useUpdateThreadIcon } from "~/features/chat/hooks/use-threads";
 import { useChatUIStore } from "~/features/chat/store";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
@@ -73,6 +74,7 @@ type ThreadItemProps = {
   isActive: boolean;
   isShared?: boolean;
   isArchived?: boolean;
+  tags?: Array<{ id: string; name: string; color: string }>;
   onDeleteClick?: (threadId: string, threadTitle: string) => void;
   onShareClick?: (threadId: string, threadTitle: string) => void;
 };
@@ -98,6 +100,7 @@ function ThreadItemComponent({
   isActive,
   isShared,
   isArchived,
+  tags: threadTags,
   onDeleteClick,
   onShareClick,
 }: ThreadItemProps) {
@@ -113,6 +116,9 @@ function ThreadItemComponent({
   const regenerateThreadIconMutation = useRegenerateThreadIcon();
   const updateIconMutation = useUpdateThreadIcon();
   const archiveThreadMutation = useArchiveThread();
+  const { data: allTags } = useTags();
+  const tagThreadMutation = useTagThread();
+  const untagThreadMutation = useUntagThread();
 
   const currentIcon = icon ?? "message-circle";
   const IconComponent = ICON_COMPONENTS[currentIcon];
@@ -302,6 +308,27 @@ function ThreadItemComponent({
                     )
               )}
               <span className="flex-1 truncate pr-6">{title}</span>
+              {threadTags && threadTags.length > 0 && (
+                <span className="flex shrink-0 gap-0.5 pr-6">
+                  {threadTags.slice(0, 2).map(tag => (
+                    <span
+                      key={tag.id}
+                      className="size-1.5 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                      title={tag.name}
+                    />
+                  ))}
+                  {threadTags.length > 2 && (
+                    <span className={`
+                      text-muted-foreground text-[9px] leading-none
+                    `}
+                    >
+                      +
+                      {threadTags.length - 2}
+                    </span>
+                  )}
+                </span>
+              )}
             </Link>
             <Button
               variant="ghost"
@@ -398,6 +425,38 @@ function ThreadItemComponent({
               Regenerate Icon
             </ContextMenuItem>
           </>
+        )}
+        {allTags && allTags.length > 0 && (
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>
+              Tags
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent className="min-w-[120px] p-1">
+              {allTags.map((tag) => {
+                const hasTag = threadTags?.some(t => t.id === tag.id) ?? false;
+                return (
+                  <ContextMenuItem
+                    key={tag.id}
+                    onClick={() => {
+                      if (hasTag) {
+                        untagThreadMutation.mutate({ threadId: id, tagId: tag.id });
+                      }
+                      else {
+                        tagThreadMutation.mutate({ threadId: id, tagId: tag.id });
+                      }
+                    }}
+                  >
+                    <span
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="flex-1">{tag.name}</span>
+                    {hasTag && <span className="text-primary text-xs">✓</span>}
+                  </ContextMenuItem>
+                );
+              })}
+            </ContextMenuSubContent>
+          </ContextMenuSub>
         )}
         <ContextMenuItem onClick={() => onShareClick?.(id, title)}>
           {isShared ? "Manage Share" : "Share"}

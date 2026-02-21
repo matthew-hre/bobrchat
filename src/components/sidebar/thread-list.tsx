@@ -17,7 +17,7 @@ import { ThreadItem } from "./thread-item";
 
 type ThreadListProps = {
   groupedThreads?: GroupedThreads;
-  flatResults?: Array<{ id: string; title: string; icon?: ThreadIcon | null }>;
+  flatResults?: Array<{ id: string; title: string; icon?: ThreadIcon | null; tags?: Array<{ id: string; name: string; color: string }> }>;
   isSearching?: boolean;
   isArchived?: boolean;
   hasNextPage?: boolean;
@@ -92,7 +92,7 @@ export const ThreadList = memo(({
 
   const renderGroup = (
     title: string,
-    threads: Array<{ id: string; title: string; icon?: ThreadIcon | null; isShared?: boolean }>,
+    threads: Array<{ id: string; title: string; icon?: ThreadIcon | null; isShared?: boolean; tags?: Array<{ id: string; name: string; color: string }> }>,
   ) => {
     if (threads.length === 0)
       return null;
@@ -116,6 +116,7 @@ export const ThreadList = memo(({
               isActive={currentChatId === thread.id}
               isShared={thread.isShared}
               isArchived={isArchived}
+              tags={thread.tags}
               onDeleteClick={handleDeleteClick}
               onShareClick={handleShareClick}
             />
@@ -157,6 +158,7 @@ export const ThreadList = memo(({
                         icon={thread.icon}
                         isActive={currentChatId === thread.id}
                         isArchived={isArchived}
+                        tags={thread.tags}
                         onDeleteClick={handleDeleteClick}
                         onShareClick={handleShareClick}
                       />
