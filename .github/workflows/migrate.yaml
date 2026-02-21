@@ -1,0 +1,30 @@
+name: Migrate
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/lib/db/migrations/**"
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - name: Setup bun Cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
+      - name: bun install
+        run: nix develop -c bun install
+      - name: Run migrations
+        run: nix develop -c bun run db:migrate:deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
