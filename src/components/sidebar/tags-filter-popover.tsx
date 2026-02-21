@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckIcon, TagIcon } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
@@ -15,6 +15,14 @@ type TagsFilterPopoverProps = {
 
 export function TagsFilterPopover({ selectedTagIds, onSelectedTagIdsChange }: TagsFilterPopoverProps) {
   const { data: tags } = useTags();
+
+  useEffect(() => {
+    if (!tags) return;
+    const validIds = selectedTagIds.filter(id => tags.some(t => t.id === id));
+    if (validIds.length !== selectedTagIds.length) {
+      onSelectedTagIdsChange(validIds);
+    }
+  }, [tags, selectedTagIds, onSelectedTagIdsChange]);
 
   const toggleTag = useCallback((tagId: string) => {
     onSelectedTagIdsChange(
