@@ -134,8 +134,8 @@ export function TagManager({ searchQuery = "" }: TagManagerProps) {
                       `,
                       selectedColor === color && !isCustomColor
                         ? `
-                          border-foreground ring-foreground ring-offset-background
-                          ring-2 ring-offset-2
+                          border-foreground ring-foreground
+                          ring-offset-background ring-2 ring-offset-2
                         `
                         : "border-transparent",
                     )}

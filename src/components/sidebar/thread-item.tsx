@@ -312,7 +312,8 @@ function ThreadItemComponent({
                 <span className={`
                   flex shrink-0 items-center gap-1 transition-opacity
                   group-hover/thread:opacity-0
-                `}>
+                `}
+                >
                   {threadTags.slice(0, 2).map(tag => (
                     <span
                       key={tag.id}
@@ -322,7 +323,10 @@ function ThreadItemComponent({
                     />
                   ))}
                   {threadTags.length > 2 && (
-                    <span className="text-muted-foreground text-[10px] leading-none">
+                    <span className={`
+                      text-muted-foreground text-[10px] leading-none
+                    `}
+                    >
                       +
                       {threadTags.length - 2}
                     </span>
