@@ -1,4 +1,4 @@
-import { bigint, boolean, index, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { users } from "./auth";
 
@@ -106,5 +106,44 @@ export const attachments = pgTable(
     index("attachments_userId_idx").on(table.userId),
     index("attachments_messageId_idx").on(table.messageId),
     index("attachments_userId_storagePath_idx").on(table.userId, table.storagePath),
+  ],
+);
+
+export const tags = pgTable(
+  "tags",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    color: text("color").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  table => [index("tags_userId_idx").on(table.userId)],
+);
+
+export const threadTags = pgTable(
+  "thread_tags",
+  {
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => threads.id, { onDelete: "cascade" }),
+    tagId: uuid("tag_id")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  table => [
+    primaryKey({ columns: [table.threadId, table.tagId] }),
+    index("thread_tags_userId_threadId_idx").on(table.userId, table.threadId),
+    index("thread_tags_userId_tagId_idx").on(table.userId, table.tagId),
   ],
 );
