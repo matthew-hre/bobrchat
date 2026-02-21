@@ -214,10 +214,13 @@ export function TagManager({ searchQuery = "" }: TagManagerProps) {
                   `}
                   style={{
                     backgroundColor: `color-mix(in srgb, ${tag.color} 15%, transparent)`,
-                    color: tag.color,
                   }}
                 >
-                  <span className="text-xs font-medium">{tag.name}</span>
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: tag.color }}
+                  />
+                  <span className="text-foreground text-xs font-medium">{tag.name}</span>
                   <Button
                     variant="ghost"
                     size="icon-sm"
