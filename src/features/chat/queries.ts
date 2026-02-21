@@ -7,12 +7,14 @@ import type { ChatUIMessage } from "~/features/chat/types";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { db } from "~/lib/db";
-import { attachments, messageMetadata, messages, threads } from "~/lib/db/schema/chat";
+import { attachments, messageMetadata, messages, tags, threads, threadTags } from "~/lib/db/schema/chat";
 import { threadShares } from "~/lib/db/schema/sharing";
 import { subscriptions, TIER_LIMITS } from "~/lib/db/schema/subscriptions";
 import { serverEnv } from "~/lib/env";
 import { decryptMessageWithKey, deriveUserKey, encryptMessage } from "~/lib/security/encryption";
 import { getKeyMeta, getOrCreateKeyMeta, getSaltsForUser } from "~/lib/security/keys";
+
+export type TagRow = { id: string; name: string; color: string };
 
 function extractAttachmentRefs(message: ChatUIMessage): { ids: string[]; storagePaths: string[] } {
   const parts = (message as unknown as { parts?: unknown }).parts;
@@ -475,13 +477,14 @@ export const getParentThread = cache(async (threadId: string) => {
  * @param options.limit Number of threads to fetch (default 50)
  * @param options.cursor Cursor for pagination (lastMessageAt of last thread from previous page)
  * @param options.archived Whether to fetch archived threads (default false)
+ * @param options.tagIds Optional tag IDs to filter by (OR semantics)
  * @return {Promise<{ threads: any[]; nextCursor: string | null }>}
  */
 export async function getThreadsByUserId(
   userId: string,
-  options: { limit?: number; cursor?: string; archived?: boolean } = {},
+  options: { limit?: number; cursor?: string; archived?: boolean; tagIds?: string[] } = {},
 ) {
-  const { limit = 50, cursor, archived = false } = options;
+  const { limit = 50, cursor, archived = false, tagIds } = options;
 
   const conditions = [
     eq(threads.userId, userId),
@@ -491,6 +494,12 @@ export async function getThreadsByUserId(
   if (cursor) {
     const cursorDate = new Date(cursor);
     conditions.push(lt(threads.lastMessageAt, cursorDate));
+  }
+
+  if (tagIds && tagIds.length > 0) {
+    conditions.push(
+      sql`EXISTS (SELECT 1 FROM thread_tags tt WHERE tt.thread_id = ${threads.id} AND tt.user_id = ${userId} AND tt.tag_id = ANY(${tagIds}))`,
+    );
   }
 
   const result = await db
@@ -517,9 +526,13 @@ export async function getThreadsByUserId(
     ? threadList[threadList.length - 1].lastMessageAt?.toISOString() ?? null
     : null;
 
+  const threadIds = threadList.map(t => t.id);
+  const tagsByThread = await getTagsForThreads(userId, threadIds);
+
   const threadsWithShareStatus = threadList.map(t => ({
     ...t,
     isShared: t.isShared && !t.isShareRevoked,
+    tags: tagsByThread.get(t.id) || [],
   }));
 
   return { threads: threadsWithShareStatus, nextCursor };
@@ -630,4 +643,113 @@ export async function deleteMessagesAfterCount(threadId: string, userId: string,
     .returning();
 
   return deleted.length;
+}
+
+/**
+ * List all tags for a user, ordered by name.
+ */
+export async function listTagsByUserId(userId: string): Promise<TagRow[]> {
+  const result = await db
+    .select({ id: tags.id, name: tags.name, color: tags.color })
+    .from(tags)
+    .where(eq(tags.userId, userId))
+    .orderBy(tags.name);
+  return result;
+}
+
+/**
+ * Create a new tag for a user.
+ */
+export async function createTag(userId: string, input: { name: string; color: string }): Promise<TagRow> {
+  const result = await db
+    .insert(tags)
+    .values({ userId, name: input.name.trim(), color: input.color })
+    .returning();
+  return { id: result[0].id, name: result[0].name, color: result[0].color };
+}
+
+/**
+ * Delete a tag by ID. Verifies ownership.
+ */
+export async function deleteTagById(userId: string, tagId: string): Promise<boolean> {
+  const result = await db
+    .delete(tags)
+    .where(and(eq(tags.id, tagId), eq(tags.userId, userId)))
+    .returning();
+  return result.length > 0;
+}
+
+/**
+ * Update a tag's name and/or color. Verifies ownership.
+ */
+export async function updateTagById(userId: string, tagId: string, input: { name?: string; color?: string }): Promise<boolean> {
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (input.name !== undefined)
+    updates.name = input.name.trim();
+  if (input.color !== undefined)
+    updates.color = input.color;
+
+  const result = await db
+    .update(tags)
+    .set(updates)
+    .where(and(eq(tags.id, tagId), eq(tags.userId, userId)))
+    .returning();
+  return result.length > 0;
+}
+
+/**
+ * Add a tag to a thread. Verifies both belong to the user.
+ */
+export async function addTagToThread(userId: string, threadId: string, tagId: string): Promise<void> {
+  await db
+    .insert(threadTags)
+    .values({ threadId, tagId, userId })
+    .onConflictDoNothing();
+}
+
+/**
+ * Remove a tag from a thread.
+ */
+export async function removeTagFromThread(userId: string, threadId: string, tagId: string): Promise<void> {
+  await db
+    .delete(threadTags)
+    .where(
+      and(
+        eq(threadTags.threadId, threadId),
+        eq(threadTags.tagId, tagId),
+        eq(threadTags.userId, userId),
+      ),
+    );
+}
+
+/**
+ * Get tags for a list of thread IDs (for batch loading).
+ */
+export async function getTagsForThreads(userId: string, threadIds: string[]): Promise<Map<string, TagRow[]>> {
+  if (threadIds.length === 0)
+    return new Map();
+
+  const rows = await db
+    .select({
+      threadId: threadTags.threadId,
+      id: tags.id,
+      name: tags.name,
+      color: tags.color,
+    })
+    .from(threadTags)
+    .innerJoin(tags, eq(threadTags.tagId, tags.id))
+    .where(
+      and(
+        eq(threadTags.userId, userId),
+        inArray(threadTags.threadId, threadIds),
+      ),
+    );
+
+  const map = new Map<string, TagRow[]>();
+  for (const row of rows) {
+    const existing = map.get(row.threadId) || [];
+    existing.push({ id: row.id, name: row.name, color: row.color });
+    map.set(row.threadId, existing);
+  }
+  return map;
 }

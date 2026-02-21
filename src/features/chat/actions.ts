@@ -2,13 +2,14 @@
 
 import { headers } from "next/headers";
 
+import type { TagRow } from "~/features/chat/queries";
 import type { ChatUIMessage } from "~/features/chat/types";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { deleteFile } from "~/features/attachments/lib/storage";
 import { deleteUserAttachmentsByIds, getThreadStats, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/features/attachments/queries";
 import { auth } from "~/features/auth/lib/auth";
-import { archiveThreadById, createThreadWithLimitCheck, deleteMessagesAfterCount, deleteThreadById, getMessagesByThreadId, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
+import { addTagToThread, archiveThreadById, createTag, createThreadWithLimitCheck, deleteMessagesAfterCount, deleteTagById, deleteThreadById, getMessagesByThreadId, listTagsByUserId, removeTagFromThread, renameThreadById, saveMessage, updateTagById, updateThreadIcon } from "~/features/chat/queries";
 import { generateThreadIcon, generateThreadTitle } from "~/features/chat/server/thread";
 import { getShareByThreadId, revokeThreadShare, upsertThreadShare } from "~/features/chat/sharing-queries";
 import { resolveKey } from "~/lib/api-keys/server";
@@ -508,4 +509,100 @@ export async function stopSharingThread(threadId: string): Promise<boolean> {
   }
 
   return revokeThreadShare(threadId, session.user.id);
+}
+
+/**
+ * Lists all tags for the authenticated user.
+ */
+export async function listUserTags(): Promise<TagRow[]> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  return listTagsByUserId(session.user.id);
+}
+
+/**
+ * Creates a new tag for the authenticated user.
+ */
+export async function createUserTag(input: { name: string; color: string }): Promise<TagRow> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  return createTag(session.user.id, input);
+}
+
+/**
+ * Deletes a tag for the authenticated user.
+ */
+export async function deleteUserTag(tagId: string): Promise<void> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  const deleted = await deleteTagById(session.user.id, tagId);
+  if (!deleted) {
+    throw new Error("Tag not found or unauthorized");
+  }
+}
+
+/**
+ * Updates a tag for the authenticated user.
+ */
+export async function updateUserTag(tagId: string, input: { name?: string; color?: string }): Promise<void> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  const updated = await updateTagById(session.user.id, tagId, input);
+  if (!updated) {
+    throw new Error("Tag not found or unauthorized");
+  }
+}
+
+/**
+ * Adds a tag to a thread for the authenticated user.
+ */
+export async function tagThread(threadId: string, tagId: string): Promise<void> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  await addTagToThread(session.user.id, threadId, tagId);
+}
+
+/**
+ * Removes a tag from a thread for the authenticated user.
+ */
+export async function untagThread(threadId: string, tagId: string): Promise<void> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  await removeTagFromThread(session.user.id, threadId, tagId);
 }
