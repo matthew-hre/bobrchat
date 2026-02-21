@@ -509,7 +509,9 @@ function ThreadTooltip({ title, isShared, tags, stats, statsLoading, onOpenChang
             {tags.map(tag => (
               <span
                 key={tag.id}
-                className="rounded px-1.5 py-0.5 text-[10px] font-medium leading-none"
+                className={`
+                  rounded px-1.5 py-0.5 text-[10px] leading-none font-medium
+                `}
                 style={{
                   backgroundColor: `color-mix(in srgb, ${tag.color} 15%, transparent)`,
                   color: tag.color,

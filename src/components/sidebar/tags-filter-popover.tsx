@@ -17,7 +17,8 @@ export function TagsFilterPopover({ selectedTagIds, onSelectedTagIdsChange }: Ta
   const { data: tags } = useTags();
 
   useEffect(() => {
-    if (!tags) return;
+    if (!tags)
+      return;
     const validIds = selectedTagIds.filter(id => tags.some(t => t.id === id));
     if (validIds.length !== selectedTagIds.length) {
       onSelectedTagIdsChange(validIds);
