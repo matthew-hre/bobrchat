@@ -309,20 +309,20 @@ function ThreadItemComponent({
               )}
               <span className="flex-1 truncate pr-6">{title}</span>
               {threadTags && threadTags.length > 0 && (
-                <span className="flex shrink-0 gap-0.5 pr-6">
+                <span className={`
+                  flex shrink-0 items-center gap-1 transition-opacity
+                  group-hover/thread:opacity-0
+                `}>
                   {threadTags.slice(0, 2).map(tag => (
                     <span
                       key={tag.id}
-                      className="size-1.5 rounded-full"
+                      className="size-2 rounded-full"
                       style={{ backgroundColor: tag.color }}
                       title={tag.name}
                     />
                   ))}
                   {threadTags.length > 2 && (
-                    <span className={`
-                      text-muted-foreground text-[9px] leading-none
-                    `}
-                    >
+                    <span className="text-muted-foreground text-[10px] leading-none">
                       +
                       {threadTags.length - 2}
                     </span>
@@ -451,7 +451,7 @@ function ThreadItemComponent({
                       style={{ backgroundColor: tag.color }}
                     />
                     <span className="flex-1">{tag.name}</span>
-                    {hasTag && <span className="text-primary text-xs">✓</span>}
+                    {hasTag && <span className="text-primary ml-2 text-xs">✓</span>}
                   </ContextMenuItem>
                 );
               })}
