@@ -67,7 +67,7 @@ export const auth = betterAuth({
     },
   },
   emailVerification: {
-    sendOnSignUp: true,
+    sendOnSignUp: process.env.NODE_ENV !== "development" && !isPreview,
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }: { user: { email: string; createdAt: Date }; url: string }) => {
       await sendEmail({
