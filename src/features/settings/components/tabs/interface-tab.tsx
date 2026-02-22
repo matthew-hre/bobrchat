@@ -123,7 +123,8 @@ export function InterfaceTab() {
               onChange={(val) => {
                 if (typeof val === "number") {
                   save({ accentColor: val });
-                } else {
+                }
+                else {
                   save({ accentColor: val as AccentColorPreset });
                 }
               }}
