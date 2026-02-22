@@ -36,7 +36,7 @@ export async function getEncryptedKey(
   }
 
   try {
-    return decryptValue(encrypted);
+    return await decryptValue(encrypted);
   }
   catch (error) {
     console.error(`Failed to decrypt ${provider} API key for user ${userId}:`, error);
