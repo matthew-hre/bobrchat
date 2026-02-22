@@ -78,6 +78,19 @@ export function InlineMessageEditor({
   const canUpload = canUploadFiles(capabilities);
   const acceptedTypes = getAcceptedFileTypes(capabilities);
 
+  const [localFiles, setLocalFiles] = React.useState<PendingFile[]>([]);
+  const localPendingFiles = React.useMemo(() => ({
+    files: localFiles,
+    setFiles: setLocalFiles,
+    clear: () => {
+      for (const f of localFiles) {
+        if (f.url?.startsWith("blob:"))
+          URL.revokeObjectURL(f.url);
+      }
+      setLocalFiles([]);
+    },
+  }), [localFiles]);
+
   const {
     pendingFiles,
     fileInputRef,
@@ -91,6 +104,7 @@ export function InlineMessageEditor({
     onValueChange: setContent,
     textareaRef,
     autoCreateFilesFromPaste: settings?.autoCreateFilesFromPaste ?? true,
+    localPendingFiles,
   });
 
   React.useEffect(() => {

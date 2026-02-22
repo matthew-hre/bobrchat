@@ -19,17 +19,27 @@ type UseFileAttachmentsProps = {
   onValueChange: (value: string) => void;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   autoCreateFilesFromPaste?: boolean;
+  localPendingFiles?: {
+    files: PendingFile[];
+    setFiles: (next: PendingFile[] | ((prev: PendingFile[]) => PendingFile[])) => void;
+    clear: () => void;
+  };
 };
 
 export function useFileAttachments({
   capabilities,
   autoCreateFilesFromPaste = true,
+  localPendingFiles,
 }: UseFileAttachmentsProps) {
   const queryClient = useQueryClient();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const pendingFiles = useChatUIStore(s => s.pendingFiles);
-  const setPendingFiles = useChatUIStore(s => s.setPendingFiles);
-  const storeClearPendingFiles = useChatUIStore(s => s.clearPendingFiles);
+  const globalPendingFiles = useChatUIStore(s => s.pendingFiles);
+  const globalSetPendingFiles = useChatUIStore(s => s.setPendingFiles);
+  const globalClearPendingFiles = useChatUIStore(s => s.clearPendingFiles);
+
+  const pendingFiles = localPendingFiles ? localPendingFiles.files : globalPendingFiles;
+  const setPendingFiles = localPendingFiles ? localPendingFiles.setFiles : globalSetPendingFiles;
+  const storeClearPendingFiles = localPendingFiles ? localPendingFiles.clear : globalClearPendingFiles;
 
   const uploadFiles = React.useCallback(
     async (filesToUpload: FileList | File[]) => {
