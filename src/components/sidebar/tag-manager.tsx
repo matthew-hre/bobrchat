@@ -4,21 +4,23 @@ import { PaletteIcon, PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import type { ColorPreset } from "~/components/ui/color-picker";
+
 import { Button } from "~/components/ui/button";
+import { ColorPicker, hueToOklch } from "~/components/ui/color-picker";
 import { Input } from "~/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { useCreateTag, useDeleteTag, useTags } from "~/features/chat/hooks/use-tags";
-import { cn } from "~/lib/utils";
 
-const TAG_COLORS = [
-  "#ef4444",
-  "#f97316",
-  "#eab308",
-  "#22c55e",
-  "#06b6d4",
-  "#3b82f6",
-  "#8b5cf6",
-  "#ec4899",
+const TAG_COLOR_PRESETS: ColorPreset[] = [
+  { value: "#ef4444", color: "#ef4444", label: "Red" },
+  { value: "#f97316", color: "#f97316", label: "Orange" },
+  { value: "#eab308", color: "#eab308", label: "Yellow" },
+  { value: "#22c55e", color: "#22c55e", label: "Green" },
+  { value: "#06b6d4", color: "#06b6d4", label: "Cyan" },
+  { value: "#3b82f6", color: "#3b82f6", label: "Blue" },
+  { value: "#8b5cf6", color: "#8b5cf6", label: "Purple" },
+  { value: "#ec4899", color: "#ec4899", label: "Pink" },
 ];
 
 type TagManagerProps = {
@@ -31,13 +33,16 @@ export function TagManager({ searchQuery = "" }: TagManagerProps) {
   const deleteTagMutation = useDeleteTag();
 
   const [newTagName, setNewTagName] = useState("");
-  const [selectedColor, setSelectedColor] = useState(TAG_COLORS[5]);
+  const [selectedColor, setSelectedColor] = useState<string | number>(TAG_COLOR_PRESETS[5].value);
   const [customHue, setCustomHue] = useState<number | null>(null);
-  const [isCustomColor, setIsCustomColor] = useState(false);
 
   const filteredTags = tags?.filter(tag =>
     tag.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  const resolvedColor = typeof selectedColor === "number"
+    ? hueToOklch(customHue ?? selectedColor)
+    : selectedColor;
 
   const handleCreateTag = async () => {
     const name = newTagName.trim();
@@ -45,10 +50,9 @@ export function TagManager({ searchQuery = "" }: TagManagerProps) {
       return;
 
     try {
-      await createTagMutation.mutateAsync({ name, color: selectedColor });
+      await createTagMutation.mutateAsync({ name, color: resolvedColor });
       setNewTagName("");
-      setSelectedColor(TAG_COLORS[5]);
-      setIsCustomColor(false);
+      setSelectedColor(TAG_COLOR_PRESETS[5].value);
       setCustomHue(null);
       toast.success("Tag created");
     }
@@ -65,24 +69,6 @@ export function TagManager({ searchQuery = "" }: TagManagerProps) {
     catch {
       toast.error("Failed to delete tag");
     }
-  };
-
-  const handleSelectPreset = (color: string) => {
-    setSelectedColor(color);
-    setIsCustomColor(false);
-    setCustomHue(null);
-  };
-
-  const handleSelectCustom = () => {
-    setIsCustomColor(true);
-    const hue = customHue ?? 200;
-    setCustomHue(hue);
-    setSelectedColor(`oklch(0.72 0.19 ${hue})`);
-  };
-
-  const handleHueChange = (hue: number) => {
-    setCustomHue(hue);
-    setSelectedColor(`oklch(0.72 0.19 ${hue})`);
   };
 
   if (isLoading) {
@@ -114,82 +100,32 @@ export function TagManager({ searchQuery = "" }: TagManagerProps) {
               variant="outline"
               size="icon-sm"
               className="size-7 shrink-0"
-              style={{ borderColor: selectedColor, color: selectedColor }}
+              style={{ borderColor: resolvedColor, color: resolvedColor }}
             >
               <PaletteIcon className="size-3.5" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-3" align="start">
-            <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {TAG_COLORS.map(color => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => handleSelectPreset(color)}
-                    className={cn(
-                      `
-                        h-7 w-7 rounded-full border-2 transition-all
-                        hover:scale-110
-                      `,
-                      selectedColor === color && !isCustomColor
-                        ? `
-                          border-foreground ring-foreground
-                          ring-offset-background ring-2 ring-offset-2
-                        `
-                        : "border-transparent",
-                    )}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-                <button
-                  type="button"
-                  onClick={handleSelectCustom}
-                  className={cn(
-                    `
-                      flex h-7 w-7 items-center justify-center rounded-full
-                      border border-dashed transition-all
-                      hover:scale-110
-                    `,
-                    isCustomColor
-                      ? `
-                        border-foreground ring-foreground ring-offset-background
-                        ring-2 ring-offset-2
-                      `
-                      : "border-muted-foreground",
-                  )}
-                  title="Custom"
-                  aria-label="Custom color"
-                >
-                  <PaletteIcon className="text-muted-foreground h-3.5 w-3.5" />
-                </button>
-              </div>
-              {isCustomColor && customHue !== null && (
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-5 w-5 shrink-0 rounded-full border"
-                    style={{ backgroundColor: `oklch(0.72 0.19 ${customHue})` }}
-                  />
-                  <input
-                    type="range"
-                    min={0}
-                    max={360}
-                    value={customHue}
-                    onChange={e => handleHueChange(Number(e.target.value))}
-                    className={`
-                      h-2 w-full cursor-pointer appearance-none rounded-full
-                    `}
-                    style={{
-                      background: "linear-gradient(to right, oklch(0.72 0.19 0), oklch(0.72 0.19 60), oklch(0.72 0.19 120), oklch(0.72 0.19 180), oklch(0.72 0.19 240), oklch(0.72 0.19 300), oklch(0.72 0.19 360))",
-                    }}
-                  />
-                  <span className="text-muted-foreground w-8 text-xs">
-                    {customHue}
-                    °
-                  </span>
-                </div>
-              )}
-            </div>
+            <ColorPicker
+              presets={TAG_COLOR_PRESETS}
+              value={selectedColor}
+              onChange={(val) => {
+                setSelectedColor(val);
+                if (typeof val !== "number") {
+                  setCustomHue(null);
+                }
+              }}
+              customHue={customHue}
+              onCustomHueChange={(hue) => {
+                setCustomHue(hue);
+                setSelectedColor(hue);
+              }}
+              onCustomHueCommit={(hue) => {
+                setCustomHue(hue);
+                setSelectedColor(hue);
+              }}
+              swatchSize="sm"
+            />
           </PopoverContent>
         </Popover>
         <Button

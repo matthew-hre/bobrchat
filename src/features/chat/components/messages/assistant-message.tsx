@@ -126,8 +126,8 @@ export const AssistantMessage = memo(({
       {showCreditErrorNotice && (
         <div className={
           `
-            border-warning/50 bg-warning/10 text-warning-foreground mt-3
-            flex flex-wrap items-start gap-3 rounded-md border p-3 text-sm
+            border-warning/50 bg-warning/10 text-warning-foreground mt-3 flex
+            flex-wrap items-start gap-3 rounded-md border p-3 text-sm
           `
         }
         >
