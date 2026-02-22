@@ -1,7 +1,12 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-const redis = Redis.fromEnv();
+import { serverEnv } from "~/lib/env";
+
+const redis = new Redis({
+  url: serverEnv.UPSTASH_REDIS_REST_URL,
+  token: serverEnv.UPSTASH_REDIS_REST_TOKEN,
+});
 
 export const chatRateLimit = new Ratelimit({
   redis,

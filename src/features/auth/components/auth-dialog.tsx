@@ -15,12 +15,11 @@ import { LoginForm } from "./login-form";
 type AuthDialogProps = {
   open?: boolean;
   showCloseButton?: boolean;
-  githubEnabled?: boolean;
 };
 
 type AuthView = "login" | "signup" | "forgot-password";
 
-export function AuthDialog({ open = true, showCloseButton = false, githubEnabled = false }: AuthDialogProps) {
+export function AuthDialog({ open = true, showCloseButton = false }: AuthDialogProps) {
   const searchParams = useSearchParams();
   const initialView = searchParams.get("view") === "login" ? "login" : "signup";
   const [view, setView] = useState<AuthView>(initialView);
@@ -85,12 +84,8 @@ export function AuthDialog({ open = true, showCloseButton = false, githubEnabled
                   />
                   {!pending2FA && (
                     <>
-                      {githubEnabled && (
-                        <>
-                          <AuthOptionsSeparator />
-                          <GitHubAuth />
-                        </>
-                      )}
+                      <AuthOptionsSeparator />
+                      <GitHubAuth />
                       <p className="text-muted-foreground text-center text-sm">
                         {view === "login" ? "Don't have an account? " : "Already have an account? "}
                         <AuthToggleButton
