@@ -73,8 +73,9 @@ export async function streamChatResponse(
   // errors with Gemini models. Thinking tokens have cryptographic signatures that become
   // invalid after passing through proxies like OpenRouter.
   const messagesWithoutReasoning = processedMessages.map((msg) => {
-    if (msg.role !== "assistant" || !msg.parts) return msg;
-    const filteredParts = msg.parts.filter((part) => part.type !== "reasoning");
+    if (msg.role !== "assistant" || !msg.parts)
+      return msg;
+    const filteredParts = msg.parts.filter(part => part.type !== "reasoning");
     return { ...msg, parts: filteredParts };
   });
 
