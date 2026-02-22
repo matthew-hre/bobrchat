@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
-import { use, useCallback, useEffect, useMemo, useRef } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type { ThreadFromApi } from "~/features/chat/hooks/use-threads";
@@ -13,7 +13,7 @@ import { ChatMessages } from "~/features/chat/components/chat-messages";
 import { ChatView } from "~/features/chat/components/chat-view";
 import { useChatActions } from "~/features/chat/hooks/use-chat-actions";
 import { THREADS_KEY, useThreadTitle } from "~/features/chat/hooks/use-threads";
-import { parseAIError } from "~/features/chat/lib/parse-ai-error";
+import { isInsufficientCreditsError, parseAIError } from "~/features/chat/lib/parse-ai-error";
 import { useChatUIStore } from "~/features/chat/store";
 import { getModelCapabilities, useFavoriteModels } from "~/features/models";
 import { OPENROUTER_CREDITS_KEY } from "~/features/settings/hooks/use-user-settings";
@@ -35,7 +35,14 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
     setInput,
     setStreamingThreadId,
     setSelectedModelId,
+    setModelSelectorOpen,
+    lastSendPayload,
+    setLastSendPayload,
+    lastSendMessageId,
+    setLastSendMessageId,
   } = useChatUIStore();
+
+  const [creditError, setCreditError] = useState<{ messageId: string } | null>(null);
 
   // Rehydrate model selector from thread's last-used model
   const hasRehydratedModelRef = useRef(false);
@@ -119,6 +126,11 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
       const friendlyMessage = parseAIError(error);
       if (/unavailable tool/i.test(friendlyMessage))
         return;
+      if (isInsufficientCreditsError(error)) {
+        setCreditError({ messageId: lastSendMessageId ?? "" });
+        return;
+      }
+
       toast.error(friendlyMessage);
     },
     onFinish: ({ message }) => {
@@ -134,8 +146,24 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
       else {
         queryClient.invalidateQueries({ queryKey: OPENROUTER_CREDITS_KEY });
       }
+
+      setCreditError(null);
+      setLastSendMessageId(null);
     },
   });
+
+  useEffect(() => {
+    if (!creditError)
+      return;
+
+    const lastUserMessage = [...messages].reverse().find(msg => msg.role === "user");
+    if (!lastUserMessage)
+      return;
+
+    if (creditError.messageId !== lastUserMessage.id) {
+      setCreditError({ messageId: lastUserMessage.id });
+    }
+  }, [creditError, messages]);
 
   useEffect(() => {
     const isStreaming = status === "submitted" || status === "streaming";
@@ -162,11 +190,22 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
     const state = useChatUIStore.getState();
     const { searchEnabled, reasoningLevel } = state;
 
+    if (message && ("text" in message || "files" in message)) {
+      const fileParts = Array.isArray(message.files)
+        ? message.files
+        : undefined;
+      setLastSendPayload({
+        text: "text" in message && typeof message.text === "string" ? message.text : "",
+        files: fileParts,
+      });
+    }
+
     const promise = baseSendMessage(message, options);
 
     // The AI SDK adds the message to state synchronously, but doesn't preserve
     // extra fields. Patch the message after React's batch update completes.
     queueMicrotask(() => {
+      let lastUserMessageId: string | null = null;
       setMessages((prev) => {
         const lastUserIdx = prev.findLastIndex(m => m.role === "user");
         if (lastUserIdx === -1)
@@ -176,16 +215,22 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
         if ("searchEnabled" in msg)
           return prev;
 
+        lastUserMessageId = msg.id;
+
         return prev.map((m, idx) =>
           idx === lastUserIdx
             ? { ...m, searchEnabled, reasoningLevel }
             : m,
         );
       });
+
+      if (lastUserMessageId) {
+        setLastSendMessageId(lastUserMessageId);
+      }
     });
 
     return promise;
-  }, [baseSendMessage, setMessages]);
+  }, [baseSendMessage, setLastSendPayload, setMessages, setLastSendMessageId]);
 
   // Handle initial pending message (from sessionStorage when creating new thread)
   const hasSentInitialRef = useRef(false);
@@ -236,6 +281,42 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
 
   const isLoading = status === "submitted" || status === "streaming";
 
+  const handleRetryCreditError = useCallback(() => {
+    if (!lastSendPayload) {
+      return;
+    }
+
+    if (!lastSendPayload.text && (!lastSendPayload.files || lastSendPayload.files.length === 0)) {
+      return;
+    }
+
+    setCreditError(null);
+    setLastSendMessageId(null);
+    const files = lastSendPayload.files?.map(file => ({
+      type: "file" as const,
+      url: file.url,
+      storagePath: file.storagePath,
+      mediaType: file.mediaType,
+      filename: file.filename,
+    }));
+
+    const nextMessage = {
+      text: lastSendPayload.text,
+      ...(files && files.length > 0 ? { files } : {}),
+    };
+
+    sendMessage(nextMessage);
+  }, [lastSendPayload, sendMessage, setLastSendMessageId]);
+
+  const handleDismissCreditError = useCallback(() => {
+    setCreditError(null);
+    setLastSendMessageId(null);
+  }, [setLastSendMessageId]);
+
+  const handleOpenModelSelector = useCallback(() => {
+    setModelSelectorOpen(true);
+  }, [setModelSelectorOpen]);
+
   return (
     <ChatView
       messages={messages}
@@ -252,6 +333,10 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
         isRegenerating={isRegenerating}
         onEditMessage={handleEditMessage}
         isEditSubmitting={isEditSubmitting}
+        creditError={creditError}
+        onRetryCreditError={handleRetryCreditError}
+        onDismissCreditError={handleDismissCreditError}
+        onOpenModelSelector={handleOpenModelSelector}
       />
     </ChatView>
   );

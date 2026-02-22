@@ -20,6 +20,10 @@ export const ChatMessages = memo(({
   isRegenerating,
   onEditMessage,
   isEditSubmitting,
+  creditError,
+  onRetryCreditError,
+  onDismissCreditError,
+  onOpenModelSelector,
 }: {
   messages: ChatUIMessage[];
   isLoading?: boolean;
@@ -27,6 +31,10 @@ export const ChatMessages = memo(({
   isRegenerating?: boolean;
   onEditMessage?: (messageId: string, payload: EditedMessagePayload) => Promise<void>;
   isEditSubmitting?: boolean;
+  creditError?: { messageId: string } | null;
+  onRetryCreditError?: () => void;
+  onDismissCreditError?: () => void;
+  onOpenModelSelector?: () => void;
 }) => {
   const searchEnabled = useChatUIStore(state => state.searchEnabled);
   const stoppedAssistantMessageInfoById = useChatUIStore(state => state.stoppedAssistantMessageInfoById);
@@ -88,6 +96,10 @@ export const ChatMessages = memo(({
               searchEnabled={searchEnabled}
               onRegenerate={onRegenerate}
               isRegenerating={isRegenerating}
+              creditError={creditError?.messageId === message.id ? creditError : null}
+              onRetryCreditError={onRetryCreditError}
+              onDismissCreditError={onDismissCreditError}
+              onOpenModelSelector={onOpenModelSelector}
             />
           </div>
         );
