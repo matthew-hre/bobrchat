@@ -2,6 +2,7 @@
 
 import {
   Book,
+  CheckIcon,
   Code,
   FileText,
   Heart,
@@ -9,6 +10,7 @@ import {
   Loader2,
   MessageCircle,
   MessageSquare,
+  PlusIcon,
   Sparkles,
   Star,
   Trash2,
@@ -40,6 +42,7 @@ import { THREAD_ICONS } from "~/lib/db/schema/chat";
 import { cn } from "~/lib/utils";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { CreateTagDialog } from "./create-tag-dialog";
 
 const ICON_COMPONENTS = {
   "message-circle": MessageCircle,
@@ -127,6 +130,7 @@ function ThreadItemComponent({
   const [newTitle, setNewTitle] = useState(title);
   const [menuOpen, setMenuOpen] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [createTagDialogOpen, setCreateTagDialogOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: stats, isLoading: statsLoading } = useThreadStats(menuOpen || tooltipOpen ? id : null);
@@ -398,38 +402,41 @@ function ThreadItemComponent({
             </ContextMenuItem>
           </>
         )}
-        {allTags && allTags.length > 0 && (
-          <ContextMenuSub>
-            <ContextMenuSubTrigger>
-              Tags
-            </ContextMenuSubTrigger>
-            <ContextMenuSubContent className="min-w-[120px] p-1">
-              {allTags.map((tag) => {
-                const hasTag = threadTags?.some(t => t.id === tag.id) ?? false;
-                return (
-                  <ContextMenuItem
-                    key={tag.id}
-                    onClick={() => {
-                      if (hasTag) {
-                        untagThreadMutation.mutate({ threadId: id, tagId: tag.id });
-                      }
-                      else {
-                        tagThreadMutation.mutate({ threadId: id, tagId: tag.id });
-                      }
-                    }}
-                  >
-                    <span
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    <span className="flex-1">{tag.name}</span>
-                    {hasTag && <span className="text-primary ml-2 text-xs">✓</span>}
-                  </ContextMenuItem>
-                );
-              })}
-            </ContextMenuSubContent>
-          </ContextMenuSub>
-        )}
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            Tags
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent className="min-w-[120px] p-1">
+            {allTags?.map((tag) => {
+              const hasTag = threadTags?.some(t => t.id === tag.id) ?? false;
+              return (
+                <ContextMenuItem
+                  key={tag.id}
+                  onClick={() => {
+                    if (hasTag) {
+                      untagThreadMutation.mutate({ threadId: id, tagId: tag.id });
+                    }
+                    else {
+                      tagThreadMutation.mutate({ threadId: id, tagId: tag.id });
+                    }
+                  }}
+                >
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: tag.color }}
+                  />
+                  <span className="flex-1">{tag.name}</span>
+                  {hasTag && <CheckIcon className="text-primary ml-2"></CheckIcon>}
+                </ContextMenuItem>
+              );
+            })}
+            {allTags && allTags.length > 0 && <ContextMenuSeparator />}
+            <ContextMenuItem onClick={() => setCreateTagDialogOpen(true)}>
+              <PlusIcon className="size-3.5" />
+              Create Tag
+            </ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
         <ContextMenuItem onClick={() => onShareClick?.(id, title)}>
           {isShared ? "Manage Share" : "Share"}
         </ContextMenuItem>
@@ -445,6 +452,7 @@ function ThreadItemComponent({
           Delete
         </ContextMenuItem>
       </ContextMenuContent>
+      <CreateTagDialog open={createTagDialogOpen} onOpenChange={setCreateTagDialogOpen} />
     </ContextMenu>
   );
 };

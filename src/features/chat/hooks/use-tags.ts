@@ -36,7 +36,18 @@ export function useDeleteTag() {
 
   return useMutation({
     mutationFn: (tagId: string) => deleteUserTag(tagId),
-    onSuccess: () => {
+    onMutate: async (tagId) => {
+      await queryClient.cancelQueries({ queryKey: TAGS_KEY });
+      const previousTags = queryClient.getQueryData<Tag[]>(TAGS_KEY);
+      queryClient.setQueryData<Tag[]>(TAGS_KEY, old => old?.filter(t => t.id !== tagId));
+      return { previousTags };
+    },
+    onError: (_err, _tagId, context) => {
+      if (context?.previousTags) {
+        queryClient.setQueryData(TAGS_KEY, context.previousTags);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: TAGS_KEY });
       queryClient.invalidateQueries({ queryKey: THREADS_KEY });
     },
