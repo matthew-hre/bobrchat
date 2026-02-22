@@ -45,7 +45,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
       storage: { current: storageInfo.usedBytes, limit: storageInfo.quota },
     },
     polarCustomerId: subscription.polarCustomerId ?? null,
-    canUpgrade: subscription.tier === "free",
+    canUpgrade: subscription.tier === "free" && !!POLAR_PRODUCT_IDS.plus,
   };
 }
 

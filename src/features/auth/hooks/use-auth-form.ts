@@ -115,7 +115,7 @@ export function useAuthForm() {
         return false;
       }
 
-      const { error: authError } = await authClient.signUp.email({
+      const { data, error: authError } = await authClient.signUp.email({
         email,
         password,
         name,
@@ -125,6 +125,11 @@ export function useAuthForm() {
         handleAuthError(authError);
         setLoading(false);
         return false;
+      }
+
+      if (data?.token) {
+        window.location.href = "/";
+        return true;
       }
 
       setPendingVerification(true);
