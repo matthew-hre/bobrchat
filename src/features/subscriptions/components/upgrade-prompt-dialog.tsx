@@ -22,7 +22,6 @@ type UpgradePromptDialogProps = {
   onOpenChangeAction: (open: boolean) => void;
   currentUsage: number;
   limit: number;
-  canUpgrade?: boolean;
 };
 
 const PLUS_FEATURES = {
@@ -36,7 +35,6 @@ export function UpgradePromptDialog({
   onOpenChangeAction,
   currentUsage,
   limit,
-  canUpgrade = true,
 }: UpgradePromptDialogProps) {
   const [isCheckingOut, setIsCheckingOut] = useState<"plus" | null>(null);
 
@@ -80,48 +78,46 @@ export function UpgradePromptDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {canUpgrade && (
-          <div className="mx-auto max-w-xs py-4">
-            <div
-              className={`
-                border-border bg-muted/30 flex flex-col rounded-lg border p-4
-              `}
-            >
-              <div className="mb-3">
-                <h3 className="font-semibold">{PLUS_FEATURES.name}</h3>
-                <p className="text-primary text-lg font-bold">
-                  {PLUS_FEATURES.price}
-                </p>
-              </div>
-              <ul className="mb-4 flex-1 space-y-2 text-sm">
-                {PLUS_FEATURES.features.map(feature => (
-                  <li key={feature} className="flex items-center gap-2">
-                    <CheckIcon className="text-primary size-4" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button
-                onClick={() => handleCheckout("plus")}
-                disabled={isCheckingOut !== null}
-                className="w-full"
-              >
-                {isCheckingOut === "plus"
-                  ? (
-                      "Redirecting..."
-                    )
-                  : (
-                      <>
-                        <SparklesIcon className="size-4" />
-                        Upgrade to
-                        {" "}
-                        {PLUS_FEATURES.name}
-                      </>
-                    )}
-              </Button>
+        <div className="mx-auto max-w-xs py-4">
+          <div
+            className={`
+              border-border bg-muted/30 flex flex-col rounded-lg border p-4
+            `}
+          >
+            <div className="mb-3">
+              <h3 className="font-semibold">{PLUS_FEATURES.name}</h3>
+              <p className="text-primary text-lg font-bold">
+                {PLUS_FEATURES.price}
+              </p>
             </div>
+            <ul className="mb-4 flex-1 space-y-2 text-sm">
+              {PLUS_FEATURES.features.map(feature => (
+                <li key={feature} className="flex items-center gap-2">
+                  <CheckIcon className="text-primary size-4" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <Button
+              onClick={() => handleCheckout("plus")}
+              disabled={isCheckingOut !== null}
+              className="w-full"
+            >
+              {isCheckingOut === "plus"
+                ? (
+                    "Redirecting..."
+                  )
+                : (
+                    <>
+                      <SparklesIcon className="size-4" />
+                      Upgrade to
+                      {" "}
+                      {PLUS_FEATURES.name}
+                    </>
+                  )}
+            </Button>
           </div>
-        )}
+        </div>
 
         <DialogFooter className="sm:justify-between">
           <Button variant="ghost" asChild>

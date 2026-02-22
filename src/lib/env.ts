@@ -6,9 +6,9 @@ const schema = {
   server: z.object({
     DATABASE_URL: z.url(),
     BETTER_AUTH_SECRET: z.string().min(32),
-    BETTER_AUTH_URL: z.url().optional(),
-    GITHUB_CLIENT_ID: z.string().optional(),
-    GITHUB_CLIENT_SECRET: z.string().optional(),
+    BETTER_AUTH_URL: z.url(),
+    GITHUB_CLIENT_ID: z.string(),
+    GITHUB_CLIENT_SECRET: z.string(),
     ENCRYPTION_SECRET: z.string().min(32),
     ENCRYPTION_SALT: z.string().min(8),
     R2_ACCOUNT_ID: z.string(),
@@ -24,8 +24,12 @@ const schema = {
     POLAR_WEBHOOK_SECRET: z.string().optional(),
     POLAR_SUCCESS_URL: z.url().optional(),
     POLAR_PLUS_PRODUCT_ID: z.string().optional(),
+    UPSTASH_REDIS_REST_URL: z.url(),
+    UPSTASH_REDIS_REST_TOKEN: z.string(),
   }),
-  client: z.object({}),
+  client: z.object({
+    NEXT_PUBLIC_BETTER_AUTH_URL: z.url().optional(),
+  }),
 };
 
 export type ServerEnvSchema = z.infer<typeof schema.server>;

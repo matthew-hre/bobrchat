@@ -13,32 +13,14 @@ import * as schema from "~/lib/db/schema";
 import { sendEmail } from "~/lib/email";
 import { serverEnv } from "~/lib/env";
 
-const isPreview = process.env.VERCEL_ENV === "preview";
-
-function getBaseURL(): string {
-  if (serverEnv.BETTER_AUTH_URL)
-    return serverEnv.BETTER_AUTH_URL;
-  if (process.env.VERCEL_BRANCH_URL)
-    return `https://${process.env.VERCEL_BRANCH_URL}`;
-  if (process.env.VERCEL_URL)
-    return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
-}
-
-const baseURL = getBaseURL();
-
-const usePolarSandbox = serverEnv.POLAR_SANDBOX || isPreview;
-
 const polarClient = serverEnv.POLAR_ACCESS_TOKEN
   ? new Polar({
       accessToken: serverEnv.POLAR_ACCESS_TOKEN,
-      server: usePolarSandbox ? "sandbox" : "production",
+      server: serverEnv.POLAR_SANDBOX ? "sandbox" : "production",
     })
   : null;
 
 const polarEnabled = !!(polarClient && serverEnv.POLAR_WEBHOOK_SECRET && serverEnv.POLAR_SUCCESS_URL);
-
-const githubEnabled = !!(serverEnv.GITHUB_CLIENT_ID && serverEnv.GITHUB_CLIENT_SECRET);
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -47,12 +29,12 @@ export const auth = betterAuth({
     usePlural: true,
   }),
   secret: serverEnv.BETTER_AUTH_SECRET,
-  baseURL,
+  baseURL: serverEnv.BETTER_AUTH_URL,
   baseAuthPath: "/api/auth",
-  trustedOrigins: [baseURL],
+  trustedOrigins: [serverEnv.BETTER_AUTH_URL],
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: process.env.NODE_ENV !== "development" && !isPreview,
+    requireEmailVerification: process.env.NODE_ENV !== "development",
     sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
       await sendEmail({
         to: user.email,
@@ -67,7 +49,7 @@ export const auth = betterAuth({
     },
   },
   emailVerification: {
-    sendOnSignUp: process.env.NODE_ENV !== "development" && !isPreview,
+    sendOnSignUp: true,
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }: { user: { email: string; createdAt: Date }; url: string }) => {
       await sendEmail({
@@ -89,14 +71,12 @@ export const auth = betterAuth({
       enabled: true,
     },
   },
-  socialProviders: githubEnabled
-    ? {
-        github: {
-          clientId: serverEnv.GITHUB_CLIENT_ID!,
-          clientSecret: serverEnv.GITHUB_CLIENT_SECRET!,
-        },
-      }
-    : {},
+  socialProviders: {
+    github: {
+      clientId: serverEnv.GITHUB_CLIENT_ID,
+      clientSecret: serverEnv.GITHUB_CLIENT_SECRET,
+    },
+  },
   session: {
     // Enable cookie caching to avoid DB lookups on every request
     // Session data is stored in a signed cookie, refreshed every 5 minutes
