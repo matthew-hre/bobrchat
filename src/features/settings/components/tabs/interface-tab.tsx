@@ -1,6 +1,6 @@
 "use client";
 
-import { CoinsIcon, HardDriveIcon, KeyIcon, MonitorIcon, MoonIcon, PaletteIcon, SunIcon } from "lucide-react";
+import { CoinsIcon, HardDriveIcon, KeyIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,13 +8,13 @@ import { toast } from "sonner";
 import type { AccentColorPreset, PreferencesUpdate } from "~/features/settings/types";
 
 import { applyAccentColor } from "~/components/theme/theme-initializer";
+import { ColorPicker } from "~/components/ui/color-picker";
 import { Kbd } from "~/components/ui/kbd";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Slider } from "~/components/ui/slider";
 import { useUpdatePreferences, useUserSettings } from "~/features/settings/hooks/use-user-settings";
-import { cn } from "~/lib/utils";
 
 import { SelectionCardItem } from "../ui/selection-card-item";
 import { SettingsSection } from "../ui/settings-section";
@@ -117,87 +117,26 @@ export function InterfaceTab() {
 
           <div className="space-y-3">
             <Label>Accent Color</Label>
-            <div className="flex flex-wrap items-center gap-2">
-              {accentColorOptions.map(option => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => save({ accentColor: option.value })}
-                  className={cn(
-                    `
-                      h-8 w-8 rounded-full border-2 transition-all
-                      hover:scale-110
-                    `,
-                    settings.accentColor === option.value
-                      ? `
-                        border-foreground ring-foreground ring-offset-background
-                        ring-2 ring-offset-2
-                      `
-                      : "border-transparent",
-                  )}
-                  style={{ backgroundColor: option.color }}
-                  title={option.label}
-                  aria-label={option.label}
-                />
-              ))}
-              <div className="bg-border mx-1 h-6 w-px" />
-              <button
-                type="button"
-                onClick={() => save({ accentColor: typeof settings.accentColor === "number" ? settings.accentColor : 135 })}
-                className={cn(
-                  `
-                    flex h-8 w-8 items-center justify-center rounded-full border
-                    border-dashed transition-all
-                    hover:scale-110
-                  `,
-                  typeof settings.accentColor === "number"
-                    ? `
-                      border-foreground ring-foreground ring-offset-background
-                      ring-2 ring-offset-2
-                    `
-                    : "border-muted-foreground",
-                )}
-                title="Custom"
-                aria-label="Custom color"
-              >
-                <PaletteIcon className="text-muted-foreground h-4 w-4" />
-              </button>
-            </div>
-            {typeof settings.accentColor === "number" && (
-              <div className="flex items-center gap-3">
-                <div
-                  className="h-6 w-6 shrink-0 rounded-full border"
-                  style={{ backgroundColor: `oklch(0.72 0.19 ${localHue ?? settings.accentColor})` }}
-                />
-                <input
-                  type="range"
-                  min={0}
-                  max={360}
-                  value={localHue ?? settings.accentColor}
-                  onChange={(e) => {
-                    const hue = Number(e.target.value);
-                    setLocalHue(hue);
-                    applyAccentColor(hue);
-                  }}
-                  onPointerUp={async () => {
-                    if (localHue !== null) {
-                      await save({ accentColor: localHue });
-                      setLocalHue(null);
-                    }
-                  }}
-                  className={`
-                    h-2 w-full cursor-pointer appearance-none rounded-full
-                  `}
-                  style={{
-                    background: "linear-gradient(to right, oklch(0.72 0.19 0), oklch(0.72 0.19 60), oklch(0.72 0.19 120), oklch(0.72 0.19 180), oklch(0.72 0.19 240), oklch(0.72 0.19 300), oklch(0.72 0.19 360))",
-                  }}
-                />
-                <span className="text-muted-foreground w-8 text-xs">
-                  {localHue ?? settings.accentColor}
-                  °
-                </span>
-              </div>
-            )}
+            <ColorPicker
+              presets={accentColorOptions}
+              value={settings.accentColor}
+              onChange={(val) => {
+                if (typeof val === "number") {
+                  save({ accentColor: val });
+                } else {
+                  save({ accentColor: val as AccentColorPreset });
+                }
+              }}
+              customHue={localHue}
+              onCustomHueChange={(hue) => {
+                setLocalHue(hue);
+                applyAccentColor(hue);
+              }}
+              onCustomHueCommit={async (hue) => {
+                await save({ accentColor: hue });
+                setLocalHue(null);
+              }}
+            />
           </div>
         </SettingsSection>
 
