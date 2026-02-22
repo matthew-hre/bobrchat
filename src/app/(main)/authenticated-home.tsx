@@ -17,6 +17,7 @@ import { useCreateThread } from "~/features/chat/hooks/use-threads";
 import { useChatUIStore } from "~/features/chat/store";
 import { UserSettingsContext } from "~/features/settings/settings-context";
 import { UpgradePromptDialog } from "~/features/subscriptions/components/upgrade-prompt-dialog";
+import { useSubscription } from "~/features/subscriptions/hooks/use-subscription";
 
 const FALLBACK_SETTINGS: Pick<UserSettingsData, "defaultThreadName" | "defaultThreadIcon" | "landingPageContent"> = {
   defaultThreadName: "New Thread",
@@ -31,6 +32,7 @@ export function AuthenticatedHome(): React.ReactNode {
   const input = useChatUIStore(state => state.input);
   const setInput = useChatUIStore(state => state.setInput);
   const createThread = useCreateThread();
+  const { data: subscription } = useSubscription();
   const [upgradeDialog, setUpgradeDialog] = useState<{ open: boolean; currentUsage: number; limit: number }>({
     open: false,
     currentUsage: 0,
@@ -100,6 +102,7 @@ export function AuthenticatedHome(): React.ReactNode {
         onOpenChangeAction={open => setUpgradeDialog(prev => ({ ...prev, open }))}
         currentUsage={upgradeDialog.currentUsage}
         limit={upgradeDialog.limit}
+        canUpgrade={subscription?.canUpgrade ?? false}
       />
     </>
   );
