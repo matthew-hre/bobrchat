@@ -68,7 +68,17 @@ export async function streamChatResponse(
   const outputCostPerToken = Number(modelPricing?.completion ?? 0);
 
   const processedMessages = await processMessageFiles(messages, userId);
-  const convertedMessages = await convertToModelMessages(processedMessages);
+
+  // Strip reasoning parts from assistant messages to avoid "Thought signature is not valid"
+  // errors with Gemini models. Thinking tokens have cryptographic signatures that become
+  // invalid after passing through proxies like OpenRouter.
+  const messagesWithoutReasoning = processedMessages.map((msg) => {
+    if (msg.role !== "assistant" || !msg.parts) return msg;
+    const filteredParts = msg.parts.filter((part) => part.type !== "reasoning");
+    return { ...msg, parts: filteredParts };
+  });
+
+  const convertedMessages = await convertToModelMessages(messagesWithoutReasoning);
 
   const streamHandlers = createStreamHandlers(
     () => {
