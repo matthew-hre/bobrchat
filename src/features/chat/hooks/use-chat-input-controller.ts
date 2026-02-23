@@ -140,6 +140,7 @@ export function useChatInputController({
 
       const fileUIParts = attachments.pendingFiles.map(f => ({
         type: "file" as const,
+        id: f.id,
         url: f.url,
         storagePath: f.storagePath,
         mediaType: f.mediaType,
