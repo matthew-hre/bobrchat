@@ -1,14 +1,10 @@
 import type { NextRequest } from "next/server";
 
-import { headers } from "next/headers";
-
-import { auth } from "~/features/auth/lib/auth";
+import { getSession } from "~/features/auth/lib/session";
 import { getThreadsByUserId } from "~/features/chat/queries";
 
 export async function GET(request: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     return Response.json({ threads: [], nextCursor: null });

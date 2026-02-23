@@ -1,14 +1,13 @@
 "use server";
 
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
 
-import { auth } from "~/features/auth/lib/auth";
+import { getRequiredSession, getSession } from "~/features/auth/lib/session";
 import { hasEncryptedKey } from "~/lib/api-keys/server";
 import { db } from "~/lib/db";
 import { threads } from "~/lib/db/schema";
 
-import type { ApiKeyProvider, FavoriteModelsInput, PreferencesUpdate, ProfileUpdate, UserSettingsData } from "./types";
+import type { ApiKeyProvider, FavoriteModelsInput, PreferencesUpdate, UserSettingsData } from "./types";
 
 import {
   deleteApiKey as deleteApiKeyQuery,
@@ -22,7 +21,6 @@ import {
   apiKeyUpdateSchema,
   favoriteModelsUpdateSchema,
   preferencesUpdateSchema,
-  profileUpdateSchema,
 } from "./types";
 
 /**
@@ -38,13 +36,7 @@ export async function updatePreferences(updates: PreferencesUpdate): Promise<Use
   const validated = preferencesUpdateSchema.parse(updates);
 
   // Get authenticated session
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   // Update settings in database and return the updated settings
   return updateUserSettingsPartial(session.user.id, validated);
@@ -69,13 +61,7 @@ export async function updateApiKey(
   });
 
   // Get authenticated session
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   // Update API key in database
   await updateApiKeyQuery(
@@ -95,41 +81,10 @@ export async function updateApiKey(
  */
 export async function deleteApiKey(provider: ApiKeyProvider): Promise<void> {
   // Get authenticated session
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   // Delete API key from database
   await deleteApiKeyQuery(session.user.id, provider);
-}
-
-/**
- * Update user profile (name, email)
- * Requires authentication and ownership verification
- *
- * @param updates Partial profile to update (type-safe via ProfileUpdate)
- * @return {Promise<void>}
- * @throws {Error} If not authenticated or validation fails
- */
-export async function updateProfile(updates: ProfileUpdate): Promise<void> {
-  // Validate input with Zod
-  const _validated = profileUpdateSchema.parse(updates);
-
-  // Get authenticated session
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
-
-  // TODO: Implement profile update in database
-  throw new Error("Profile updates are not yet implemented");
 }
 
 /**
@@ -168,9 +123,7 @@ export async function createDefaultUserSettings(userId: string): Promise<UserSet
  * @return {Promise<UserSettingsData | null>} Fresh user settings after cleanup, or null if not authenticated
  */
 export async function syncUserSettings(): Promise<UserSettingsData | null> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     return null;
@@ -205,13 +158,7 @@ export async function updateFavoriteModels(updates: FavoriteModelsInput): Promis
   const validated = favoriteModelsUpdateSchema.parse(updates);
 
   // Get authenticated session
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   // Update settings in database
   return updateUserSettingsPartial(session.user.id, validated);
@@ -226,13 +173,7 @@ export async function updateFavoriteModels(updates: FavoriteModelsInput): Promis
  * @throws {Error} If not authenticated
  */
 export async function deleteAllThreads(): Promise<{ deletedCount: number }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const result = await db
     .delete(threads)
@@ -249,13 +190,7 @@ export async function deleteAllThreads(): Promise<{ deletedCount: number }> {
  * Otherwise falls back to total_credits - total_usage from the credits endpoint.
  */
 export async function getOpenRouterCredits(params?: { openrouterClientKey?: string }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const { resolvedKeys } = await getUserSettingsAndKeys(
     session.user.id,

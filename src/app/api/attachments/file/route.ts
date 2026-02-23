@@ -1,17 +1,14 @@
 import { and, eq } from "drizzle-orm";
-import { headers } from "next/headers";
 
 import { getFileBuffer, getFileStream } from "~/features/attachments/lib/storage";
-import { auth } from "~/features/auth/lib/auth";
+import { getSession } from "~/features/auth/lib/session";
 import { db } from "~/lib/db";
 import { attachments } from "~/lib/db/schema/chat";
 import { decryptBuffer, deriveUserKey, isEncryptedBuffer } from "~/lib/security/encryption";
 import { getSaltForVersion } from "~/lib/security/keys";
 
 export async function GET(req: Request) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     return new Response("Not authenticated", { status: 401 });

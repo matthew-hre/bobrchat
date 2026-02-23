@@ -1,10 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
-
 import type { SubscriptionTier } from "~/lib/db/schema/subscriptions";
 
-import { auth } from "~/features/auth/lib/auth";
+import { getRequiredSession } from "~/features/auth/lib/session";
 
 import { checkThreadLimit, getStorageQuota, getUserSubscription, POLAR_PRODUCT_IDS } from "./index";
 
@@ -23,10 +21,7 @@ export type SubscriptionStatus = {
 };
 
 export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const [subscription, threadCheck, storageInfo] = await Promise.all([
     getUserSubscription(session.user.id),

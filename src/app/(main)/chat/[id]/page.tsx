@@ -1,10 +1,9 @@
 import type { UIMessage } from "ai";
 import type { Metadata } from "next";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { auth } from "~/features/auth/lib/auth";
+import { getSession } from "~/features/auth/lib/session";
 import { getMessagesByThreadId, getParentThread, getThreadById } from "~/features/chat/queries";
 
 import ChatThread from "./chat-thread";
@@ -23,9 +22,7 @@ export default async function ChatServer({ params }: ChatServerProps) {
   }
 
   // Verify user is authenticated
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
   if (!session?.user) {
     redirect("/");
   }

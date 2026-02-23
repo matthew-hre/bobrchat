@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 
-import { headers } from "next/headers";
 import Link from "next/link";
 
-import { auth } from "~/features/auth/lib/auth";
+import { getSession } from "~/features/auth/lib/session";
 import { SharedChatMessages } from "~/features/chat/components/shared-chat-messages";
 import { sanitizeMessagesForSharing } from "~/features/chat/lib/sanitize-shared-messages";
 import { getMessagesByThreadId, getThreadById } from "~/features/chat/queries";
@@ -18,7 +17,7 @@ export default async function SharePage({ params }: SharePageProps) {
 
   const [share, session] = await Promise.all([
     getShareByShareId(shareId),
-    auth.api.getSession({ headers: await headers() }),
+    getSession(),
   ]);
   const isLoggedIn = !!session;
 
