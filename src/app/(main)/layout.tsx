@@ -1,5 +1,5 @@
 import { HydrationBoundary } from "@tanstack/react-query";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 
 import { KeyboardShortcutsProvider } from "~/components/keyboard-shortcuts-provider";
 import { ChatSidebar } from "~/components/sidebar/chat-sidebar";
@@ -7,7 +7,7 @@ import { FloatingSidebarToggle } from "~/components/sidebar/floating-sidebar-tog
 import { ThemeInitializer } from "~/components/theme/theme-initializer";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { GlobalDropZoneProvider } from "~/features/attachments/components/global-drop-zone";
-import { auth } from "~/features/auth/lib/auth";
+import { getSession } from "~/features/auth/lib/session";
 import { getUserSettings } from "~/features/settings/queries";
 import { UserSettingsProvider } from "~/features/settings/settings-provider";
 import { prefetchThreads } from "~/lib/queries/prefetch-threads";
@@ -25,9 +25,7 @@ export default async function MainLayout({
   const defaultSidebarWidth = Number.isFinite(parsedSidebarWidth)
     ? parsedSidebarWidth
     : undefined;
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   const [dehydratedState, settings] = await Promise.all([
     session?.user ? prefetchThreads(session.user.id) : Promise.resolve(undefined),

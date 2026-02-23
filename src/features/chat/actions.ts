@@ -1,14 +1,12 @@
 "use server";
 
-import { headers } from "next/headers";
-
 import type { TagRow } from "~/features/chat/queries";
 import type { ChatUIMessage } from "~/features/chat/types";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { deleteFile } from "~/features/attachments/lib/storage";
 import { deleteUserAttachmentsByIds, getThreadStats, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/features/attachments/queries";
-import { auth } from "~/features/auth/lib/auth";
+import { getRequiredSession } from "~/features/auth/lib/session";
 import { addTagToThread, archiveThreadById, createTag, createThreadWithLimitCheck, deleteMessagesAfterCount, deleteTagById, deleteThreadById, getMessagesByThreadId, listTagsByUserId, removeTagFromThread, renameThreadById, saveMessage, updateTagById, updateThreadIcon } from "~/features/chat/queries";
 import { generateThreadIcon, generateThreadTitle } from "~/features/chat/server/thread";
 import { getShareByThreadId, revokeThreadShare, upsertThreadShare } from "~/features/chat/sharing-queries";
@@ -62,12 +60,7 @@ export async function createNewThread(options?: {
   title?: string;
   icon?: ThreadIcon;
 }): Promise<{ threadId: string } | { error: string; code: "THREAD_LIMIT_EXCEEDED"; currentUsage: number; limit: number }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user)
-    throw new Error("Not authenticated");
+  const session = await getRequiredSession();
 
   const result = await createThreadWithLimitCheck(session.user.id, {
     threadId: options?.threadId,
@@ -96,13 +89,7 @@ export async function createNewThread(options?: {
  * @return {Promise<void>}
  */
 export async function saveUserMessage(threadId: string, message: ChatUIMessage): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   await saveMessage(threadId, session.user.id, message);
 }
@@ -115,13 +102,7 @@ export async function saveUserMessage(threadId: string, message: ChatUIMessage):
  * @return {Promise<void>}
  */
 export async function deleteThread(threadId: string): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const userId = session.user.id;
 
@@ -178,13 +159,7 @@ export async function deleteThread(threadId: string): Promise<void> {
  * @return {Promise<void>}
  */
 export async function renameThread(threadId: string, newTitle: string): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const renamed = await renameThreadById(threadId, session.user.id, newTitle);
   if (!renamed) {
@@ -201,13 +176,7 @@ export async function renameThread(threadId: string, newTitle: string): Promise<
  * @return {Promise<void>}
  */
 export async function setThreadIcon(threadId: string, icon: ThreadIcon): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const updated = await updateThreadIcon(threadId, session.user.id, icon);
   if (!updated) {
@@ -224,13 +193,7 @@ export async function setThreadIcon(threadId: string, icon: ThreadIcon): Promise
  * @return {Promise<void>}
  */
 export async function archiveThread(threadId: string, archive: boolean): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const updated = await archiveThreadById(threadId, session.user.id, archive);
   if (!updated) {
@@ -248,13 +211,7 @@ export async function archiveThread(threadId: string, archive: boolean): Promise
  * @return {Promise<string>} The new title
  */
 export async function regenerateThreadName(threadId: string, clientKey?: string, useAllMessages = false): Promise<string> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const userId = session.user.id;
 
@@ -318,13 +275,7 @@ export async function regenerateThreadName(threadId: string, clientKey?: string,
  * @return {Promise<ThreadIcon>} The new icon
  */
 export async function regenerateThreadIcon(threadId: string, clientKey?: string): Promise<ThreadIcon> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const userId = session.user.id;
 
@@ -373,13 +324,7 @@ export async function fetchThreadStats(threadId: string): Promise<{
   attachmentSize: number;
   totalCost: number;
 }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   return getThreadStats({ userId: session.user.id, threadId });
 }
@@ -394,13 +339,7 @@ export async function fetchThreadStats(threadId: string): Promise<{
  * @returns Number of messages deleted
  */
 export async function truncateThreadMessages(threadId: string, keepCount: number): Promise<number> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   return deleteMessagesAfterCount(threadId, session.user.id, keepCount);
 }
@@ -416,13 +355,7 @@ export async function deleteMessageAttachmentsByIds(attachmentIds: string[]): Pr
   if (attachmentIds.length === 0)
     return;
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const userId = session.user.id;
 
@@ -443,13 +376,7 @@ export async function createOrUpdateThreadShare(
   threadId: string,
   showAttachments: boolean,
 ): Promise<{ shareId: string; shareUrl: string }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const { shareId } = await upsertThreadShare(threadId, session.user.id, showAttachments);
 
@@ -471,13 +398,7 @@ export async function getThreadShareStatus(threadId: string): Promise<{
   showAttachments: boolean;
   isRevoked: boolean;
 } | null> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const share = await getShareByThreadId(threadId, session.user.id);
 
@@ -500,13 +421,7 @@ export async function getThreadShareStatus(threadId: string): Promise<{
  * @returns True if revoked, false if not found or already revoked
  */
 export async function stopSharingThread(threadId: string): Promise<boolean> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   return revokeThreadShare(threadId, session.user.id);
 }
@@ -515,13 +430,7 @@ export async function stopSharingThread(threadId: string): Promise<boolean> {
  * Lists all tags for the authenticated user.
  */
 export async function listUserTags(): Promise<TagRow[]> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   return listTagsByUserId(session.user.id);
 }
@@ -530,13 +439,7 @@ export async function listUserTags(): Promise<TagRow[]> {
  * Creates a new tag for the authenticated user.
  */
 export async function createUserTag(input: { name: string; color: string }): Promise<TagRow> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   return createTag(session.user.id, input);
 }
@@ -545,13 +448,7 @@ export async function createUserTag(input: { name: string; color: string }): Pro
  * Deletes a tag for the authenticated user.
  */
 export async function deleteUserTag(tagId: string): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const deleted = await deleteTagById(session.user.id, tagId);
   if (!deleted) {
@@ -563,13 +460,7 @@ export async function deleteUserTag(tagId: string): Promise<void> {
  * Updates a tag for the authenticated user.
  */
 export async function updateUserTag(tagId: string, input: { name?: string; color?: string }): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   const updated = await updateTagById(session.user.id, tagId, input);
   if (!updated) {
@@ -581,13 +472,7 @@ export async function updateUserTag(tagId: string, input: { name?: string; color
  * Adds a tag to a thread for the authenticated user.
  */
 export async function tagThread(threadId: string, tagId: string): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   await addTagToThread(session.user.id, threadId, tagId);
 }
@@ -596,13 +481,7 @@ export async function tagThread(threadId: string, tagId: string): Promise<void> 
  * Removes a tag from a thread for the authenticated user.
  */
 export async function untagThread(threadId: string, tagId: string): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    throw new Error("Not authenticated");
-  }
+  const session = await getRequiredSession();
 
   await removeTagFromThread(session.user.id, threadId, tagId);
 }

@@ -1,8 +1,6 @@
-import { headers } from "next/headers";
-
 import type { UserSettingsData } from "~/features/settings/types";
 
-import { auth } from "~/features/auth/lib/auth";
+import { getSession } from "~/features/auth/lib/session";
 import { getUserSettings } from "~/features/settings/queries";
 
 /**
@@ -11,9 +9,7 @@ import { getUserSettings } from "~/features/settings/queries";
  */
 export async function GET(): Promise<Response> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getSession();
 
     if (!session?.user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,14 +1,10 @@
-import { headers } from "next/headers";
-
 import type { ChatUIMessage } from "~/features/chat/types";
 
-import { auth } from "~/features/auth/lib/auth";
+import { getSession } from "~/features/auth/lib/session";
 import { saveMessage } from "~/features/chat/queries";
 
 export async function POST(req: Request) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     return new Response(JSON.stringify({ error: "Not authenticated" }), {

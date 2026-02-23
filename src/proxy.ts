@@ -1,9 +1,8 @@
 import type { NextRequest } from "next/server";
 
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { auth } from "~/features/auth/lib/auth";
+import { getSession } from "~/features/auth/lib/session";
 
 /**
  * Proxy middleware to handle authentication
@@ -31,10 +30,7 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    // Get session from better-auth
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getSession();
 
     // User is authenticated
     if (session) {

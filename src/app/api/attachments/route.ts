@@ -1,12 +1,10 @@
-import { headers } from "next/headers";
-
 import { deleteFile } from "~/features/attachments/lib/storage";
 import {
   deleteUserAttachments,
   deleteUserAttachmentsByIds,
   listUserAttachments,
 } from "~/features/attachments/queries";
-import { auth } from "~/features/auth/lib/auth";
+import { getSession } from "~/features/auth/lib/session";
 import { deleteAttachmentsRateLimit, rateLimitResponse } from "~/lib/rate-limit";
 
 const PAGE_SIZE = 12;
@@ -22,7 +20,7 @@ function json(data: unknown, init?: ResponseInit) {
 }
 
 export async function GET(req: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   if (!session?.user)
     return json({ error: "Not authenticated" }, { status: 401 });
 
@@ -49,7 +47,7 @@ export async function GET(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   if (!session?.user)
     return json({ error: "Not authenticated" }, { status: 401 });
 
