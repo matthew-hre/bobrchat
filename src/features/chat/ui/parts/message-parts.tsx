@@ -1,9 +1,10 @@
 /* eslint-disable react/no-array-index-key */
 "use client";
 
+import dynamic from "next/dynamic";
+
 import type { ExtractToolUIPart, HandoffToolUIPart, ReasoningUIPart, SearchToolUIPart } from "~/features/chat/types";
 
-import { MemoizedMarkdown } from "~/features/chat/components/messages/markdown";
 import { ExtractingSources } from "~/features/chat/components/ui/extracting-sources";
 import { HandingOff } from "~/features/chat/components/ui/handing-off";
 import { ReasoningContent } from "~/features/chat/components/ui/reasoning-content";
@@ -20,6 +21,10 @@ import {
 import { cn } from "~/lib/utils";
 
 import { normalizeExtractToolPart, normalizeHandoffToolPart, normalizeReasoningText, normalizeSearchToolPart } from "./normalize";
+
+const MemoizedMarkdown = dynamic(
+  () => import("~/features/chat/components/messages/markdown").then(mod => mod.MemoizedMarkdown),
+);
 
 export type RenderState = {
   isLast: boolean;
