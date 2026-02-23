@@ -7,7 +7,7 @@ import { hasEncryptedKey } from "~/lib/api-keys/server";
 import { db } from "~/lib/db";
 import { threads } from "~/lib/db/schema";
 
-import type { ApiKeyProvider, FavoriteModelsInput, PreferencesUpdate, ProfileUpdate, UserSettingsData } from "./types";
+import type { ApiKeyProvider, FavoriteModelsInput, PreferencesUpdate, UserSettingsData } from "./types";
 
 import {
   deleteApiKey as deleteApiKeyQuery,
@@ -21,7 +21,6 @@ import {
   apiKeyUpdateSchema,
   favoriteModelsUpdateSchema,
   preferencesUpdateSchema,
-  profileUpdateSchema,
 } from "./types";
 
 /**
