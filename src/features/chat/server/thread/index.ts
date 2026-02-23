@@ -1,2 +1,1 @@
-export { generateThreadIcon } from "./icon";
-export { generateThreadTitle } from "./naming";
+export { generateThreadIcon, generateThreadMetadata, generateThreadTitle } from "./metadata";

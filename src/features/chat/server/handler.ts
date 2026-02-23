@@ -5,7 +5,7 @@ import type { ChatUIMessage } from "~/features/chat/types";
 import { ensureThreadExists, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
 import { formatProviderError } from "~/features/chat/server/error";
 import { streamChatResponse } from "~/features/chat/server/service";
-import { generateThreadIcon, generateThreadTitle } from "~/features/chat/server/thread";
+import { generateThreadMetadata } from "~/features/chat/server/thread";
 import { getUserSettingsAndKeys } from "~/features/settings/queries";
 
 type ChatRequestBody = {
@@ -100,36 +100,28 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
   );
 
   if (threadId && messages.length === 1 && messages[0].role === "user") {
-    const firstMessage = messages[0];
-    const userMessage = firstMessage.parts
-      ? firstMessage.parts
-          .filter(p => p.type === "text")
-          .map(p => (p as { text: string }).text)
-          .join("")
-      : "";
+    const wantsTitle = settings.autoThreadNaming;
+    const wantsIcon = settings.autoThreadIcon && !settings.showSidebarIcons;
 
-    if (settings.autoThreadNaming) {
-      (async () => {
-        try {
-          const title = await generateThreadTitle(userMessage, openrouterKey);
-          await renameThreadById(threadId, userId, title);
-        }
-        catch (error) {
-          console.error("Failed to auto-rename thread", error);
-        }
-      })();
-    }
+    if (wantsTitle || wantsIcon) {
+      const firstMessage = messages[0];
+      const userMessage = firstMessage.parts
+        ? firstMessage.parts
+            .filter(p => p.type === "text")
+            .map(p => (p as { text: string }).text)
+            .join("")
+        : "";
 
-    if (settings.autoThreadIcon && !settings.showSidebarIcons) {
-      (async () => {
-        try {
-          const icon = await generateThreadIcon(userMessage, openrouterKey);
-          await updateThreadIcon(threadId, userId, icon);
-        }
-        catch (error) {
-          console.error("Failed to auto-update thread icon", error);
-        }
-      })();
+      generateThreadMetadata(userMessage, openrouterKey)
+        .then(async (metadata) => {
+          await Promise.all([
+            wantsTitle ? renameThreadById(threadId, userId, metadata.title) : Promise.resolve(),
+            wantsIcon ? updateThreadIcon(threadId, userId, metadata.icon) : Promise.resolve(),
+          ]);
+        })
+        .catch((error) => {
+          console.error("Failed to generate thread metadata", error);
+        });
     }
   }
 
