@@ -1,4 +1,4 @@
-export { getPolarProductId, getSubscriptionStatus } from "./actions";
+export { createCheckoutSession, createCustomerPortalSession, getPolarProductId, getSubscriptionStatus } from "./actions";
 export { UpgradeDialog } from "./components/upgrade-dialog";
 export { UpgradePromptDialog } from "./components/upgrade-prompt-dialog";
 export { UsageMeter } from "./components/usage-meter";

@@ -1,5 +1,4 @@
 /* eslint-disable node/no-process-env */
-import { polarClient } from "@polar-sh/better-auth";
 import { twoFactorClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
@@ -9,7 +8,7 @@ const baseURL = clientEnv.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.NEXT_PUBLIC
 
 export const authClient = createAuthClient({
   baseURL,
-  plugins: [twoFactorClient(), polarClient()],
+  plugins: [twoFactorClient()],
 });
 
 export const { signIn, signUp, signOut, useSession, twoFactor } = authClient;
