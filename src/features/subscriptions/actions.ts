@@ -3,6 +3,8 @@
 import type { SubscriptionTier } from "~/lib/db/schema/subscriptions";
 
 import { getRequiredSession } from "~/features/auth/lib/session";
+import { serverEnv } from "~/lib/env";
+import { polarClient } from "~/lib/polar";
 
 import { checkThreadLimit, getStorageQuota, getUserSubscription, POLAR_PRODUCT_IDS } from "./index";
 
@@ -46,4 +48,40 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
 
 export async function getPolarProductId(tier: "plus"): Promise<string | undefined> {
   return POLAR_PRODUCT_IDS[tier];
+}
+
+export async function createCheckoutSession(productId: string): Promise<{ url: string } | { error: string }> {
+  if (!polarClient) {
+    return { error: "Payments are not configured." };
+  }
+
+  const session = await getRequiredSession();
+
+  const checkout = await polarClient.checkouts.create({
+    products: [productId],
+    customerEmail: session.user.email,
+    externalCustomerId: session.user.id,
+    successUrl: serverEnv.POLAR_SUCCESS_URL ?? `${serverEnv.BETTER_AUTH_URL}/settings?tab=subscription`,
+  });
+
+  return { url: checkout.url };
+}
+
+export async function createCustomerPortalSession(): Promise<{ url: string } | { error: string }> {
+  if (!polarClient) {
+    return { error: "Payments are not configured." };
+  }
+
+  const session = await getRequiredSession();
+  const subscription = await getUserSubscription(session.user.id);
+
+  if (!subscription.polarCustomerId) {
+    return { error: "No billing account found." };
+  }
+
+  const portalSession = await polarClient.customerSessions.create({
+    customerId: subscription.polarCustomerId,
+  });
+
+  return { url: portalSession.customerPortalUrl };
 }

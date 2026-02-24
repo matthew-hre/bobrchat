@@ -14,8 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { authClient } from "~/features/auth/lib/auth-client";
-import { getPolarProductId } from "~/features/subscriptions/actions";
+import { createCheckoutSession, getPolarProductId } from "~/features/subscriptions/actions";
 
 type UpgradePromptDialogProps = {
   open: boolean;
@@ -46,7 +45,12 @@ export function UpgradePromptDialog({
         toast.error("Payments are not configured. Please contact support.");
         return;
       }
-      await authClient.checkout({ products: [productId] });
+      const result = await createCheckoutSession(productId);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      window.location.href = result.url;
     }
     catch {
       toast.error("Failed to start checkout. Please try again.");

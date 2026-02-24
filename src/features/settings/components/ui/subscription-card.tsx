@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
-import { authClient } from "~/features/auth/lib/auth-client";
+import { createCustomerPortalSession } from "~/features/subscriptions/actions";
 import { UpgradeDialog } from "~/features/subscriptions/components/upgrade-dialog";
 import { UsageMeter } from "~/features/subscriptions/components/usage-meter";
 import { useSubscription } from "~/features/subscriptions/hooks/use-subscription";
@@ -28,16 +28,26 @@ function formatBytes(bytes: number): string {
 }
 
 export function SubscriptionCard() {
-  const { data: subscription, isLoading } = useSubscription();
+  const { data: subscription, isLoading, awaitingUpgrade } = useSubscription();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   const handleManageSubscription = async () => {
     setIsRedirecting(true);
-    await authClient.customer.portal();
+    try {
+      const result = await createCustomerPortalSession();
+      if ("error" in result) {
+        setIsRedirecting(false);
+        return;
+      }
+      window.location.href = result.url;
+    }
+    catch {
+      setIsRedirecting(false);
+    }
   };
 
-  if (isLoading) {
+  if (isLoading || awaitingUpgrade) {
     return (
       <div className="bg-card space-y-3 rounded-lg p-4">
         <Skeleton className="h-6 w-24" />
