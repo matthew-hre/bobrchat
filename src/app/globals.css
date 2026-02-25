@@ -175,6 +175,13 @@ html.accent-gray.dark {
   --sidebar-ring: oklch(0.65 0.02 260);
 }
 
+.radix-themes {
+  --color-panel-solid: var(--card) !important;
+  --color-panel-translucent: var(--card) !important;
+  --color-surface: var(--card) !important;
+  --accent-surface: var(--background) !important;
+}
+
 /* cmdk spacing */
 div[data-slot="command-group"] > div {
   @apply space-y-1;

@@ -1,11 +1,18 @@
-import { Avatar } from "~/components/ui/avatar";
 import BoringAvatar from "boring-avatars";
-import { AvatarFallback } from "~/components/ui/avatar";
-import { AvatarImage } from "~/components/ui/avatar";
-import { Session } from "~/features/auth/lib/auth";
 
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 
-export function UserAvatar({ session }: { session: Session | null }) {
+type UserAvatarProps = {
+  session: {
+    user: {
+      name: string;
+      email: string;
+      image?: string | null;
+    };
+  } | null;
+};
+
+export function UserAvatar({ session }: UserAvatarProps) {
   return (
     <Avatar className="size-24">
       <AvatarImage

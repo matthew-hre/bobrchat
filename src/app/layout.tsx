@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 
 import { Analytics } from "@vercel/analytics/next";
-import { JetBrains_Mono, Rethink_Sans } from "next/font/google";
+import { AuthKitProvider } from "@workos-inc/authkit-nextjs/components";
 
 import "./globals.css";
+
+import { JetBrains_Mono, Rethink_Sans } from "next/font/google";
 
 import { ThemeProvider } from "~/components/theme/theme-provider";
 import { Toaster } from "~/components/ui/sonner";
@@ -78,19 +80,21 @@ export default function RootLayout({
         `}
       >
         <Analytics />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <PreviousRouteProvider>
-            <QueryProvider>
-              <Toaster position="top-right" />
-              {children}
-            </QueryProvider>
-          </PreviousRouteProvider>
-        </ThemeProvider>
+        <AuthKitProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <PreviousRouteProvider>
+              <QueryProvider>
+                <Toaster position="top-right" />
+                {children}
+              </QueryProvider>
+            </PreviousRouteProvider>
+          </ThemeProvider>
+        </AuthKitProvider>
       </body>
     </html>
   );

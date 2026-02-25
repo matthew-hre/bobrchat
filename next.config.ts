@@ -20,7 +20,6 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: [
     "@aws-sdk/client-s3",
-    "@polar-sh/better-auth",
     "@polar-sh/sdk",
     "drizzle-orm",
     "postgres",
@@ -44,7 +43,7 @@ const nextConfig: NextConfig = {
             "style-src 'self' 'unsafe-inline'",
             `img-src 'self' data: blob: ${r2PublicUrl} https://avatars.githubusercontent.com`,
             "font-src 'self' data:",
-            `connect-src 'self' https://openrouter.ai https://*.parallel.ai ${serverEnv.R2_PUBLIC_URL || ""}`,
+            `connect-src 'self' https://openrouter.ai https://api.workos.com https://*.parallel.ai ${serverEnv.R2_PUBLIC_URL || ""}`,
             `frame-src 'self' blob: ${serverEnv.R2_PUBLIC_URL || ""}`,
             "frame-ancestors 'none'",
           ].join("; "),

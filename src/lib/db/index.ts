@@ -37,7 +37,6 @@ function createDb() {
   }
 
   // Use Pool (WebSocket) instead of neon (HTTP) for transaction support.
-  // This is due to a bug with neon-http and better-auth when it comes to transactions.
   const pool = new Pool({
     connectionString: serverEnv.DATABASE_URL,
     max: 10,

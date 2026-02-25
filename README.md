@@ -23,7 +23,7 @@ bun db:push
 
 - **Stack:** `Next.js 16` (App Router), React 19, Tailwind v4.
 - **DB:** PostgreSQL via Drizzle ORM (`src/lib/db/`).
-- **Auth:** better-auth integration (`src/features/auth/` + `src/app/api/auth/`).
+- **Auth:** WorkOS AuthKit (`src/features/auth/`).
 - **AI:** Vercel AI SDK + OpenRouter (`src/features/chat/`).
 
 ## Structure
@@ -57,7 +57,7 @@ bun db:push
 
 - **App shell / routes:** `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/api/*`.
 - **Chat flow:** `src/features/chat/` — store, actions, queries, components.
-- **Auth:** `src/features/auth/` (client config) + `src/app/api/auth/` (backend routes).
+- **Auth:** `src/features/auth/` (session, actions, client hooks).
 - **UI primitives:** `src/components/ui/` for shared building blocks.
 
 ## License

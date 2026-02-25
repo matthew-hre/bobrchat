@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { Session } from "~/features/auth/lib/auth";
 import type { ProfileCardWidget } from "~/features/settings/types";
 
+import { useSession } from "~/features/auth/lib/auth-client";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
@@ -26,11 +27,14 @@ const widgetComponents: Record<ProfileCardWidget, React.ComponentType> = {
 
 export function UserProfileCard({ session }: UserProfileCardProps) {
   const { data: settings } = useUserSettings({ enabled: true });
+  const { data: clientSession } = useSession();
 
   if (!session) {
     return null;
   }
 
+  const name = clientSession?.user?.name || session.user.name;
+  const image = clientSession?.user?.image ?? session.user.image;
   const widgetKey = settings?.profileCardWidget ?? "apiKeyStatus";
   const WidgetComponent = widgetComponents[widgetKey];
 
@@ -44,14 +48,14 @@ export function UserProfileCard({ session }: UserProfileCardProps) {
       `)}
     >
       <Avatar className="size-9 shrink-0">
-        <AvatarImage src={session.user.image || undefined} alt={session.user.name} />
+        <AvatarImage src={image || undefined} alt={name} />
         <AvatarFallback className="bg-transparent p-0">
-          {session.user.image
+          {image
             ? null
             : (
                 <BoringAvatar
                   size={36}
-                  name={session.user.name || "user"}
+                  name={name || "user"}
                   variant="beam"
                   colors={["#F92672", "#A1EFE4", "#FD971F", "#E6DB74", "#66D9EF"]}
                 />
@@ -60,7 +64,7 @@ export function UserProfileCard({ session }: UserProfileCardProps) {
       </Avatar>
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-sm font-medium">
-          {session.user.name}
+          {name}
         </span>
         <span className="text-muted-foreground flex items-center gap-1 text-xs">
           <WidgetComponent />

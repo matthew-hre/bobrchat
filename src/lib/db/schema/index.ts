@@ -1,4 +1,3 @@
-import { authRelations } from "./auth";
 import { userSettingsRelations } from "./settings";
 
 export * from "./auth";
@@ -10,6 +9,5 @@ export * from "./sharing";
 export * from "./subscriptions";
 
 export const relations = {
-  ...authRelations,
   ...userSettingsRelations,
 };

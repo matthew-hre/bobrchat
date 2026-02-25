@@ -1,21 +1,13 @@
+import { getSignUpUrl, withAuth } from "@workos-inc/authkit-nextjs";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
-
-import { AuthDialog } from "~/features/auth/components/auth-dialog";
-import { getSession } from "~/features/auth/lib/session";
 
 export default async function AuthPage() {
-  const session = await getSession();
+  const { user } = await withAuth();
 
-  if (session?.user) {
+  if (user) {
     redirect("/");
   }
 
-  return (
-    <div className="h-full w-full">
-      <Suspense>
-        <AuthDialog />
-      </Suspense>
-    </div>
-  );
+  const url = await getSignUpUrl();
+  redirect(url);
 }

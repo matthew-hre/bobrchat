@@ -1,119 +1,19 @@
-/* eslint-disable node/no-process-env */
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { nextCookies } from "better-auth/next-js";
-import { twoFactor } from "better-auth/plugins";
-
-import { createDefaultUserSettings } from "~/features/settings/actions";
-import { createUserSubscription } from "~/features/subscriptions/queries";
-import { db } from "~/lib/db";
-import * as schema from "~/lib/db/schema";
-import { sendEmail } from "~/lib/email";
-import { serverEnv } from "~/lib/env";
-
-export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema,
-    usePlural: true,
-  }),
-  secret: serverEnv.BETTER_AUTH_SECRET,
-  baseURL: serverEnv.BETTER_AUTH_URL,
-  baseAuthPath: "/api/auth",
-  trustedOrigins: [serverEnv.BETTER_AUTH_URL],
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: process.env.NODE_ENV !== "development",
-    sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
-      await sendEmail({
-        to: user.email,
-        subject: "Reset your BobrChat password",
-        html: `
-          <h1>Reset your password</h1>
-          <p>Click the link below to reset your password:</p>
-          <a href="${url}">Reset Password</a>
-          <p>If you didn't request a password reset, you can ignore this email.</p>
-        `,
-      });
-    },
-  },
-  emailVerification: {
-    sendOnSignUp: true,
-    autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url }: { user: { email: string; createdAt: Date }; url: string }) => {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your email for BobrChat",
-        html: `
-          <p>Click the link below to verify your email address:</p>
-          <a href="${url}">Verify Email</a>
-          <p>If you didn't create an account, you can ignore this email.</p>
-        `,
-      });
-    },
-  },
+/**
+ * Session type for BobrChat auth.
+ */
+export type Session = {
   user: {
-    deleteUser: {
-      enabled: true,
-    },
-    changeEmail: {
-      enabled: true,
-    },
-  },
-  socialProviders: {
-    github: {
-      clientId: serverEnv.GITHUB_CLIENT_ID,
-      clientSecret: serverEnv.GITHUB_CLIENT_SECRET,
-    },
-  },
+    id: string;
+    name: string;
+    email: string;
+    emailVerified: boolean;
+    image: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
   session: {
-    // Enable cookie caching to avoid DB lookups on every request
-    // Session data is stored in a signed cookie, refreshed every 5 minutes
-
-    // NOTE: If we ever add custom session fields (roles, permissions, etc.),
-    // use disableCookieCache: true after changing those fields:
-    // await auth.api.getSession({
-    //   headers: await headers(),
-    //   query: { disableCookieCache: true }
-    // });
-    cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60, // 5 minutes - session is cached in cookie
-    },
-  },
-  rateLimit: {
-    storage: process.env.NODE_ENV === "development" ? "memory" : "database",
-    window: 60,
-    max: 100,
-    customRules: {
-      "/sign-in/*": { window: 10, max: 5 },
-      "/sign-up/*": { window: 10, max: 5 },
-    },
-  },
-  databaseHooks: {
-    user: {
-      create: {
-        async after(user) {
-          await Promise.all([
-            createDefaultUserSettings(user.id),
-            createUserSubscription(user.id),
-          ]);
-        },
-      },
-    },
-  },
-  advanced: {
-    database: {
-      generateId: () => crypto.randomUUID(),
-    },
-  },
-  plugins: [
-    nextCookies(),
-    twoFactor({
-      issuer: "BobrChat",
-    }),
-  ],
-});
-
-// i really hate that this is how the docs want me to do this
-export type Session = typeof auth.$Infer.Session;
+    token: string;
+    userId: string;
+    expiresAt: Date;
+  };
+};

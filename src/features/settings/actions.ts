@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { getRequiredSession, getSession } from "~/features/auth/lib/session";
 import { hasEncryptedKey } from "~/lib/api-keys/server";
 import { db } from "~/lib/db";
-import { threads } from "~/lib/db/schema";
+import { threads, users } from "~/lib/db/schema";
 
 import type { ApiKeyProvider, FavoriteModelsInput, PreferencesUpdate, UserSettingsData } from "./types";
 
@@ -182,6 +182,7 @@ export async function deleteAllThreads(): Promise<{ deletedCount: number }> {
 
   return { deletedCount: Array.isArray(result) ? result.length : 0 };
 }
+
 
 /**
  * Fetch OpenRouter remaining credits using the SDK.

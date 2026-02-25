@@ -6,10 +6,10 @@
  */
 
 function getClientEnv() {
-  const NEXT_PUBLIC_BETTER_AUTH_URL = process.env.NEXT_PUBLIC_BETTER_AUTH_URL;
+  const NEXT_PUBLIC_WORKOS_REDIRECT_URI = process.env.NEXT_PUBLIC_WORKOS_REDIRECT_URI;
 
   return {
-    NEXT_PUBLIC_BETTER_AUTH_URL,
+    NEXT_PUBLIC_WORKOS_REDIRECT_URI,
   };
 }
 
