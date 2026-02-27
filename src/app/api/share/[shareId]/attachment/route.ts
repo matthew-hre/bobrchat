@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import { getFileBuffer, getFileStream } from "~/features/attachments/lib/storage";
+import { contentDisposition, getFileBuffer, getFileStream } from "~/features/attachments/lib/storage";
 import { getShareByShareId } from "~/features/chat/sharing-queries";
 import { db } from "~/lib/db";
 import { attachments, messages } from "~/lib/db/schema/chat";
@@ -49,7 +49,7 @@ export async function GET(
 
   const responseHeaders = {
     "Content-Type": attachment.mediaType,
-    "Content-Disposition": `${isInline ? "inline" : "attachment"}; filename="${attachment.filename}"`,
+    "Content-Disposition": contentDisposition(isInline ? "inline" : "attachment", attachment.filename),
     "Cache-Control": "public, max-age=86400",
     "X-Content-Type-Options": "nosniff",
   };
