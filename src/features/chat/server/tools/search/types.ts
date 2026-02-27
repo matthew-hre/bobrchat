@@ -6,7 +6,7 @@ export const PARALLEL_BETA_HEADER = "search-extract-2025-10-10";
 export const searchInputSchema = z.object({
   objective: z
     .string()
-    .max(200)
+    .max(500)
     .describe(
       "Natural-language description of the search goal. Include source or freshness guidance here.",
     ),
@@ -52,7 +52,7 @@ export type SearchInput = z.infer<typeof searchInputSchema>;
 export const extractInputSchema = z.object({
   objective: z
     .string()
-    .max(200)
+    .max(500)
     .describe("What information to extract from the URLs."),
   urls: z
     .array(z.url())

@@ -25,6 +25,13 @@ const ERROR_HINTS: Record<string, string> = {
   "Provider returned error": "The model provider returned an error. This may be a temporary issue—try again or select a different model.",
 };
 
+const ERROR_PATTERN_HINTS: Array<{ pattern: RegExp; message: string }> = [
+  {
+    pattern: /Thought signature is not valid/i,
+    message: "This model's thinking tokens became invalid. Please try again or start a new thread.",
+  },
+];
+
 const STATUS_CODE_MESSAGES: Record<number, string> = {
   400: "Bad request. The request was malformed or invalid.",
   401: "Authentication failed. Please check your API key in settings.",
@@ -72,6 +79,9 @@ export function formatProviderError(error: unknown): string {
       try {
         const nested: NestedProviderError = JSON.parse(metadata.raw);
         if (nested.error?.message) {
+          const patternHint = ERROR_PATTERN_HINTS.find(h => h.pattern.test(nested.error!.message!));
+          if (patternHint)
+            return patternHint.message;
           const providerName = metadata.provider_name;
           return providerName
             ? `${providerName}: ${nested.error.message}`
