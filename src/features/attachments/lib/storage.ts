@@ -7,6 +7,16 @@ import path from "node:path";
 
 import { serverEnv } from "~/lib/env";
 
+/**
+ * Build a Content-Disposition header value that is safe for non-ASCII filenames.
+ * Uses RFC 5987 filename* for Unicode support, with an ASCII fallback.
+ */
+export function contentDisposition(disposition: "inline" | "attachment", filename: string): string {
+  const ascii = filename.replace(/[^\x20-\x7E]/g, "_");
+  const encoded = encodeURIComponent(filename).replace(/['()]/g, escape);
+  return `${disposition}; filename="${ascii}"; filename*=UTF-8''${encoded}`;
+}
+
 export type UploadedFile = {
   id: string;
   filename: string;
@@ -57,7 +67,7 @@ export async function saveFile(
       Key: key,
       Body: buffer,
       ContentType: contentType,
-      ContentDisposition: `${disposition}; filename="${file.name}"`,
+      ContentDisposition: contentDisposition(disposition, file.name),
     },
   });
   await upload.done();
