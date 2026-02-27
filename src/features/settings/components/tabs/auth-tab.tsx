@@ -1,9 +1,9 @@
 "use client";
 
-import { useAccessToken, useAuth } from "@workos-inc/authkit-nextjs/components";
+import { useQueryClient } from "@tanstack/react-query";
 import "@radix-ui/themes/styles.css";
 import "@workos-inc/widgets/styles.css";
-import { useQueryClient } from "@tanstack/react-query";
+import { useAccessToken, useAuth } from "@workos-inc/authkit-nextjs/components";
 import {
   UserProfile,
   UserSecurity,

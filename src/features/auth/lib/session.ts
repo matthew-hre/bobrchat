@@ -13,7 +13,8 @@ const resolveInternalUser = cache(async (workosId: string, workosName: string) =
     .from(users)
     .where(eq(users.workosId, workosId))
     .limit(1);
-  if (!row) return null;
+  if (!row)
+    return null;
 
   if (row.name !== workosName) {
     await db.update(users).set({ name: workosName }).where(eq(users.id, row.id));

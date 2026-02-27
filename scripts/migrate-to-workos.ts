@@ -17,8 +17,9 @@
  * Safe to re-run: skips users that already have a `workos_id`.
  */
 
-import postgres from "postgres";
 import { WorkOS } from "@workos-inc/node";
+import { Buffer } from "node:buffer";
+import postgres from "postgres";
 
 /* eslint-disable node/no-process-env */
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -113,8 +114,8 @@ async function main() {
     const [firstName, ...lastNameParts] = (user.name as string).split(" ");
     const lastName = lastNameParts.join(" ") || undefined;
 
-    const createParams: Parameters<typeof workos.userManagement.createUser>[0] =
-      {
+    const createParams: Parameters<typeof workos.userManagement.createUser>[0]
+      = {
         email: user.email,
         emailVerified: user.email_verified,
         firstName,
@@ -140,9 +141,10 @@ async function main() {
         `  ✓ ${user.email} → ${workosUser.id} (${method})`,
       );
       migrated++;
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : JSON.stringify(error);
+    }
+    catch (error: unknown) {
+      const message
+        = error instanceof Error ? error.message : JSON.stringify(error);
       console.error(`  ✗ ${user.email}: ${message}`);
       failed++;
     }
