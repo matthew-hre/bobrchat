@@ -22,7 +22,7 @@ export function UserAvatar({ session }: UserAvatarProps) {
       <AvatarFallback className="bg-transparent p-0">
         <BoringAvatar
           size={96}
-          name={session?.user?.name || "user"}
+          name={session?.user?.email || "user"}
           variant="beam"
           colors={["#F92672", "#A1EFE4", "#FD971F", "#E6DB74", "#66D9EF"]}
         />
