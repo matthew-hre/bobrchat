@@ -10,6 +10,7 @@ import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { archiveThread, createNewThread, deleteThread, fetchThreadStats, regenerateThreadIcon, regenerateThreadName, renameThread, setThreadIcon } from "~/features/chat/actions";
 import { groupThreadsByDate } from "~/features/chat/utils/thread-grouper";
+import { SUBSCRIPTION_KEY } from "~/features/subscriptions/hooks/use-subscription";
 import { ARCHIVED_THREADS_KEY, THREADS_KEY } from "~/lib/queries/query-keys";
 
 export { ARCHIVED_THREADS_KEY, THREADS_KEY };
@@ -149,6 +150,7 @@ export function useCreateThread() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: THREADS_KEY });
+      queryClient.invalidateQueries({ queryKey: SUBSCRIPTION_KEY });
     },
   });
 }
