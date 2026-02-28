@@ -3,8 +3,8 @@ import type { NextRequest } from "next/server";
 import { authkit, handleAuthkitHeaders } from "@workos-inc/authkit-nextjs";
 
 /* eslint-disable node/no-process-env */
-const REDIRECT_URI =
-  process.env.VERCEL_ENV === "production"
+const REDIRECT_URI
+  = process.env.VERCEL_ENV === "production"
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/callback`
     : process.env.VERCEL_ENV === "preview"
       ? `https://${process.env.VERCEL_URL}/callback`
