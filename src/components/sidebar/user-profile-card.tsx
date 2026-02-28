@@ -34,6 +34,7 @@ export function UserProfileCard({ session }: UserProfileCardProps) {
   }
 
   const name = clientSession?.user?.name || session.user.name;
+  const email = clientSession?.user?.email || session.user.email;
   const image = clientSession?.user?.image ?? session.user.image;
   const widgetKey = settings?.profileCardWidget ?? "apiKeyStatus";
   const WidgetComponent = widgetComponents[widgetKey];
@@ -55,7 +56,7 @@ export function UserProfileCard({ session }: UserProfileCardProps) {
             : (
                 <BoringAvatar
                   size={36}
-                  name={name || "user"}
+                  name={email || "user"}
                   variant="beam"
                   colors={["#F92672", "#A1EFE4", "#FD971F", "#E6DB74", "#66D9EF"]}
                 />

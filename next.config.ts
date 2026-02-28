@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
             "style-src 'self' 'unsafe-inline'",
-            `img-src 'self' data: blob: ${r2PublicUrl} https://avatars.githubusercontent.com`,
+            `img-src 'self' data: blob: https: ${r2PublicUrl}`,
             "font-src 'self' data:",
             `connect-src 'self' https://openrouter.ai https://api.workos.com https://*.parallel.ai ${serverEnv.R2_PUBLIC_URL || ""}`,
             `frame-src 'self' blob: ${serverEnv.R2_PUBLIC_URL || ""}`,
