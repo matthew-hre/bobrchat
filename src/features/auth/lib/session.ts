@@ -51,11 +51,6 @@ export async function getSession(): Promise<Session | null> {
       createdAt: internalUser.createdAt,
       updatedAt: internalUser.updatedAt,
     },
-    session: {
-      token: "",
-      userId: internalUser.id,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-    },
   };
 }
 

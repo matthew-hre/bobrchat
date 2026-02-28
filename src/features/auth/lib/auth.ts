@@ -11,9 +11,4 @@ export type Session = {
     createdAt: Date;
     updatedAt: Date;
   };
-  session: {
-    token: string;
-    userId: string;
-    expiresAt: Date;
-  };
 };
