@@ -7,10 +7,11 @@ import { toast } from "sonner";
 
 import type { AccentColorPreset, PreferencesUpdate } from "~/features/settings/types";
 
-import { applyAccentColor } from "~/components/theme/theme-initializer";
+import { applyAccentColor, applyFonts } from "~/components/theme/theme-initializer";
 import { ColorPicker } from "~/components/ui/color-picker";
 import { Kbd } from "~/components/ui/kbd";
 import { Label } from "~/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Slider } from "~/components/ui/slider";
@@ -71,6 +72,8 @@ export function InterfaceTab() {
   const save = async (patch: PreferencesUpdate) => {
     const previousTheme = settings?.theme;
     const previousAccentColor = settings?.accentColor;
+    const previousFontSans = settings?.fontSans;
+    const previousFontMono = settings?.fontMono;
 
     try {
       if (patch.theme) {
@@ -78,6 +81,12 @@ export function InterfaceTab() {
       }
       if (patch.accentColor) {
         applyAccentColor(patch.accentColor);
+      }
+      if (patch.fontSans || patch.fontMono) {
+        applyFonts(
+          patch.fontSans ?? settings?.fontSans ?? "rethink",
+          patch.fontMono ?? settings?.fontMono ?? "jetbrains",
+        );
       }
 
       await updatePreferences.mutateAsync(patch);
@@ -88,6 +97,9 @@ export function InterfaceTab() {
       }
       if (patch.accentColor && previousAccentColor) {
         applyAccentColor(previousAccentColor);
+      }
+      if (patch.fontSans || patch.fontMono) {
+        applyFonts(previousFontSans ?? "rethink", previousFontMono ?? "jetbrains");
       }
       console.error("Failed to save preferences:", error);
       const message = error instanceof Error ? error.message : "Failed to save preferences";
@@ -138,6 +150,40 @@ export function InterfaceTab() {
                 setLocalHue(null);
               }}
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <Label>Sans-Serif Font</Label>
+              <Select
+                value={settings.fontSans ?? "rethink"}
+                onValueChange={v => save({ fontSans: v as "rethink" | "system" })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rethink">Rethink Sans</SelectItem>
+                  <SelectItem value="system">System Default</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3">
+              <Label>Monospace Font</Label>
+              <Select
+                value={settings.fontMono ?? "jetbrains"}
+                onValueChange={v => save({ fontMono: v as "jetbrains" | "system" })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="jetbrains">JetBrains Mono</SelectItem>
+                  <SelectItem value="system">System Default</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </SettingsSection>
 

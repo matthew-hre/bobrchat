@@ -9,6 +9,8 @@ import { userSettings } from "~/lib/db/schema/settings";
 const DEFAULT_SETTINGS: UserSettingsData = {
   theme: "dark",
   accentColor: "green",
+  fontSans: "rethink",
+  fontMono: "jetbrains",
   defaultThreadName: "New Thread",
   defaultThreadIcon: "message-circle",
   landingPageContent: "suggestions",

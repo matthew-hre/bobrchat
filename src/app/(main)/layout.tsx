@@ -45,6 +45,8 @@ export default async function MainLayout({
             <ThemeInitializer
               theme={settings?.theme}
               accentColor={settings?.accentColor}
+              fontSans={settings?.fontSans}
+              fontMono={settings?.fontMono}
             />
           </KeyboardShortcutsProvider>
         </SidebarProvider>

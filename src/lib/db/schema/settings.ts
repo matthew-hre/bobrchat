@@ -16,6 +16,8 @@ export const userSettings = pgTable(
     settings: jsonb("settings").notNull().default({
       theme: "dark",
       accentColor: "green",
+      fontSans: "rethink",
+      fontMono: "jetbrains",
       defaultThreadName: "New Chat",
       defaultThreadIcon: "message-circle",
       landingPageContent: "suggestions",

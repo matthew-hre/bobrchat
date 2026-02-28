@@ -12,10 +12,10 @@ import { Toaster } from "~/components/ui/sonner";
 import { PreviousRouteProvider } from "~/features/settings/previous-route-context";
 import { QueryProvider } from "~/lib/queries/query-provider";
 
-const rethinkSans = Rethink_Sans({ subsets: ["latin"], variable: "--font-sans" });
+const rethinkSans = Rethink_Sans({ subsets: ["latin"], variable: "--font-rethink" });
 
 const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+  variable: "--font-jetbrains",
   subsets: ["latin"],
 });
 
@@ -71,14 +71,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`
-          ${rethinkSans.variable}
-          ${jetbrainsMono.variable}
-          min-h-screen w-full antialiased
-        `}
-      >
+    <html lang="en" suppressHydrationWarning className={`${rethinkSans.variable} ${jetbrainsMono.variable}`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var c=document.cookie.split(";");var fs,fm;c.forEach(function(s){s=s.trim();if(s.startsWith("font_sans="))fs=s.substring(10);if(s.startsWith("font_mono="))fm=s.substring(10)});var h=document.documentElement.style;if(fs==="system")h.setProperty("--font-rethink","ui-sans-serif,system-ui,-apple-system,sans-serif");if(fm==="system")h.setProperty("--font-jetbrains","ui-monospace,SFMono-Regular,Menlo,Consolas,monospace")})()`,
+          }}
+        />
+      </head>
+      <body className="min-h-screen w-full font-sans antialiased">
         <Analytics />
         <AuthKitProvider>
           <ThemeProvider
