@@ -46,7 +46,6 @@ export async function getSession(): Promise<Session | null> {
       id: internalUser.id,
       name: internalUser.name,
       email: internalUser.email,
-      emailVerified: internalUser.emailVerified,
       image: internalUser.image,
       createdAt: internalUser.createdAt,
       updatedAt: internalUser.updatedAt,

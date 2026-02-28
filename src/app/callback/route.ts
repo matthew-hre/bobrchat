@@ -41,7 +41,6 @@ export const GET = handleAuth({
         .set({
           workosId: user.id,
           image: user.profilePictureUrl ?? null,
-          emailVerified: user.emailVerified,
         })
         .where(eq(users.id, byEmail.id));
       return;
@@ -53,7 +52,6 @@ export const GET = handleAuth({
       .values({
         name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email,
         email: user.email,
-        emailVerified: user.emailVerified,
         image: user.profilePictureUrl ?? null,
         workosId: user.id,
       })

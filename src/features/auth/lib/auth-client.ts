@@ -25,9 +25,7 @@ export function useSession() {
       user: {
         name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email,
         email: user.email,
-        emailVerified: user.emailVerified,
         image: user.profilePictureUrl ?? null,
-        twoFactorEnabled: false,
       },
     },
     isPending: false,
