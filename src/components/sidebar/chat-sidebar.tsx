@@ -16,7 +16,9 @@ import {
   SidebarHeader,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useFilteredThreads } from "~/features/chat/hooks/use-filtered-threads";
+import { useTags } from "~/features/chat/hooks/use-tags";
 import { useThreads } from "~/features/chat/hooks/use-threads";
 
 import { Button } from "../ui/button";
@@ -37,9 +39,12 @@ function ThreadListSkeleton() {
   );
 }
 
-function ThreadListContent({ searchQuery, showArchived, selectedTagIds }: { searchQuery: string; showArchived: boolean; selectedTagIds: string[] }) {
+type ViewMode = "recents" | "tags";
+
+function ThreadListContent({ searchQuery, showArchived, selectedTagIds, viewMode }: { searchQuery: string; showArchived: boolean; selectedTagIds: string[]; viewMode: ViewMode }) {
   const {
     data: groupedThreads,
+    tagGroups,
     isLoading: threadsLoading,
     hasNextPage,
     fetchNextPage,
@@ -61,6 +66,18 @@ function ThreadListContent({ searchQuery, showArchived, selectedTagIds }: { sear
         flatResults={flatResults}
         isSearching
         isArchived={showArchived}
+      />
+    );
+  }
+
+  if (viewMode === "tags" && tagGroups) {
+    return (
+      <ThreadList
+        tagGroups={tagGroups}
+        isArchived={showArchived}
+        hasNextPage={hasNextPage}
+        fetchNextPage={fetchNextPage}
+        isFetchingNextPage={isFetchingNextPage}
       />
     );
   }
@@ -88,7 +105,11 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>("recents");
   const { searchInputRef } = useKeyboardShortcutsContext();
+  const { data: tags } = useTags();
+
+  const hasTags = tags && tags.length > 0;
 
   return (
     <Sidebar collapsible="offcanvas">
@@ -172,6 +193,23 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
             </div>
           </div>
         </div>
+        {hasTags && (
+          <div className="px-3 pb-1">
+            <Tabs
+              value={viewMode}
+              onValueChange={v => setViewMode(v as ViewMode)}
+            >
+              <TabsList className="h-8 w-full">
+                <TabsTrigger value="recents" className="flex-1 text-xs">
+                  Recents
+                </TabsTrigger>
+                <TabsTrigger value="tags" className="flex-1 text-xs">
+                  Tags
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -179,6 +217,7 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
             searchQuery={searchQuery}
             showArchived={showArchived}
             selectedTagIds={selectedTagIds}
+            viewMode={hasTags ? viewMode : "recents"}
           />
         </SidebarGroup>
       </SidebarContent>

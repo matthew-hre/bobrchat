@@ -2,21 +2,77 @@
 
 import type { RefCallback } from "react";
 
+import { ChevronDownIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
-import type { GroupedThreads } from "~/features/chat/utils/thread-grouper";
+import type { GroupedThreads, TagGroup } from "~/features/chat/utils/thread-grouper";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { Skeleton } from "~/components/ui/skeleton";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
+import { cn } from "~/lib/utils";
+
 import { DeleteThreadDialog } from "./delete-thread-dialog";
 import { ShareThreadDialog } from "./share-thread-dialog";
 import { ThreadItem } from "./thread-item";
 
+function CollapsibleTagGroup({ group, currentChatId, isArchived, onDeleteClick, onShareClick }: {
+  group: TagGroup;
+  currentChatId: string | null;
+  isArchived?: boolean;
+  onDeleteClick: (id: string, title: string) => void;
+  onShareClick: (id: string, title: string) => void;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div className="space-y-1">
+      <button
+        type="button"
+        onClick={() => setCollapsed(prev => !prev)}
+        className={`
+          flex w-full items-center gap-1.5 px-1 text-xs font-semibold
+          tracking-wider uppercase
+        `}
+      >
+        <ChevronDownIcon className={cn(
+          "text-muted-foreground size-3 shrink-0 transition-transform duration-200",
+          collapsed && "-rotate-90",
+        )}
+        />
+        <span
+          className="size-2 shrink-0 rounded-full"
+          style={{ backgroundColor: group.tag.color }}
+        />
+        <span>{group.tag.name}</span>
+      </button>
+      {!collapsed && (
+        <div className="space-y-0.5">
+          {group.threads.map(thread => (
+            <ThreadItem
+              key={thread.id}
+              id={thread.id}
+              title={thread.title}
+              icon={thread.icon as ThreadIcon | null | undefined}
+              isActive={currentChatId === thread.id}
+              isShared={thread.isShared as boolean | undefined}
+              isArchived={isArchived}
+              tags={thread.tags}
+              onDeleteClick={onDeleteClick}
+              onShareClick={onShareClick}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ThreadListProps = {
   groupedThreads?: GroupedThreads;
+  tagGroups?: TagGroup[];
   flatResults?: Array<{ id: string; title: string; icon?: ThreadIcon | null; tags?: Array<{ id: string; name: string; color: string }> }>;
   isSearching?: boolean;
   isArchived?: boolean;
@@ -27,6 +83,7 @@ type ThreadListProps = {
 
 export const ThreadList = memo(({
   groupedThreads,
+  tagGroups,
   flatResults,
   isSearching,
   isArchived,
@@ -139,7 +196,7 @@ export const ThreadList = memo(({
     );
   }
 
-  if (!groupedThreads && !isSearching) {
+  if (!groupedThreads && !tagGroups && !isSearching) {
     return null;
   }
 
@@ -174,24 +231,49 @@ export const ThreadList = memo(({
                   )}
             </div>
           )
-        : (
-            <div className="space-y-4 py-2">
-              {renderGroup("Today", groupedThreads!.today)}
-              {renderGroup("Last 7 Days", groupedThreads!.last7Days)}
-              {renderGroup("Last 30 Days", groupedThreads!.last30Days)}
-              {renderGroup("Older", groupedThreads!.older)}
-              {hasNextPage && (
-                <div ref={loadMoreRef} className="px-1 py-2">
-                  {isFetchingNextPage && (
-                    <div className="space-y-1">
-                      <Skeleton className="h-8 w-full" />
-                      <Skeleton className="h-8 w-full" />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+        : tagGroups
+          ? (
+              <div className="space-y-4 py-2">
+                {tagGroups.map(group => (
+                  <CollapsibleTagGroup
+                    key={group.tag.id}
+                    group={group}
+                    currentChatId={currentChatId}
+                    isArchived={isArchived}
+                    onDeleteClick={handleDeleteClick}
+                    onShareClick={handleShareClick}
+                  />
+                ))}
+                {hasNextPage && (
+                  <div ref={loadMoreRef} className="px-1 py-2">
+                    {isFetchingNextPage && (
+                      <div className="space-y-1">
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          : (
+              <div className="space-y-4 py-2">
+                {renderGroup("Today", groupedThreads!.today)}
+                {renderGroup("Last 7 Days", groupedThreads!.last7Days)}
+                {renderGroup("Last 30 Days", groupedThreads!.last30Days)}
+                {renderGroup("Older", groupedThreads!.older)}
+                {hasNextPage && (
+                  <div ref={loadMoreRef} className="px-1 py-2">
+                    {isFetchingNextPage && (
+                      <div className="space-y-1">
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
       {threadToDelete && (
         <DeleteThreadDialog
           open={!!threadToDelete}
