@@ -54,7 +54,7 @@ export async function POST(req: Request) {
   }
 
   const keyMeta = await getOrCreateKeyMeta(session.user.id);
-  const encryptionKey = deriveUserKey(session.user.id, keyMeta.salt);
+  const encryptionKey = await deriveUserKey(session.user.id, keyMeta.salt);
 
   const { success, reset } = await uploadRateLimit.limit(session.user.id);
   if (!success) {

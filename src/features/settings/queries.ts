@@ -73,7 +73,7 @@ export async function getUserSettingsAndKeys(
   }
   else if (encryptedApiKeys.openrouter) {
     try {
-      resolvedKeys.openrouter = decryptValue(encryptedApiKeys.openrouter);
+      resolvedKeys.openrouter = await decryptValue(encryptedApiKeys.openrouter);
     }
     catch (error) {
       console.error(`Failed to decrypt openrouter API key for user ${userId}:`, error);
@@ -85,7 +85,7 @@ export async function getUserSettingsAndKeys(
   }
   else if (encryptedApiKeys.parallel) {
     try {
-      resolvedKeys.parallel = decryptValue(encryptedApiKeys.parallel);
+      resolvedKeys.parallel = await decryptValue(encryptedApiKeys.parallel);
     }
     catch (error) {
       console.error(`Failed to decrypt parallel API key for user ${userId}:`, error);
@@ -206,7 +206,7 @@ export async function updateApiKey(
   let updatedEncrypted = currentEncrypted;
   updatedEncrypted = {
     ...currentEncrypted,
-    [provider]: encryptValue(apiKey),
+    [provider]: await encryptValue(apiKey),
   };
 
   await db

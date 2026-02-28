@@ -169,12 +169,12 @@ export async function rotateKey(userId: string): Promise<void> {
             throw new Error(`Missing salt for version ${msg.keyVersion} during rotation`);
           }
 
-          const oldContent = decryptMessage(
+          const oldContent = await decryptMessage(
             { iv: msg.iv, ciphertext: msg.ciphertext, authTag: msg.authTag },
             userId,
             msgSalt,
           );
-          const newEncrypted = encryptMessage(oldContent, userId, newSalt);
+          const newEncrypted = await encryptMessage(oldContent, userId, newSalt);
 
           await tx
             .update(messages)
@@ -218,9 +218,9 @@ export async function rotateKey(userId: string): Promise<void> {
         if (!isEncryptedBuffer(raw))
           continue;
 
-        const oldKey = deriveUserKey(userId, attSalt);
+        const oldKey = await deriveUserKey(userId, attSalt);
         const plaintext = decryptBuffer(raw, oldKey);
-        const newKey = deriveUserKey(userId, newSalt);
+        const newKey = await deriveUserKey(userId, newSalt);
         const reEncrypted = encryptBuffer(plaintext, newKey);
 
         // Write to a new path first, then update DB, then clean up old file.

@@ -83,7 +83,7 @@ export async function processMessageFiles(
           if (!salt) {
             throw new Error(`Missing salt for key version ${attachment.keyVersion}`);
           }
-          const key = deriveUserKey(userId, salt);
+          const key = await deriveUserKey(userId, salt);
           content = decryptBuffer(raw, key).toString("utf-8");
         }
         else {
@@ -127,7 +127,7 @@ export async function processMessageFiles(
           if (!salt) {
             throw new Error(`Missing salt for key version ${attachment.keyVersion}`);
           }
-          const key = deriveUserKey(userId, salt);
+          const key = await deriveUserKey(userId, salt);
           buffer = decryptBuffer(raw, key);
         }
 
