@@ -27,6 +27,7 @@ import {
   SheetTrigger,
 } from "~/components/ui/sheet";
 import { Skeleton } from "~/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { handleSignOut as signOutAction } from "~/features/auth/actions";
 import { useSession } from "~/features/auth/lib/auth-client";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
@@ -137,7 +138,11 @@ export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
         <ProfileSidebar onSignOut={handleSignOut} />
 
         {/* Main Content Area */}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <Tabs
+          value={activeTab}
+          onValueChange={v => handleTabChange(v as TabId)}
+          className="flex min-w-0 flex-1 flex-col gap-0"
+        >
           {/* Desktop Header with Horizontal Tabs */}
           <header className={`
             bg-background hidden px-6 pt-14 pb-4
@@ -168,44 +173,27 @@ export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
                   canScrollRight ? "opacity-100" : "opacity-0",
                 )}
               />
-              <nav
+              <TabsList
                 ref={tabsRef}
                 onScroll={updateScrollState}
-                className={`
-                  bg-muted/50 inline-flex max-w-full gap-1 overflow-x-auto
-                  rounded-lg p-1
-                `}
+                className="bg-muted/50 h-auto max-w-full gap-1 overflow-x-auto"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-
                   return (
-                    <button
+                    <TabsTrigger
                       key={tab.id}
-                      type="button"
+                      value={tab.id}
                       data-tab-id={tab.id}
-                      onClick={() => handleTabChange(tab.id)}
-                      className={cn(
-                        `
-                          flex shrink-0 items-center gap-2 rounded-md px-3
-                          py-1.5 text-sm font-medium transition-colors
-                        `,
-                        isActive
-                          ? "bg-background text-foreground shadow-sm"
-                          : `
-                            text-muted-foreground
-                            hover:text-foreground
-                          `,
-                      )}
+                      className="shrink-0 gap-2 px-3 py-1.5"
                     >
                       <Icon className="size-4" />
                       {tab.label}
-                    </button>
+                    </TabsTrigger>
                   );
                 })}
-              </nav>
+              </TabsList>
             </div>
           </header>
 
@@ -316,8 +304,13 @@ export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
             </div>
           </header>
 
-          <TabContent activeTab={activeTab} />
-        </div>
+          <TabsContent value="interface"><InterfaceTab /></TabsContent>
+          <TabsContent value="preferences"><PreferencesTab /></TabsContent>
+          <TabsContent value="integrations"><IntegrationsTab /></TabsContent>
+          <TabsContent value="models"><ModelsTab /></TabsContent>
+          <TabsContent value="attachments"><AttachmentsTab /></TabsContent>
+          <TabsContent value="auth"><AuthTab /></TabsContent>
+        </Tabs>
       </div>
     </div>
   );
@@ -469,23 +462,4 @@ function MobileProfileCard() {
       </div>
     </div>
   );
-}
-
-function TabContent({ activeTab }: { activeTab: TabId }) {
-  switch (activeTab) {
-    case "interface":
-      return <InterfaceTab />;
-    case "preferences":
-      return <PreferencesTab />;
-    case "integrations":
-      return <IntegrationsTab />;
-    case "models":
-      return <ModelsTab />;
-    case "attachments":
-      return <AttachmentsTab />;
-    case "auth":
-      return <AuthTab />;
-    default:
-      return <InterfaceTab />;
-  }
 }

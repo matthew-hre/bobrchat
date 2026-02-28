@@ -211,7 +211,7 @@ function TagRow({ tag }: { tag: { id: string; name: string; color: string } }) {
               <Button
                 variant="destructive"
                 size="sm"
-                className="h-6 animate-in fade-in zoom-in-95 px-2 text-xs"
+                className="animate-in fade-in zoom-in-95 h-6 px-2 text-xs"
                 onClick={handleDelete}
                 onBlur={() => setConfirmingDelete(false)}
                 disabled={deleteTagMutation.isPending}
