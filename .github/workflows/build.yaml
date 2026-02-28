@@ -14,10 +14,9 @@ jobs:
     timeout-minutes: 60
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost:5432/ci' }}
-      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'ci-placeholder-secret-at-least-32-chars!' }}
-      BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL || 'http://localhost:3000' }}
-      GITHUB_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID || 'ci-placeholder' }}
-      GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET || 'ci-placeholder' }}
+      WORKOS_API_KEY: ${{ secrets.WORKOS_API_KEY || 'ci-placeholder' }}
+      WORKOS_CLIENT_ID: ${{ secrets.WORKOS_CLIENT_ID || 'ci-placeholder' }}
+      WORKOS_COOKIE_PASSWORD: ${{ secrets.WORKOS_COOKIE_PASSWORD || 'ci-placeholder-secret-at-least-32-chars!' }}
       ENCRYPTION_SECRET: ${{ secrets.ENCRYPTION_SECRET || 'ci-placeholder-secret-at-least-32-chars!' }}
       ENCRYPTION_SALT: ${{ secrets.ENCRYPTION_SALT || 'ci-salt!!' }}
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID || 'ci-placeholder' }}

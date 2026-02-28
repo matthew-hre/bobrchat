@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { applyAccentColor } from "~/components/theme/theme-initializer";
@@ -28,7 +27,8 @@ import {
   SheetTrigger,
 } from "~/components/ui/sheet";
 import { Skeleton } from "~/components/ui/skeleton";
-import { signOut, useSession } from "~/features/auth/lib/auth-client";
+import { handleSignOut as signOutAction } from "~/features/auth/actions";
+import { useSession } from "~/features/auth/lib/auth-client";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { usePreviousRoute } from "~/features/settings/previous-route-context";
 import { cn } from "~/lib/utils";
@@ -72,7 +72,6 @@ type SettingsPageProps = {
 };
 
 export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { previousRoute } = usePreviousRoute();
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
@@ -125,10 +124,9 @@ export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
   }, [scrollTabToCenter]);
 
   const handleSignOut = useCallback(async () => {
-    await signOut();
     queryClient.removeQueries();
-    router.push("/auth");
-  }, [router, queryClient]);
+    await signOutAction();
+  }, [queryClient]);
 
   const activeTabConfig = tabs.find(tab => tab.id === activeTab);
 

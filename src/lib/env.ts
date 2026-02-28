@@ -5,10 +5,9 @@ import * as z from "zod";
 const schema = {
   server: z.object({
     DATABASE_URL: z.url(),
-    BETTER_AUTH_SECRET: z.string().min(32),
-    BETTER_AUTH_URL: z.url(),
-    GITHUB_CLIENT_ID: z.string(),
-    GITHUB_CLIENT_SECRET: z.string(),
+    WORKOS_API_KEY: z.string(),
+    WORKOS_CLIENT_ID: z.string(),
+    WORKOS_COOKIE_PASSWORD: z.string().min(32),
     ENCRYPTION_SECRET: z.string().min(32),
     ENCRYPTION_SALT: z.string().min(8),
     R2_ACCOUNT_ID: z.string(),
@@ -28,7 +27,7 @@ const schema = {
     UPSTASH_REDIS_REST_TOKEN: z.string(),
   }),
   client: z.object({
-    NEXT_PUBLIC_BETTER_AUTH_URL: z.url().optional(),
+    NEXT_PUBLIC_WORKOS_REDIRECT_URI: z.url().optional(),
   }),
 };
 

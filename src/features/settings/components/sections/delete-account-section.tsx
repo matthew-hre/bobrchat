@@ -1,28 +1,24 @@
 "use client";
 
 import { TriangleAlertIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
-import { authClient } from "~/features/auth/lib/auth-client";
+import { deleteAccount } from "~/features/auth/actions";
 
 import { ConfirmationDialog } from "../ui/confirmation-dialog";
 import { SettingsSection } from "../ui/settings-section";
 
 export function DeleteAccountSection() {
-  const router = useRouter();
-
   const handleDeleteAccount = async () => {
-    const { error } = await authClient.deleteUser();
-
-    if (error) {
-      toast.error(error.message || "Failed to delete account");
+    try {
+      await deleteAccount();
+      toast.success("Account deleted successfully");
+    }
+    catch (error) {
+      toast.error("Failed to delete account");
       throw error;
     }
-
-    toast.success("Account deleted successfully");
-    router.push("/auth");
   };
 
   return (

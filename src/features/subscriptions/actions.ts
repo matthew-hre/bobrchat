@@ -61,7 +61,7 @@ export async function createCheckoutSession(productId: string): Promise<{ url: s
     products: [productId],
     customerEmail: session.user.email,
     externalCustomerId: session.user.id,
-    successUrl: serverEnv.POLAR_SUCCESS_URL ?? `${serverEnv.BETTER_AUTH_URL}/settings?tab=subscription`,
+    successUrl: serverEnv.POLAR_SUCCESS_URL,
   });
 
   return { url: checkout.url };
