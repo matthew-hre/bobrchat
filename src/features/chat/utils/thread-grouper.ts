@@ -5,6 +5,51 @@ type ThreadWithDate = {
   [key: string]: unknown;
 };
 
+type ThreadWithTags = ThreadWithDate & {
+  tags?: Array<{ id: string; name: string; color: string }>;
+};
+
+export type TagGroup = {
+  tag: { id: string; name: string; color: string };
+  threads: ThreadWithTags[];
+};
+
+export function groupThreadsByTag(threads: ThreadWithTags[]): TagGroup[] {
+  const groupMap = new Map<string, TagGroup>();
+
+  for (const thread of threads) {
+    if (!thread.tags || thread.tags.length === 0)
+      continue;
+
+    for (const tag of thread.tags) {
+      let group = groupMap.get(tag.id);
+      if (!group) {
+        group = { tag, threads: [] };
+        groupMap.set(tag.id, group);
+      }
+      group.threads.push(thread);
+    }
+  }
+
+  const groups = Array.from(groupMap.values());
+
+  for (const group of groups) {
+    group.threads.sort((a, b) => {
+      const aTime = a.lastMessageAt?.getTime() ?? 0;
+      const bTime = b.lastMessageAt?.getTime() ?? 0;
+      return bTime - aTime;
+    });
+  }
+
+  groups.sort((a, b) => {
+    const aRecent = a.threads[0]?.lastMessageAt?.getTime() ?? 0;
+    const bRecent = b.threads[0]?.lastMessageAt?.getTime() ?? 0;
+    return bRecent - aRecent;
+  });
+
+  return groups;
+}
+
 export type GroupedThreads = {
   today: ThreadWithDate[];
   last7Days: ThreadWithDate[];

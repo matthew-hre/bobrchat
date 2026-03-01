@@ -5,11 +5,11 @@ import type { InfiniteData } from "@tanstack/react-query";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import type { GroupedThreads } from "~/features/chat/utils/thread-grouper";
+import type { GroupedThreads, TagGroup } from "~/features/chat/utils/thread-grouper";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { archiveThread, createNewThread, deleteThread, fetchThreadStats, regenerateThreadIcon, regenerateThreadName, renameThread, setThreadIcon } from "~/features/chat/actions";
-import { groupThreadsByDate } from "~/features/chat/utils/thread-grouper";
+import { groupThreadsByDate, groupThreadsByTag } from "~/features/chat/utils/thread-grouper";
 import { SUBSCRIPTION_KEY } from "~/features/subscriptions/hooks/use-subscription";
 import { ARCHIVED_THREADS_KEY, THREADS_KEY } from "~/lib/queries/query-keys";
 
@@ -69,22 +69,34 @@ export function useThreads(options: { enabled?: boolean; archived?: boolean; tag
     enabled: options.enabled,
   });
 
-  const groupedThreads: GroupedThreads | undefined = useMemo(() => {
+  const allThreads = useMemo(() => {
     if (!query.data)
       return undefined;
 
-    const allThreads = query.data.pages.flatMap(page =>
+    return query.data.pages.flatMap(page =>
       page.threads.map(t => ({
         ...t,
         lastMessageAt: t.lastMessageAt ? new Date(t.lastMessageAt) : null,
       })),
     );
-    return groupThreadsByDate(allThreads);
   }, [query.data]);
+
+  const groupedThreads: GroupedThreads | undefined = useMemo(() => {
+    if (!allThreads)
+      return undefined;
+    return groupThreadsByDate(allThreads);
+  }, [allThreads]);
+
+  const tagGroups: TagGroup[] | undefined = useMemo(() => {
+    if (!allThreads)
+      return undefined;
+    return groupThreadsByTag(allThreads);
+  }, [allThreads]);
 
   return {
     ...query,
     data: groupedThreads,
+    tagGroups,
   };
 }
 

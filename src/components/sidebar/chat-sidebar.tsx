@@ -16,13 +16,14 @@ import {
   SidebarHeader,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useFilteredThreads } from "~/features/chat/hooks/use-filtered-threads";
+import { useTags } from "~/features/chat/hooks/use-tags";
 import { useThreads } from "~/features/chat/hooks/use-threads";
 
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
-import { TagManager } from "./tag-manager";
 import { TagsFilterPopover } from "./tags-filter-popover";
 import { ThreadList } from "./thread-list";
 import { UpgradeBanner } from "./upgrade-banner";
@@ -38,9 +39,12 @@ function ThreadListSkeleton() {
   );
 }
 
-function ThreadListContent({ searchQuery, showArchived, selectedTagIds }: { searchQuery: string; showArchived: boolean; selectedTagIds: string[] }) {
+type ViewMode = "recents" | "tags";
+
+function ThreadListContent({ searchQuery, showArchived, selectedTagIds, viewMode }: { searchQuery: string; showArchived: boolean; selectedTagIds: string[]; viewMode: ViewMode }) {
   const {
     data: groupedThreads,
+    tagGroups,
     isLoading: threadsLoading,
     hasNextPage,
     fetchNextPage,
@@ -62,6 +66,18 @@ function ThreadListContent({ searchQuery, showArchived, selectedTagIds }: { sear
         flatResults={flatResults}
         isSearching
         isArchived={showArchived}
+      />
+    );
+  }
+
+  if (viewMode === "tags" && tagGroups) {
+    return (
+      <ThreadList
+        tagGroups={tagGroups}
+        isArchived={showArchived}
+        hasNextPage={hasNextPage}
+        fetchNextPage={fetchNextPage}
+        isFetchingNextPage={isFetchingNextPage}
       />
     );
   }
@@ -89,8 +105,11 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<"threads" | "tags">("threads");
+  const [viewMode, setViewMode] = useState<ViewMode>("recents");
   const { searchInputRef } = useKeyboardShortcutsContext();
+  const { data: tags } = useTags();
+
+  const hasTags = tags && tags.length > 0;
 
   return (
     <Sidebar collapsible="offcanvas">
@@ -135,7 +154,7 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
             <Input
               ref={searchInputRef}
               type="text"
-              placeholder={activeTab === "tags" ? "Search tags..." : showArchived ? "Search archived..." : "Search threads..."}
+              placeholder={showArchived ? "Search archived..." : "Search threads..."}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="h-8 pr-[4.5rem] pl-8"
@@ -155,61 +174,51 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
                   <XIcon className="size-3" />
                 </Button>
               )}
-              {activeTab === "threads" && (
-                <>
-                  <TagsFilterPopover
-                    selectedTagIds={selectedTagIds}
-                    onSelectedTagIdsChange={setSelectedTagIds}
-                  />
-                  <Button
-                    variant={showArchived ? "secondary" : "ghost"}
-                    size="icon-sm"
-                    className="size-6 shrink-0"
-                    title={showArchived ? "Show active threads" : "Show archived threads"}
-                    onClick={() => {
-                      setShowArchived(prev => !prev);
-                      setSearchQuery("");
-                    }}
-                  >
-                    <ArchiveIcon className="size-3" />
-                  </Button>
-                </>
-              )}
+              <TagsFilterPopover
+                selectedTagIds={selectedTagIds}
+                onSelectedTagIdsChange={setSelectedTagIds}
+              />
+              <Button
+                variant={showArchived ? "secondary" : "ghost"}
+                size="icon-sm"
+                className="size-6 shrink-0"
+                title={showArchived ? "Show active threads" : "Show archived threads"}
+                onClick={() => {
+                  setShowArchived(prev => !prev);
+                  setSearchQuery("");
+                }}
+              >
+                <ArchiveIcon className="size-3" />
+              </Button>
             </div>
           </div>
         </div>
-        <div className="flex gap-1 px-3 pb-2">
-          <Button
-            variant={activeTab === "threads" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-6 flex-1 text-xs"
-            onClick={() => setActiveTab("threads")}
-          >
-            Threads
-          </Button>
-          <Button
-            variant={activeTab === "tags" ? "secondary" : "ghost"}
-            size="sm"
-            className="h-6 flex-1 text-xs"
-            onClick={() => setActiveTab("tags")}
-          >
-            Tags
-          </Button>
-        </div>
+        {hasTags && (
+          <div className="px-3 pb-1">
+            <Tabs
+              value={viewMode}
+              onValueChange={v => setViewMode(v as ViewMode)}
+            >
+              <TabsList className="h-8 w-full">
+                <TabsTrigger value="recents" className="flex-1 text-xs">
+                  Recents
+                </TabsTrigger>
+                <TabsTrigger value="tags" className="flex-1 text-xs">
+                  Tags
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          {activeTab === "threads"
-            ? (
-                <ThreadListContent
-                  searchQuery={searchQuery}
-                  showArchived={showArchived}
-                  selectedTagIds={selectedTagIds}
-                />
-              )
-            : (
-                <TagManager searchQuery={searchQuery} />
-              )}
+          <ThreadListContent
+            searchQuery={searchQuery}
+            showArchived={showArchived}
+            selectedTagIds={selectedTagIds}
+            viewMode={hasTags ? viewMode : "recents"}
+          />
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-0">
