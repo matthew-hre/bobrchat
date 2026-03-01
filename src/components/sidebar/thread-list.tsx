@@ -11,7 +11,6 @@ import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { Skeleton } from "~/components/ui/skeleton";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
-
 import { cn } from "~/lib/utils";
 
 import { DeleteThreadDialog } from "./delete-thread-dialog";
@@ -38,7 +37,10 @@ function CollapsibleTagGroup({ group, currentChatId, isArchived, onDeleteClick, 
         `}
       >
         <ChevronDownIcon className={cn(
-          "text-muted-foreground size-3 shrink-0 transition-transform duration-200",
+          `
+            text-muted-foreground size-3 shrink-0 transition-transform
+            duration-200
+          `,
           collapsed && "-rotate-90",
         )}
         />
