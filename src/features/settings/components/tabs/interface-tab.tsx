@@ -177,7 +177,7 @@ export function InterfaceTab() {
                 value={settings.fontMono ?? "jetbrains"}
                 onValueChange={v => save({ fontMono: v as UserSettingsData["fontMono"] })}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full font-mono">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
