@@ -8,9 +8,8 @@ import { ThemeInitializer } from "~/components/theme/theme-initializer";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { GlobalDropZoneProvider } from "~/features/attachments/components/global-drop-zone";
 import { getSession } from "~/features/auth/lib/session";
-import { getUserSettings } from "~/features/settings/queries";
 import { UserSettingsProvider } from "~/features/settings/settings-provider";
-import { prefetchThreads } from "~/lib/queries/prefetch-threads";
+import { prefetchUserData } from "~/lib/queries/prefetch-user-data";
 
 export default async function MainLayout({
   children,
@@ -27,10 +26,9 @@ export default async function MainLayout({
     : undefined;
   const session = await getSession();
 
-  const [dehydratedState, settings] = await Promise.all([
-    session?.user ? prefetchThreads(session.user.id) : Promise.resolve(undefined),
-    session?.user ? getUserSettings(session.user.id) : Promise.resolve(null),
-  ]);
+  const { dehydratedState, settings } = session?.user
+    ? await prefetchUserData(session.user.id)
+    : { dehydratedState: undefined, settings: null };
 
   return (
     <HydrationBoundary state={dehydratedState}>

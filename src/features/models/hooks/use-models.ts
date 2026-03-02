@@ -39,7 +39,7 @@ export function useModelsQuery(
  */
 export function useFavoriteModels(): { models: Model[]; isLoading: boolean } {
   const { hasKey } = useApiKeyStatus("openrouter");
-  const { data: settings, isLoading: isSettingsLoading } = useUserSettings();
+  const { data: settings, isPending: isSettingsPending } = useUserSettings();
   const favoriteIds = settings?.favoriteModels ?? [];
 
   const { data: favoriteModels, isLoading: isModelsLoading } = useQuery({
@@ -52,7 +52,7 @@ export function useFavoriteModels(): { models: Model[]; isLoading: boolean } {
 
   return {
     models: favoriteModels ?? [],
-    isLoading: isSettingsLoading || isModelsLoading,
+    isLoading: isSettingsPending || isModelsLoading,
   };
 }
 

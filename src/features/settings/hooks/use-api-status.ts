@@ -5,7 +5,7 @@ import { useChatUIStore } from "~/features/chat/store";
 import { useUserSettings } from "./use-user-settings";
 
 export function useApiKeyStatus(provider: ApiKeyProvider) {
-  const { data: settings, isLoading } = useUserSettings({ enabled: true });
+  const { data: settings, isPending } = useUserSettings({ enabled: true });
   const clientKey = useChatUIStore(s =>
     provider === "openrouter" ? s.openrouterKey : s.parallelKey,
   );
@@ -16,7 +16,7 @@ export function useApiKeyStatus(provider: ApiKeyProvider) {
   return {
     hasKey: hasClientKey || hasServerKey,
     source: hasClientKey ? "client" as const : hasServerKey ? "server" as const : null,
-    isLoading,
+    isLoading: isPending,
     clientKey,
   };
 }
