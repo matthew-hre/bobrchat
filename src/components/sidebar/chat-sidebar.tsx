@@ -17,9 +17,10 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { useFilteredThreads } from "~/features/chat/hooks/use-filtered-threads";
 import { useTags } from "~/features/chat/hooks/use-tags";
 import { useThreads } from "~/features/chat/hooks/use-threads";
+
+import { useDebouncedValue } from "~/lib/hooks";
 
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -42,6 +43,9 @@ function ThreadListSkeleton() {
 type ViewMode = "recents" | "tags";
 
 function ThreadListContent({ searchQuery, showArchived, selectedTagIds, viewMode }: { searchQuery: string; showArchived: boolean; selectedTagIds: string[]; viewMode: ViewMode }) {
+  const debouncedSearch = useDebouncedValue(searchQuery.trim(), 300);
+  const isSearching = debouncedSearch.length > 0;
+
   const {
     data: groupedThreads,
     tagGroups,
@@ -49,23 +53,32 @@ function ThreadListContent({ searchQuery, showArchived, selectedTagIds, viewMode
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useThreads({ archived: showArchived, tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined });
-
-  const { groupedThreads: filteredGrouped, flatResults, isSearching } = useFilteredThreads(
-    groupedThreads,
-    searchQuery,
-  );
+  } = useThreads({
+    archived: showArchived,
+    tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
+    search: isSearching ? debouncedSearch : undefined,
+  });
 
   if (threadsLoading) {
     return <ThreadListSkeleton />;
   }
 
-  if (isSearching) {
+  if (isSearching && groupedThreads) {
+    const flatResults = [
+      ...groupedThreads.today,
+      ...groupedThreads.last7Days,
+      ...groupedThreads.last30Days,
+      ...groupedThreads.older,
+    ];
+
     return (
       <ThreadList
         flatResults={flatResults}
         isSearching
         isArchived={showArchived}
+        hasNextPage={hasNextPage}
+        fetchNextPage={fetchNextPage}
+        isFetchingNextPage={isFetchingNextPage}
       />
     );
   }
@@ -82,10 +95,10 @@ function ThreadListContent({ searchQuery, showArchived, selectedTagIds, viewMode
     );
   }
 
-  if (filteredGrouped) {
+  if (groupedThreads) {
     return (
       <ThreadList
-        groupedThreads={filteredGrouped}
+        groupedThreads={groupedThreads}
         isArchived={showArchived}
         hasNextPage={hasNextPage}
         fetchNextPage={fetchNextPage}
