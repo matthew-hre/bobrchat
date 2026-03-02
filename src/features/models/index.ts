@@ -45,12 +45,4 @@ export {
   getModelListItemCapabilities,
   validateFilesForModel,
 } from "./utils/model-capabilities";
-export {
-  filterByCapabilities,
-  filterBySearch,
-  sortModels,
-} from "./utils/model-filtering";
-export {
-  buildCapabilitiesMap,
-  buildModelMetadataMap,
-} from "./utils/model-metadata";
+
