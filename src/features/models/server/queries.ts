@@ -16,7 +16,8 @@ function searchWords(search: string | undefined): string[] {
 
 function buildSearchCondition(search: string | undefined): SQL | undefined {
   const words = searchWords(search);
-  if (words.length === 0) return undefined;
+  if (words.length === 0)
+    return undefined;
 
   // Each word must appear in at least one of the searchable fields
   const wordConditions = words.map((word) => {
@@ -106,7 +107,8 @@ export async function queryModels(params: ModelsQueryParams = {}): Promise<Model
   const conditions: SQL[] = [];
 
   const searchCondition = buildSearchCondition(search);
-  if (searchCondition) conditions.push(searchCondition);
+  if (searchCondition)
+    conditions.push(searchCondition);
 
   if (providers.length > 0) {
     conditions.push(
@@ -254,7 +256,8 @@ export async function queryModelsForList(params: ModelsQueryParams = {}): Promis
   const conditions: SQL[] = [];
 
   const searchCondition = buildSearchCondition(search);
-  if (searchCondition) conditions.push(searchCondition);
+  if (searchCondition)
+    conditions.push(searchCondition);
 
   if (providers.length > 0) {
     conditions.push(
