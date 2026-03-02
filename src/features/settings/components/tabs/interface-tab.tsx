@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import type { AccentColorPreset, PreferencesUpdate } from "~/features/settings/types";
+import type { AccentColorPreset, PreferencesUpdate, UserSettingsData } from "~/features/settings/types";
 
 import { applyAccentColor, applyFonts } from "~/components/theme/theme-initializer";
 import { ColorPicker } from "~/components/ui/color-picker";
@@ -157,13 +157,15 @@ export function InterfaceTab() {
               <Label>Sans-Serif Font</Label>
               <Select
                 value={settings.fontSans ?? "rethink"}
-                onValueChange={v => save({ fontSans: v as "rethink" | "system" })}
+                onValueChange={v => save({ fontSans: v as UserSettingsData["fontSans"] })}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="rethink" style={{ fontFamily: "var(--font-rethink)" }}>Rethink Sans</SelectItem>
+                  <SelectItem value="lexend" style={{ fontFamily: "var(--font-lexend)" }}>Lexend</SelectItem>
+                  <SelectItem value="atkinson" style={{ fontFamily: "var(--font-atkinson)" }}>Atkinson Hyperlegible</SelectItem>
                   <SelectItem value="system" style={{ fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif" }}>System Default</SelectItem>
                 </SelectContent>
               </Select>
@@ -173,13 +175,14 @@ export function InterfaceTab() {
               <Label>Monospace Font</Label>
               <Select
                 value={settings.fontMono ?? "jetbrains"}
-                onValueChange={v => save({ fontMono: v as "jetbrains" | "system" })}
+                onValueChange={v => save({ fontMono: v as UserSettingsData["fontMono"] })}
               >
-                <SelectTrigger className="w-full" style={{ fontFamily: (settings.fontMono ?? "jetbrains") === "jetbrains" ? "var(--font-jetbrains)" : "ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace" }}>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="jetbrains" style={{ fontFamily: "var(--font-jetbrains)" }}>JetBrains Mono</SelectItem>
+                  <SelectItem value="atkinson-mono" style={{ fontFamily: "var(--font-atkinson-mono)" }}>Atkinson Hyperlegible Mono</SelectItem>
                   <SelectItem value="system" style={{ fontFamily: "ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace" }}>System Default</SelectItem>
                 </SelectContent>
               </Select>

@@ -28,11 +28,21 @@ export function applyAccentColor(color: AccentColor) {
   }
 }
 
+const FONT_SANS_CLASSES = ["font-sans-lexend", "font-sans-atkinson", "font-sans-system"];
+const FONT_MONO_CLASSES = ["font-mono-atkinson-mono", "font-mono-system"];
+
 export function applyFonts(fontSans: UserSettingsData["fontSans"], fontMono: UserSettingsData["fontMono"]) {
   const html = document.documentElement;
 
-  html.classList.toggle("font-sans-system", fontSans === "system");
-  html.classList.toggle("font-mono-system", fontMono === "system");
+  FONT_SANS_CLASSES.forEach(cls => html.classList.remove(cls));
+  if (fontSans !== "rethink") {
+    html.classList.add(`font-sans-${fontSans}`);
+  }
+
+  FONT_MONO_CLASSES.forEach(cls => html.classList.remove(cls));
+  if (fontMono !== "jetbrains") {
+    html.classList.add(`font-mono-${fontMono}`);
+  }
 
   // Persist to cookies so root layout can apply before paint on next load
   document.cookie = `font_sans=${fontSans}; path=/; max-age=31536000; SameSite=Lax`;

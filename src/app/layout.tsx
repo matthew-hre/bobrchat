@@ -8,7 +8,7 @@ import "./globals.css";
 import { ThemeProvider } from "~/components/theme/theme-provider";
 import { Toaster } from "~/components/ui/sonner";
 import { PreviousRouteProvider } from "~/features/settings/previous-route-context";
-import { jetbrainsMono, rethinkSans } from "~/lib/fonts";
+import { atkinsonHyperlegible, atkinsonHyperlegibleMono, jetbrainsMono, lexend, rethinkSans } from "~/lib/fonts";
 import { QueryProvider } from "~/lib/queries/query-provider";
 
 export const metadata: Metadata = {
@@ -63,11 +63,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${rethinkSans.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${rethinkSans.variable} ${jetbrainsMono.variable} ${lexend.variable} ${atkinsonHyperlegible.variable} ${atkinsonHyperlegibleMono.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var c=document.cookie.split(";");var fs,fm;c.forEach(function(s){s=s.trim();if(s.startsWith("font_sans="))fs=s.substring(10);if(s.startsWith("font_mono="))fm=s.substring(10)});var h=document.documentElement;if(fs==="system")h.classList.add("font-sans-system");if(fm==="system")h.classList.add("font-mono-system")})()`,
+            __html: `(function(){var c=document.cookie.split(";");var fs,fm;c.forEach(function(s){s=s.trim();if(s.startsWith("font_sans="))fs=s.substring(10);if(s.startsWith("font_mono="))fm=s.substring(10)});var h=document.documentElement;if(fs&&fs!=="rethink")h.classList.add("font-sans-"+fs);if(fm&&fm!=="jetbrains")h.classList.add("font-mono-"+fm)})()`,
           }}
         />
       </head>

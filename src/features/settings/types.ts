@@ -27,8 +27,8 @@ const accentColorSchema = z.union([
 export const preferencesSchema = z.object({
   theme: z.enum(["light", "dark", "system"]),
   accentColor: accentColorSchema.default("green"),
-  fontSans: z.enum(["rethink", "system"]).default("rethink"),
-  fontMono: z.enum(["jetbrains", "system"]).default("jetbrains"),
+  fontSans: z.enum(["rethink", "lexend", "atkinson", "system"]).default("rethink"),
+  fontMono: z.enum(["jetbrains", "atkinson-mono", "system"]).default("jetbrains"),
   customInstructions: z.string().max(5000).optional(),
   defaultThreadName: z
     .string()
@@ -53,8 +53,8 @@ export const preferencesSchema = z.object({
 export const preferencesUpdateSchema = z.object({
   theme: z.enum(["light", "dark", "system"]).optional(),
   accentColor: accentColorSchema.optional(),
-  fontSans: z.enum(["rethink", "system"]).optional(),
-  fontMono: z.enum(["jetbrains", "system"]).optional(),
+  fontSans: z.enum(["rethink", "lexend", "atkinson", "system"]).optional(),
+  fontMono: z.enum(["jetbrains", "atkinson-mono", "system"]).optional(),
   customInstructions: z.string().max(5000).optional(),
   defaultThreadName: z.string().max(255).transform(v => v.trim() || "New Thread").optional(),
   defaultThreadIcon: z.enum(THREAD_ICONS).optional(),
@@ -130,8 +130,8 @@ export type FavoriteModelsInput = z.infer<typeof favoriteModelsSchema>;
 export type UserSettingsData = {
   theme: "dark" | "light" | "system";
   accentColor: AccentColor;
-  fontSans: "rethink" | "system";
-  fontMono: "jetbrains" | "system";
+  fontSans: "rethink" | "lexend" | "atkinson" | "system";
+  fontMono: "jetbrains" | "atkinson-mono" | "system";
   customInstructions?: string;
   defaultThreadName: string;
   defaultThreadIcon: (typeof THREAD_ICONS)[number];

@@ -96,7 +96,6 @@
   }
 }
 
-
 .dark {
   /* Dark theme */
   --background: oklch(0.16 0.01 260);
@@ -136,11 +135,20 @@
 }
 
 /* Font overrides — class-based so they survive hydration & next-themes */
+html.font-sans-lexend {
+  --font-rethink: var(--font-lexend);
+}
+html.font-sans-atkinson {
+  --font-rethink: var(--font-atkinson);
+}
 html.font-sans-system {
   --font-rethink: ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
+html.font-mono-atkinson-mono {
+  --font-jetbrains: var(--font-atkinson-mono);
+}
 html.font-mono-system {
-  --font-jetbrains: ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+  --font-jetbrains: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
 }
 
 /* Accent color presets - Monokai-inspired palette */
