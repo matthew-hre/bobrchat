@@ -351,11 +351,11 @@ function ProfileSidebar({ onSignOut }: { onSignOut: () => void }) {
           : (
               <>
                 <UserAvatar session={session} />
-                <div className="text-center">
-                  <h2 className="text-lg font-semibold">
+                <div className="min-w-0 max-w-full text-center">
+                  <h2 className="truncate text-lg font-semibold">
                     {session?.user?.name || "Unnamed User"}
                   </h2>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground truncate text-sm">
                     {session?.user?.email || "No email"}
                   </p>
                 </div>
@@ -454,11 +454,11 @@ function MobileProfileCard() {
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 min-w-0">
       <UserAvatar session={session} />
-      <div>
-        <p className="font-medium">{session?.user?.name || "Unnamed User"}</p>
-        <p className="text-muted-foreground text-sm">{session?.user?.email || "No email"}</p>
+      <div className="min-w-0">
+        <p className="truncate font-medium">{session?.user?.name || "Unnamed User"}</p>
+        <p className="text-muted-foreground truncate text-sm">{session?.user?.email || "No email"}</p>
       </div>
     </div>
   );
