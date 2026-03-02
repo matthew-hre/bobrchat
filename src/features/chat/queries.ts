@@ -1,6 +1,6 @@
 import type Buffer from "node:buffer";
 
-import { and, count, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import { cache } from "react";
 
 import type { ChatUIMessage } from "~/features/chat/types";
@@ -482,9 +482,9 @@ export const getParentThread = cache(async (threadId: string) => {
  */
 export async function getThreadsByUserId(
   userId: string,
-  options: { limit?: number; cursor?: string; archived?: boolean; tagIds?: string[] } = {},
+  options: { limit?: number; cursor?: string; archived?: boolean; tagIds?: string[]; search?: string } = {},
 ) {
-  const { limit = 50, cursor, archived = false, tagIds } = options;
+  const { limit = 50, cursor, archived = false, tagIds, search } = options;
 
   const conditions = [
     eq(threads.userId, userId),
@@ -494,6 +494,10 @@ export async function getThreadsByUserId(
   if (cursor) {
     const cursorDate = new Date(cursor);
     conditions.push(lt(threads.lastMessageAt, cursorDate));
+  }
+
+  if (search) {
+    conditions.push(ilike(threads.title, `%${search}%`));
   }
 
   if (tagIds && tagIds.length > 0) {

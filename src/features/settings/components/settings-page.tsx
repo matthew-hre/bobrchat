@@ -307,7 +307,7 @@ export function SettingsPage({ initialTab = "interface" }: SettingsPageProps) {
           <TabsContent value="interface"><InterfaceTab /></TabsContent>
           <TabsContent value="preferences"><PreferencesTab /></TabsContent>
           <TabsContent value="integrations"><IntegrationsTab /></TabsContent>
-          <TabsContent value="models"><ModelsTab /></TabsContent>
+          <TabsContent value="models" className="flex min-h-0 flex-1 flex-col"><ModelsTab /></TabsContent>
           <TabsContent value="attachments"><AttachmentsTab /></TabsContent>
           <TabsContent value="auth"><AuthTab /></TabsContent>
         </Tabs>

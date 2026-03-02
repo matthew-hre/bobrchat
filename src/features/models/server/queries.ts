@@ -8,7 +8,88 @@ import { and, arrayContains, count, desc, eq, ilike, or, sql } from "drizzle-orm
 import { db } from "~/lib/db";
 import { models } from "~/lib/db/schema";
 
-import type { ModelListItem, ModelsListQueryResult, ModelsQueryParams, ModelsQueryResult } from "../types";
+import type { ModelListItem, ModelsListQueryResult, ModelsQueryParams, ModelsQueryResult, SortOrder } from "../types";
+
+function searchWords(search: string | undefined): string[] {
+  return (search ?? "").trim().split(/\s+/).filter(Boolean);
+}
+
+function buildSearchCondition(search: string | undefined): SQL | undefined {
+  const words = searchWords(search);
+  if (words.length === 0)
+    return undefined;
+
+  // Each word must appear in at least one of the searchable fields
+  const wordConditions = words.map((word) => {
+    const pattern = `%${word}%`;
+    return or(
+      ilike(models.name, pattern),
+      ilike(models.provider, pattern),
+      ilike(models.modelId, pattern),
+    )!;
+  });
+
+  return and(...wordConditions);
+}
+
+function buildSearchRelevance(search: string): SQL {
+  const words = searchWords(search);
+  // Rank: 0 = all words match name/id, 1 = all words match provider, 2 = description-only
+  const nameConditions = words.map(w => sql`(LOWER(${models.name}) LIKE ${`%${w.toLowerCase()}%`} OR LOWER(${models.modelId}) LIKE ${`%${w.toLowerCase()}%`})`);
+  const providerConditions = words.map(w => sql`LOWER(${models.provider}) LIKE ${`%${w.toLowerCase()}%`}`);
+
+  return sql`CASE
+    WHEN ${sql.join(nameConditions, sql` AND `)} THEN 0
+    WHEN ${sql.join(providerConditions, sql` AND `)} THEN 1
+    ELSE 2
+  END`;
+}
+
+function buildSortOrder(sortOrder: SortOrder) {
+  switch (sortOrder) {
+    case "provider-asc":
+      return models.provider;
+    case "provider-desc":
+      return desc(models.provider);
+    case "model-asc":
+      return models.name;
+    case "model-desc":
+      return desc(models.name);
+    case "cost-asc":
+      return models.pricingPrompt;
+    case "cost-desc":
+      return desc(models.pricingPrompt);
+    default:
+      return models.provider;
+  }
+}
+
+function buildCapabilityConditions(capabilities: string[]): SQL[] {
+  const conditions: SQL[] = [];
+  for (const cap of capabilities) {
+    switch (cap) {
+      case "image":
+        conditions.push(arrayContains(models.inputModalities, ["image"]));
+        break;
+      case "pdf":
+        conditions.push(
+          or(
+            arrayContains(models.inputModalities, ["file"]),
+            sql`${models.contextLength} > 16000`,
+          )!,
+        );
+        break;
+      case "search":
+        conditions.push(arrayContains(models.supportedParameters, ["tools"]));
+        conditions.push(sql`${models.contextLength} > 32000`);
+        break;
+      case "reasoning":
+        conditions.push(arrayContains(models.supportedParameters, ["reasoning"]));
+        break;
+    }
+  }
+  return conditions;
+}
 
 /**
  * Query models from database with filtering, sorting, and pagination
@@ -25,71 +106,19 @@ export async function queryModels(params: ModelsQueryParams = {}): Promise<Model
 
   const conditions: SQL[] = [];
 
-  // Search filter (name, provider, description)
-  if (search?.trim()) {
-    const searchTerm = `%${search.trim()}%`;
-    conditions.push(
-      or(
-        ilike(models.name, searchTerm),
-        ilike(models.provider, searchTerm),
-        ilike(models.description, searchTerm),
-        ilike(models.modelId, searchTerm),
-      )!,
-    );
-  }
+  const searchCondition = buildSearchCondition(search);
+  if (searchCondition)
+    conditions.push(searchCondition);
 
-  // Provider filter
   if (providers.length > 0) {
     conditions.push(
       or(...providers.map(p => eq(models.provider, p)))!,
     );
   }
 
-  // Capability filters
-  for (const cap of capabilities) {
-    switch (cap) {
-      case "image":
-        conditions.push(arrayContains(models.inputModalities, ["image"]));
-        break;
-      case "pdf":
-        // PDF support: either native file support or sufficient context length
-        conditions.push(
-          or(
-            arrayContains(models.inputModalities, ["file"]),
-            sql`${models.contextLength} > 16000`,
-          )!,
-        );
-        break;
-      case "search":
-        // Search: tools support + large context
-        conditions.push(arrayContains(models.supportedParameters, ["tools"]));
-        conditions.push(sql`${models.contextLength} > 32000`);
-        break;
-      case "reasoning":
-        conditions.push(arrayContains(models.supportedParameters, ["reasoning"]));
-        break;
-    }
-  }
+  conditions.push(...buildCapabilityConditions(capabilities));
 
-  // Build order clause
-  const orderClause = (() => {
-    switch (sortOrder) {
-      case "provider-asc":
-        return models.provider;
-      case "provider-desc":
-        return desc(models.provider);
-      case "model-asc":
-        return models.name;
-      case "model-desc":
-        return desc(models.name);
-      case "cost-asc":
-        return models.pricingPrompt;
-      case "cost-desc":
-        return desc(models.pricingPrompt);
-      default:
-        return models.provider;
-    }
-  })();
+  const orderClause = buildSortOrder(sortOrder);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -107,7 +136,7 @@ export async function queryModels(params: ModelsQueryParams = {}): Promise<Model
     .select({ rawData: models.rawData })
     .from(models)
     .where(whereClause)
-    .orderBy(orderClause)
+    .orderBy(...(search?.trim() ? [buildSearchRelevance(search), orderClause] : [orderClause]))
     .limit(pageSize)
     .offset(offset);
 
@@ -226,69 +255,19 @@ export async function queryModelsForList(params: ModelsQueryParams = {}): Promis
 
   const conditions: SQL[] = [];
 
-  // Search filter (name, provider, description)
-  if (search?.trim()) {
-    const searchTerm = `%${search.trim()}%`;
-    conditions.push(
-      or(
-        ilike(models.name, searchTerm),
-        ilike(models.provider, searchTerm),
-        ilike(models.description, searchTerm),
-        ilike(models.modelId, searchTerm),
-      )!,
-    );
-  }
+  const searchCondition = buildSearchCondition(search);
+  if (searchCondition)
+    conditions.push(searchCondition);
 
-  // Provider filter
   if (providers.length > 0) {
     conditions.push(
       or(...providers.map(p => eq(models.provider, p)))!,
     );
   }
 
-  // Capability filters
-  for (const cap of capabilities) {
-    switch (cap) {
-      case "image":
-        conditions.push(arrayContains(models.inputModalities, ["image"]));
-        break;
-      case "pdf":
-        conditions.push(
-          or(
-            arrayContains(models.inputModalities, ["file"]),
-            sql`${models.contextLength} > 16000`,
-          )!,
-        );
-        break;
-      case "search":
-        conditions.push(arrayContains(models.supportedParameters, ["tools"]));
-        conditions.push(sql`${models.contextLength} > 32000`);
-        break;
-      case "reasoning":
-        conditions.push(arrayContains(models.supportedParameters, ["reasoning"]));
-        break;
-    }
-  }
+  conditions.push(...buildCapabilityConditions(capabilities));
 
-  // Build order clause
-  const orderClause = (() => {
-    switch (sortOrder) {
-      case "provider-asc":
-        return models.provider;
-      case "provider-desc":
-        return desc(models.provider);
-      case "model-asc":
-        return models.name;
-      case "model-desc":
-        return desc(models.name);
-      case "cost-asc":
-        return models.pricingPrompt;
-      case "cost-desc":
-        return desc(models.pricingPrompt);
-      default:
-        return models.provider;
-    }
-  })();
+  const orderClause = buildSortOrder(sortOrder);
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -315,7 +294,7 @@ export async function queryModelsForList(params: ModelsQueryParams = {}): Promis
     })
     .from(models)
     .where(whereClause)
-    .orderBy(orderClause)
+    .orderBy(...(search?.trim() ? [buildSearchRelevance(search), orderClause] : [orderClause]))
     .limit(pageSize)
     .offset(offset);
 

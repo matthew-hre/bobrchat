@@ -16,8 +16,9 @@ export async function GET(request: NextRequest) {
   const archived = searchParams.get("archived") === "true";
   const tagIdsParam = searchParams.get("tagIds");
   const tagIds = tagIdsParam ? tagIdsParam.split(",").filter(Boolean) : undefined;
+  const search = searchParams.get("search") ?? undefined;
 
-  const result = await getThreadsByUserId(session.user.id, { limit, cursor, archived, tagIds });
+  const result = await getThreadsByUserId(session.user.id, { limit, cursor, archived, tagIds, search });
 
   return Response.json(result);
 }

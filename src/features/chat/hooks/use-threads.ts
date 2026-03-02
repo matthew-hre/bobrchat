@@ -38,7 +38,7 @@ type CreateThreadInput = {
   icon?: ThreadIcon;
 };
 
-async function fetchThreads({ pageParam, archived, tagIds }: { pageParam: string | undefined; archived?: boolean; tagIds?: string[] }): Promise<ThreadsResponse> {
+async function fetchThreads({ pageParam, archived, tagIds, search }: { pageParam: string | undefined; archived?: boolean; tagIds?: string[]; search?: string }): Promise<ThreadsResponse> {
   const params = new URLSearchParams({ limit: "50" });
   if (pageParam) {
     params.set("cursor", pageParam);
@@ -49,20 +49,25 @@ async function fetchThreads({ pageParam, archived, tagIds }: { pageParam: string
   if (tagIds && tagIds.length > 0) {
     params.set("tagIds", tagIds.join(","));
   }
+  if (search) {
+    params.set("search", search);
+  }
   const response = await fetch(`/api/threads?${params.toString()}`);
   if (!response.ok)
     throw new Error("Failed to fetch threads");
   return response.json();
 }
 
-export function useThreads(options: { enabled?: boolean; archived?: boolean; tagIds?: string[] } = {}) {
-  const queryKey = options.tagIds?.length
-    ? [...THREADS_KEY, "tagged", ...options.tagIds.slice().sort()]
-    : options.archived ? ARCHIVED_THREADS_KEY : THREADS_KEY;
+export function useThreads(options: { enabled?: boolean; archived?: boolean; tagIds?: string[]; search?: string } = {}) {
+  const queryKey = options.search
+    ? [...THREADS_KEY, "search", options.search]
+    : options.tagIds?.length
+      ? [...THREADS_KEY, "tagged", ...options.tagIds.slice().sort()]
+      : options.archived ? ARCHIVED_THREADS_KEY : THREADS_KEY;
 
   const query = useInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam }) => fetchThreads({ pageParam, archived: options.archived, tagIds: options.tagIds }),
+    queryFn: ({ pageParam }) => fetchThreads({ pageParam, archived: options.archived, tagIds: options.tagIds, search: options.search }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: lastPage => lastPage.nextCursor ?? undefined,
     staleTime: 30 * 1000,
