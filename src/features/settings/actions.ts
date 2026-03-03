@@ -2,12 +2,14 @@
 
 import { eq } from "drizzle-orm";
 
+import type { ApiKeyProvider } from "~/lib/api-keys";
+
 import { getRequiredSession, getSession } from "~/features/auth/lib/session";
 import { hasEncryptedKey } from "~/lib/api-keys/server";
 import { db } from "~/lib/db";
 import { threads } from "~/lib/db/schema";
 
-import type { ApiKeyProvider, FavoriteModelsInput, PreferencesUpdate, UserSettingsData } from "./types";
+import type { FavoriteModelsInput, PreferencesUpdate, UserSettingsData } from "./types";
 
 import {
   deleteApiKey as deleteApiKeyQuery,
