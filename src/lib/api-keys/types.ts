@@ -1,7 +1,7 @@
 /**
  * Supported API key providers.
  */
-export type ApiKeyProvider = "openrouter" | "parallel";
+export type ApiKeyProvider = "openrouter" | "openai" | "parallel";
 
 /**
  * localStorage keys for client-side API key storage.
@@ -9,5 +9,6 @@ export type ApiKeyProvider = "openrouter" | "parallel";
  */
 export const CLIENT_STORAGE_KEYS: Record<ApiKeyProvider, string> = {
   openrouter: "openrouter_api_key",
+  openai: "openai_api_key",
   parallel: "parallel_api_key",
 };

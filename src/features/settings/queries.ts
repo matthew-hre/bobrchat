@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 
-import type { ApiKeyProvider, EncryptedApiKeysData, UserSettingsData } from "~/features/settings/types";
+import type { EncryptedApiKeysData, UserSettingsData } from "~/features/settings/types";
+import type { ApiKeyProvider } from "~/lib/api-keys";
 
 import { decryptValue, encryptValue } from "~/lib/api-keys/encryption";
 import { db } from "~/lib/db";

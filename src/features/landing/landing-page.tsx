@@ -18,7 +18,11 @@ import { ParallelSearchMockup } from "./mockups/parallel-search-mockup";
 
 export function LandingPage() {
   return (
-    <div className={`flex min-h-screen flex-col ${rethinkSans.className}`}>
+    <div className={`
+      flex min-h-screen flex-col
+      ${rethinkSans.className}
+    `}
+    >
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
