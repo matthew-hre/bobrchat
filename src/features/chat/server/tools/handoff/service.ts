@@ -7,7 +7,7 @@ import { threads } from "~/lib/db/schema/chat";
 
 import { getModelProvider } from "../../models";
 
-const HANDOFF_MODEL = "google/gemini-2.5-flash";
+const HANDOFF_MODEL = "google/gemini-3.1-flash-lite-preview";
 
 const HANDOFF_SYSTEM_PROMPT = `You are a context summarizer. Your job is to read a thread and the user's handoff request, then generate a focused prompt for a new thread.
 

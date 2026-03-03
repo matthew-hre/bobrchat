@@ -41,7 +41,7 @@ export async function generateThreadTitle(message: string, apiKey: string): Prom
 
   try {
     const provider = getModelProvider(apiKey);
-    const model = provider("google/gemini-2.5-flash-lite");
+    const model = provider("google/gemini-3.1-flash-lite-preview");
 
     const { text } = await generateText({
       model,
@@ -69,7 +69,7 @@ export async function generateThreadIcon(message: string, apiKey: string): Promi
 
   try {
     const provider = getModelProvider(apiKey);
-    const model = provider("google/gemini-2.5-flash-lite");
+    const model = provider("google/gemini-3.1-flash-lite-preview");
 
     const iconList = THREAD_ICONS.map(icon => `- ${icon}: ${ICON_DESCRIPTIONS[icon]}`).join("\n");
 
@@ -114,7 +114,7 @@ export async function generateThreadMetadata(message: string, apiKey: string): P
 
   try {
     const provider = getModelProvider(apiKey);
-    const model = provider("google/gemini-2.5-flash-lite");
+    const model = provider("google/gemini-3.1-flash-lite-preview");
 
     const iconList = THREAD_ICONS.map(icon => `- ${icon}: ${ICON_DESCRIPTIONS[icon]}`).join("\n");
 
