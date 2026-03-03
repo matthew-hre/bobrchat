@@ -33,13 +33,16 @@ type ChatUIStore = {
 
   // Browser API keys (loaded from localStorage once, not persisted by zustand)
   openrouterKey: string | null;
+  openaiKey: string | null;
   parallelKey: string | null;
   loadApiKeysFromStorage: () => void;
 
   setOpenRouterKey: (key: string) => void;
+  setOpenAIKey: (key: string) => void;
   setParallelKey: (key: string) => void;
 
   removeOpenRouterKey: () => void;
+  removeOpenAIKey: (key: string) => void;
   removeParallelKey: () => void;
 
   // Streaming indicator (not persisted)
@@ -96,6 +99,7 @@ export const useChatUIStore = create<ChatUIStore>()(
 
       // Browser API keys (not persisted by zustand, loaded manually from localStorage)
       openrouterKey: null,
+      openaiKey: null,
       parallelKey: null,
       loadApiKeysFromStorage: () => {
         set({
@@ -109,11 +113,10 @@ export const useChatUIStore = create<ChatUIStore>()(
         set({ openrouterKey: key });
       },
 
-      removeOpenRouterKey: () => {
-        removeClientKey("openrouter");
-        set({ openrouterKey: null });
+      setOpenAIKey: (key: string) => {
+        setClientKey("openai", key);
+        set({openaiKey: key});
       },
-
       setParallelKey: (key: string) => {
         setClientKey("parallel", key);
         set({ parallelKey: key });
@@ -122,6 +125,16 @@ export const useChatUIStore = create<ChatUIStore>()(
       removeParallelKey: () => {
         removeClientKey("parallel");
         set({ parallelKey: null });
+      },
+
+      removeOpenAIKey: () => {
+        removeClientKey("openai");
+        set({openaiKey: null});
+      },
+
+      removeOpenRouterKey: () => {
+        removeClientKey("openrouter");
+        set({ openrouterKey: null });
       },
 
       streamingThreadId: null,

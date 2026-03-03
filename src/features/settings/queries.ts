@@ -29,6 +29,7 @@ export type ResolvedUserData = {
   settings: UserSettingsData;
   resolvedKeys: {
     openrouter?: string;
+    openai?: string;
     parallel?: string;
   };
 };
@@ -60,12 +61,13 @@ async function getUserSettingsRow(userId: string) {
  * @param userId ID of the user
  * @param clientKeys Optional client-provided keys (from localStorage)
  * @param clientKeys.openrouter OpenRouter API key from client
+ * @param clientKeys.openai OpenAI API key from client
  * @param clientKeys.parallel Parallel API key from client
  * @returns Settings and resolved API keys
  */
 export async function getUserSettingsAndKeys(
   userId: string,
-  clientKeys?: { openrouter?: string; parallel?: string },
+  clientKeys?: { openrouter?: string; openai?: string; parallel?: string },
 ): Promise<ResolvedUserData> {
   const { settings, encryptedApiKeys } = await getUserSettingsRow(userId);
 
@@ -77,6 +79,18 @@ export async function getUserSettingsAndKeys(
   else if (encryptedApiKeys.openrouter) {
     try {
       resolvedKeys.openrouter = decryptValue(encryptedApiKeys.openrouter);
+    }
+    catch (error) {
+      console.error(`Failed to decrypt openrouter API key for user ${userId}:`, error);
+    }
+  }
+
+  if (clientKeys?.openai) {
+    resolvedKeys.openai = clientKeys.openai;
+  }
+  else if (encryptedApiKeys.openai) {
+    try {
+      resolvedKeys.openai = decryptValue(encryptedApiKeys.openai);
     }
     catch (error) {
       console.error(`Failed to decrypt openrouter API key for user ${userId}:`, error);
@@ -246,7 +260,7 @@ export async function deleteApiKey(userId: string, provider: ApiKeyProvider): Pr
   const cleanedEncrypted: EncryptedApiKeysData = {};
   Object.entries(currentEncrypted).forEach(([key, value]) => {
     if (key !== provider && value !== undefined) {
-      cleanedEncrypted[key as "openrouter" | "parallel"] = value;
+      cleanedEncrypted[key as "openrouter" | "openai" | "parallel"] = value;
     }
   });
 
