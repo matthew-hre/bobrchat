@@ -16,6 +16,14 @@ const modelProviders: ApiKeyConfig[] = [
     logo: "/logos/providers/openrouter.svg",
     link: { href: "https://openrouter.ai/keys", label: "openrouter.ai/keys" },
   },
+  {
+    provider: "openai",
+    label: "OpenAI",
+    description: "Use your own OpenAI API key for direct access to GPT models.",
+    placeholder: "sk-...",
+    logo: "/logos/providers/openai.svg",
+    link: { href: "https://platform.openai.com/api-keys", label: "platform.openai.com/api-keys" },
+  },
 ];
 
 const searchProviders: ApiKeyConfig[] = [
@@ -47,8 +55,6 @@ export function IntegrationsTab() {
             ))}
           </Accordion>
         </section>
-
-        <Separator />
 
         <section className="space-y-2">
           <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Search Providers</h4>
