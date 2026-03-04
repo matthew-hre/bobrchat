@@ -6,9 +6,7 @@ import { useUserSettings } from "./use-user-settings";
 
 export function useApiKeyStatus(provider: ApiKeyProvider) {
   const { data: settings, isPending } = useUserSettings({ enabled: true });
-  const clientKey = useChatUIStore(s =>
-    provider === "openrouter" ? s.openrouterKey : s.parallelKey,
-  );
+  const clientKey = useChatUIStore(s => s.clientKeys[provider]);
 
   const hasClientKey = !!clientKey;
   const hasServerKey = settings?.configuredApiKeys?.[provider] ?? false;
