@@ -3,9 +3,9 @@ import { persist } from "zustand/middleware";
 
 import type { PendingFile } from "~/features/chat/components/messages/file-preview";
 import type { FileUIPart } from "~/features/chat/types";
+import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
 import { getClientKey, removeClientKey, setClientKey } from "~/lib/api-keys/client";
-import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
 type ChatUIStore = {
   // Chat input
@@ -96,7 +96,8 @@ export const useChatUIStore = create<ChatUIStore>()(
         const keys: Partial<Record<ApiKeyProvider, string>> = {};
         for (const provider of ["openrouter", "openai", "parallel"] as const) {
           const key = getClientKey(provider);
-          if (key) keys[provider] = key;
+          if (key)
+            keys[provider] = key;
         }
         set({ clientKeys: keys });
       },
@@ -108,7 +109,7 @@ export const useChatUIStore = create<ChatUIStore>()(
 
       removeClientApiKey: (provider) => {
         removeClientKey(provider);
-        set(state => {
+        set((state) => {
           const next = { ...state.clientKeys };
           delete next[provider];
           return { clientKeys: next };

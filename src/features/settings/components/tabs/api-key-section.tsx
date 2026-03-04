@@ -59,7 +59,10 @@ export function ApiKeySection({ config }: { config: ApiKeyConfig }) {
               alt={`${config.label} logo`}
               width={24}
               height={24}
-              className={cn("size-5 invert-0 dark:invert")}
+              className={cn(`
+                size-5 invert-0
+                dark:invert
+              `)}
             />
             <span className="font-medium">{config.label}</span>
             {form.hasKey && (

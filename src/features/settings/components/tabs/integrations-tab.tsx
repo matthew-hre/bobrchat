@@ -1,11 +1,12 @@
 "use client";
 
 import { Accordion } from "~/components/ui/accordion";
-import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
-import { type ApiKeyConfig, ApiKeySection } from "./api-key-section";
+import type { ApiKeyConfig } from "./api-key-section";
+
+import { ApiKeySection } from "./api-key-section";
 
 const modelProviders: ApiKeyConfig[] = [
   {
@@ -48,7 +49,12 @@ export function IntegrationsTab() {
     <div className="flex h-full flex-col">
       <div className="w-full space-y-6 p-6">
         <section className="space-y-2">
-          <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Model Providers</h4>
+          <h4 className={`
+            text-muted-foreground text-xs font-medium tracking-wide uppercase
+          `}
+          >
+            Model Providers
+          </h4>
           <Accordion type="multiple">
             {modelProviders.map(config => (
               <ApiKeySection key={config.provider} config={config} />
@@ -57,7 +63,12 @@ export function IntegrationsTab() {
         </section>
 
         <section className="space-y-2">
-          <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Search Providers</h4>
+          <h4 className={`
+            text-muted-foreground text-xs font-medium tracking-wide uppercase
+          `}
+          >
+            Search Providers
+          </h4>
           <Accordion type="multiple">
             {searchProviders.map(config => (
               <ApiKeySection key={config.provider} config={config} />
