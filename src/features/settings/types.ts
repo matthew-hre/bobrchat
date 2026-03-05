@@ -12,6 +12,9 @@ export type LandingPageContentType = "suggestions" | "greeting" | "blank";
 
 export type ProfileCardWidget = "apiKeyStatus" | "openrouterCredits" | "storageQuota";
 
+export const autoArchiveOptions = [0, 1, 3, 7, 14, 30, 90] as const;
+export type AutoArchiveAfterDays = (typeof autoArchiveOptions)[number];
+
 export const accentColorPresets = ["green", "pink", "cyan", "orange", "yellow", "blue", "gray"] as const;
 export type AccentColorPreset = (typeof accentColorPresets)[number];
 export type AccentColor = AccentColorPreset | number; // preset name or custom hue (0-360)
@@ -45,6 +48,7 @@ export const preferencesSchema = z.object({
   inputHeightScale: z.number().int().min(0).max(4).default(0),
   hideModelProviderNames: z.boolean().default(false),
   profileCardWidget: z.enum(["apiKeyStatus", "openrouterCredits", "storageQuota"]).default("apiKeyStatus"),
+  autoArchiveAfterDays: z.union([z.literal(0), z.literal(1), z.literal(3), z.literal(7), z.literal(14), z.literal(30), z.literal(90)]).default(0),
 });
 
 /**
@@ -68,6 +72,7 @@ export const preferencesUpdateSchema = z.object({
   inputHeightScale: z.number().int().min(0).max(4).optional(),
   hideModelProviderNames: z.boolean().optional(),
   profileCardWidget: z.enum(["apiKeyStatus", "openrouterCredits", "storageQuota"]).optional(),
+  autoArchiveAfterDays: z.union([z.literal(0), z.literal(1), z.literal(3), z.literal(7), z.literal(14), z.literal(30), z.literal(90)]).optional(),
 });
 
 export type PreferencesInput = z.infer<typeof preferencesSchema>;
@@ -145,6 +150,7 @@ export type UserSettingsData = {
   inputHeightScale: number;
   hideModelProviderNames?: boolean;
   profileCardWidget: ProfileCardWidget;
+  autoArchiveAfterDays: AutoArchiveAfterDays;
   // List of favorite model IDs from OpenRouter (max 10)
   favoriteModels?: string[];
   // Derived: which providers have a key configured (server can verify server-stored keys,

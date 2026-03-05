@@ -63,7 +63,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${rethinkSans.variable} ${jetbrainsMono.variable} ${lexend.variable} ${atkinsonHyperlegible.variable} ${atkinsonHyperlegibleMono.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`
+        ${rethinkSans.variable}
+        ${jetbrainsMono.variable}
+        ${lexend.variable}
+        ${atkinsonHyperlegible.variable}
+        ${atkinsonHyperlegibleMono.variable}
+      `}
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{

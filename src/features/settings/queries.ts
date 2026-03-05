@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS: UserSettingsData = {
   sendMessageKeyboardShortcut: "enter",
   inputHeightScale: 0,
   profileCardWidget: "apiKeyStatus",
+  autoArchiveAfterDays: 0,
 };
 
 export type ResolvedUserData = {

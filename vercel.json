@@ -5,6 +5,10 @@
     {
       "path": "/api/cron/sync-models",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/auto-archive",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

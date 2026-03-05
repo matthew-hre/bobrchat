@@ -110,6 +110,7 @@ export async function createDefaultUserSettings(userId: string): Promise<UserSet
     sendMessageKeyboardShortcut: "enter",
     inputHeightScale: 0,
     profileCardWidget: "apiKeyStatus",
+    autoArchiveAfterDays: 0,
   };
 
   await updateUserSettings(userId, defaultSettings);
