@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     if (!salt) {
       return new Response("Decryption key not found", { status: 500 });
     }
-    const key = deriveUserKey(attachment.userId, salt);
+    const key = await deriveUserKey(attachment.userId, salt);
     content = decryptBuffer(raw, key).toString("utf-8");
   }
   else {

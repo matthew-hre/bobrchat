@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer";
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
+import { createCipheriv, createDecipheriv, randomBytes, scrypt } from "node:crypto";
 
 import type { ChatUIMessage } from "~/features/chat/types";
 
@@ -16,12 +16,22 @@ export type EncryptedMessage = {
   authTag: string;
 };
 
+function scryptAsync(password: string, salt: string, keylen: number): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    scrypt(password, salt, keylen, (err, derivedKey) => {
+      if (err)
+        reject(err);
+      else resolve(derivedKey);
+    });
+  });
+}
+
 /**
  * Derive encryption key for per-user message encryption.
  * Uses scrypt with ENCRYPTION_SECRET:userId as password and user's salt.
  */
-export function deriveUserKey(userId: string, salt: string): Buffer {
-  return scryptSync(`${serverEnv.ENCRYPTION_SECRET}:${userId}`, salt, KEY_LENGTH);
+export async function deriveUserKey(userId: string, salt: string): Promise<Buffer> {
+  return scryptAsync(`${serverEnv.ENCRYPTION_SECRET}:${userId}`, salt, KEY_LENGTH);
 }
 
 /**
@@ -32,8 +42,8 @@ export function deriveUserKey(userId: string, salt: string): Buffer {
  * @param salt The user's unique salt
  * @returns Encrypted message components (iv, ciphertext, authTag as hex strings)
  */
-export function encryptMessage(content: ChatUIMessage, userId: string, salt: string): EncryptedMessage {
-  const key = deriveUserKey(userId, salt);
+export async function encryptMessage(content: ChatUIMessage, userId: string, salt: string): Promise<EncryptedMessage> {
+  const key = await deriveUserKey(userId, salt);
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGORITHM, key, iv);
 
@@ -56,8 +66,8 @@ export function encryptMessage(content: ChatUIMessage, userId: string, salt: str
  * @returns The decrypted message content
  * @throws If decryption fails or JSON is malformed
  */
-export function decryptMessage(encrypted: EncryptedMessage, userId: string, salt: string): ChatUIMessage {
-  const key = deriveUserKey(userId, salt);
+export async function decryptMessage(encrypted: EncryptedMessage, userId: string, salt: string): Promise<ChatUIMessage> {
+  const key = await deriveUserKey(userId, salt);
   return decryptMessageWithKey(encrypted, key);
 }
 
@@ -149,8 +159,8 @@ export function isEncryptedBuffer(data: Buffer): boolean {
  * Derive encryption key for API key encryption (global, not per-user).
  * Uses ENCRYPTION_SECRET with ENCRYPTION_SALT.
  */
-function getApiKeyEncryptionKey(): Buffer {
-  return scryptSync(serverEnv.ENCRYPTION_SECRET, serverEnv.ENCRYPTION_SALT, KEY_LENGTH);
+async function getApiKeyEncryptionKey(): Promise<Buffer> {
+  return scryptAsync(serverEnv.ENCRYPTION_SECRET, serverEnv.ENCRYPTION_SALT, KEY_LENGTH);
 }
 
 /**
@@ -163,9 +173,9 @@ function getApiKeyEncryptionKey(): Buffer {
  * @param plaintext The value to encrypt
  * @returns Encrypted value in "hex(iv):hex(ciphertext):hex(authTag)" format
  */
-export function encryptValue(plaintext: string): string {
+export async function encryptValue(plaintext: string): Promise<string> {
   const iv = randomBytes(IV_LENGTH);
-  const cipher = createCipheriv(ALGORITHM, getApiKeyEncryptionKey(), iv);
+  const cipher = createCipheriv(ALGORITHM, await getApiKeyEncryptionKey(), iv);
 
   let encrypted = cipher.update(plaintext, "utf8", "hex");
   encrypted += cipher.final("hex");
@@ -182,7 +192,7 @@ export function encryptValue(plaintext: string): string {
  * @returns Decrypted plaintext
  * @throws If decryption fails (invalid key, corrupted data, or tampered data)
  */
-export function decryptValue(encrypted: string): string {
+export async function decryptValue(encrypted: string): Promise<string> {
   const parts = encrypted.split(":");
   if (parts.length !== 3) {
     throw new Error("Invalid encrypted value format");
@@ -198,7 +208,7 @@ export function decryptValue(encrypted: string): string {
     throw new Error("Invalid encryption parameters");
   }
 
-  const decipher = createDecipheriv(ALGORITHM, getApiKeyEncryptionKey(), iv);
+  const decipher = createDecipheriv(ALGORITHM, await getApiKeyEncryptionKey(), iv);
   decipher.setAuthTag(authTag);
 
   let decrypted = decipher.update(encryptedData, undefined, "utf8");
