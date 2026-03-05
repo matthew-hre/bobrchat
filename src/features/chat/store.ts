@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 
 import type { PendingFile } from "~/features/chat/components/messages/file-preview";
 import type { FileUIPart } from "~/features/chat/types";
+import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
 import { getClientKey, removeClientKey, setClientKey } from "~/lib/api-keys/client";
 
@@ -32,15 +33,10 @@ type ChatUIStore = {
   setModelSelectorOverride: (fn: (() => void) | null) => void;
 
   // Browser API keys (loaded from localStorage once, not persisted by zustand)
-  openrouterKey: string | null;
-  parallelKey: string | null;
+  clientKeys: Partial<Record<ApiKeyProvider, string>>;
+  setClientApiKey: (provider: ApiKeyProvider, key: string) => void;
+  removeClientApiKey: (provider: ApiKeyProvider) => void;
   loadApiKeysFromStorage: () => void;
-
-  setOpenRouterKey: (key: string) => void;
-  setParallelKey: (key: string) => void;
-
-  removeOpenRouterKey: () => void;
-  removeParallelKey: () => void;
 
   // Streaming indicator (not persisted)
   streamingThreadId: string | null;
@@ -95,33 +91,29 @@ export const useChatUIStore = create<ChatUIStore>()(
       setModelSelectorOverride: fn => set({ modelSelectorOverride: fn }),
 
       // Browser API keys (not persisted by zustand, loaded manually from localStorage)
-      openrouterKey: null,
-      parallelKey: null,
+      clientKeys: {},
       loadApiKeysFromStorage: () => {
-        set({
-          openrouterKey: getClientKey("openrouter"),
-          parallelKey: getClientKey("parallel"),
+        const keys: Partial<Record<ApiKeyProvider, string>> = {};
+        for (const provider of ["openrouter", "openai", "parallel"] as const) {
+          const key = getClientKey(provider);
+          if (key)
+            keys[provider] = key;
+        }
+        set({ clientKeys: keys });
+      },
+
+      setClientApiKey: (provider, key) => {
+        setClientKey(provider, key);
+        set(state => ({ clientKeys: { ...state.clientKeys, [provider]: key } }));
+      },
+
+      removeClientApiKey: (provider) => {
+        removeClientKey(provider);
+        set((state) => {
+          const next = { ...state.clientKeys };
+          delete next[provider];
+          return { clientKeys: next };
         });
-      },
-
-      setOpenRouterKey: (key: string) => {
-        setClientKey("openrouter", key);
-        set({ openrouterKey: key });
-      },
-
-      removeOpenRouterKey: () => {
-        removeClientKey("openrouter");
-        set({ openrouterKey: null });
-      },
-
-      setParallelKey: (key: string) => {
-        setClientKey("parallel", key);
-        set({ parallelKey: key });
-      },
-
-      removeParallelKey: () => {
-        removeClientKey("parallel");
-        set({ parallelKey: null });
       },
 
       streamingThreadId: null,

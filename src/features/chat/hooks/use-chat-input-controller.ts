@@ -14,7 +14,7 @@ import {
   getModelCapabilities,
   useFavoriteModels,
 } from "~/features/models";
-import { useApiKeyStatus } from "~/features/settings/hooks/use-api-status";
+import { useApiKeyStatus, useHasAnyApiKey } from "~/features/settings/hooks/use-api-status";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
 type UseChatInputControllerProps = {
@@ -33,8 +33,8 @@ export function useChatInputController({
   const inputHeightScale = settings?.inputHeightScale ?? 0;
   const autoCreateFilesFromPaste = settings?.autoCreateFilesFromPaste ?? true;
 
-  const { hasKey: hasOpenRouterKey, isLoading: isOpenRouterLoading }
-    = useApiKeyStatus("openrouter");
+  const { hasKey: hasAnyApiKey, isLoading: isAnyApiKeyLoading }
+    = useHasAnyApiKey();
   const { hasKey: hasParallelApiKey, isLoading: isParallelApiLoading }
     = useApiKeyStatus("parallel");
 
@@ -120,7 +120,7 @@ export function useChatInputController({
 
   const canSend
     = !isLoading
-      && hasOpenRouterKey !== false
+      && hasAnyApiKey
       && selectedModel !== undefined
       && hasContent
       && !hasUploadingFiles;
@@ -201,8 +201,8 @@ export function useChatInputController({
     },
 
     apiStatus: {
-      hasOpenRouterKey,
-      isOpenRouterLoading,
+      hasAnyApiKey,
+      isAnyApiKeyLoading,
       hasParallelApiKey,
       isParallelApiLoading,
     },

@@ -4,11 +4,12 @@ import { convertToModelMessages, stepCountIs, streamText } from "ai";
 
 import type { ChatUIMessage } from "~/features/chat/types";
 import type { UserSettingsData } from "~/features/settings/types";
+import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
 import { calculateResponseMetadata } from "./metrics";
-import { getModelProvider } from "./models";
 import { generatePrompt } from "./prompt";
-import { createStreamHandlers, getPdfPluginConfig, getReasoningConfig, processStreamChunk } from "./stream";
+import { resolveProvider } from "./provider-resolver";
+import { createStreamHandlers, processStreamChunk } from "./stream";
 import { createHandoffTool, createSearchTools } from "./tools";
 import { getTotalPdfPageCount, hasPdfAttachment, processMessageFiles } from "./uploads";
 
@@ -22,7 +23,7 @@ export type PdfEngineConfig = {
  *
  * @param messages The chat messages to send to the model.
  * @param modelId The ID of the model to use.
- * @param openRouterApiKey The resolved OpenRouter API key.
+ * @param resolvedKeys The resolved API keys for all providers.
  * @param userSettings The user's settings (pre-fetched to avoid duplicate DB queries).
  * @param searchEnabled Whether web search is enabled for this request.
  * @param parallelApiKey The Parallel Web API key for web search functionality.
@@ -35,7 +36,7 @@ export type ReasoningLevel = "xhigh" | "high" | "medium" | "low" | "minimal" | "
 export async function streamChatResponse(
   messages: ChatUIMessage[],
   modelId: string,
-  openRouterApiKey: string,
+  resolvedKeys: Partial<Record<ApiKeyProvider, string>>,
   userSettings: UserSettingsData,
   userId: string,
   searchEnabled?: boolean,
@@ -46,16 +47,10 @@ export async function streamChatResponse(
   modelPricing?: { prompt: string; completion: string },
   supportsTools?: boolean,
 ) {
-  if (!openRouterApiKey) {
-    throw new Error("No API key configured. Please set up your OpenRouter API key in settings.");
-  }
-
   const startTime = Date.now();
   let firstTokenTime: number | null = null;
   const searchCalls: Array<{ resultCount: number }> = [];
   const extractCalls: Array<{ urlCount: number }> = [];
-
-  const provider = getModelProvider(openRouterApiKey);
 
   const hasPdf = hasPdfAttachment(messages);
   const useOcr = hasPdf && pdfEngineConfig?.useOcrForPdfs && !pdfEngineConfig?.supportsNativePdf;
@@ -93,25 +88,28 @@ export async function streamChatResponse(
     },
   );
 
+  const { model, providerOptions } = resolveProvider({
+    modelId,
+    resolvedKeys,
+    reasoningLevel,
+    hasPdf,
+    pdfEngineConfig,
+  });
+
   const searchTools = searchEnabled && parallelApiKey ? createSearchTools(parallelApiKey) : {};
-  const handoffTools = threadId ? createHandoffTool(userId, threadId, messages, openRouterApiKey) : {};
+  const openrouterKey = resolvedKeys.openrouter;
+  const handoffTools = threadId && openrouterKey ? createHandoffTool(userId, threadId, messages, openrouterKey) : {};
   const tools = (Object.keys({ ...searchTools, ...handoffTools }).length > 0) && supportsTools
     ? { ...searchTools, ...handoffTools }
     : undefined;
 
   const result = streamText({
-    model: provider(modelId),
+    model,
     system: systemPrompt,
     messages: convertedMessages,
     tools,
     stopWhen: stepCountIs(8),
-    providerOptions: {
-      openrouter: {
-        usage: { include: true },
-        ...getPdfPluginConfig(hasPdf, pdfEngineConfig),
-        ...getReasoningConfig(reasoningLevel),
-      },
-    },
+    providerOptions,
     onChunk({ chunk }) {
       processStreamChunk(chunk, streamHandlers);
     },

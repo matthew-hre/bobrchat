@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 
-import type { ApiKeyProvider, EncryptedApiKeysData, UserSettingsData } from "~/features/settings/types";
+import type { EncryptedApiKeysData, UserSettingsData } from "~/features/settings/types";
+import type { ApiKeyProvider } from "~/lib/api-keys";
 
 import { decryptValue, encryptValue } from "~/lib/api-keys/encryption";
 import { db } from "~/lib/db";
@@ -27,10 +28,7 @@ const DEFAULT_SETTINGS: UserSettingsData = {
 
 export type ResolvedUserData = {
   settings: UserSettingsData;
-  resolvedKeys: {
-    openrouter?: string;
-    parallel?: string;
-  };
+  resolvedKeys: Partial<Record<ApiKeyProvider, string>>;
 };
 
 async function getUserSettingsRow(userId: string) {
@@ -60,38 +58,30 @@ async function getUserSettingsRow(userId: string) {
  * @param userId ID of the user
  * @param clientKeys Optional client-provided keys (from localStorage)
  * @param clientKeys.openrouter OpenRouter API key from client
+ * @param clientKeys.openai OpenAI API key from client
  * @param clientKeys.parallel Parallel API key from client
  * @returns Settings and resolved API keys
  */
 export async function getUserSettingsAndKeys(
   userId: string,
-  clientKeys?: { openrouter?: string; parallel?: string },
+  clientKeys?: Partial<Record<ApiKeyProvider, string>>,
 ): Promise<ResolvedUserData> {
   const { settings, encryptedApiKeys } = await getUserSettingsRow(userId);
 
   const resolvedKeys: ResolvedUserData["resolvedKeys"] = {};
+  const providers: ApiKeyProvider[] = ["openrouter", "openai", "parallel"];
 
-  if (clientKeys?.openrouter) {
-    resolvedKeys.openrouter = clientKeys.openrouter;
-  }
-  else if (encryptedApiKeys.openrouter) {
-    try {
-      resolvedKeys.openrouter = decryptValue(encryptedApiKeys.openrouter);
+  for (const provider of providers) {
+    if (clientKeys?.[provider]) {
+      resolvedKeys[provider] = clientKeys[provider];
     }
-    catch (error) {
-      console.error(`Failed to decrypt openrouter API key for user ${userId}:`, error);
-    }
-  }
-
-  if (clientKeys?.parallel) {
-    resolvedKeys.parallel = clientKeys.parallel;
-  }
-  else if (encryptedApiKeys.parallel) {
-    try {
-      resolvedKeys.parallel = decryptValue(encryptedApiKeys.parallel);
-    }
-    catch (error) {
-      console.error(`Failed to decrypt parallel API key for user ${userId}:`, error);
+    else if (encryptedApiKeys[provider]) {
+      try {
+        resolvedKeys[provider] = decryptValue(encryptedApiKeys[provider]);
+      }
+      catch (error) {
+        console.error(`Failed to decrypt ${provider} API key for user ${userId}:`, error);
+      }
     }
   }
 
@@ -246,7 +236,7 @@ export async function deleteApiKey(userId: string, provider: ApiKeyProvider): Pr
   const cleanedEncrypted: EncryptedApiKeysData = {};
   Object.entries(currentEncrypted).forEach(([key, value]) => {
     if (key !== provider && value !== undefined) {
-      cleanedEncrypted[key as "openrouter" | "parallel"] = value;
+      cleanedEncrypted[key as ApiKeyProvider] = value;
     }
   });
 

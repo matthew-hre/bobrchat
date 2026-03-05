@@ -109,7 +109,7 @@ function ThreadItemComponent({
 }: ThreadItemProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const openrouterKey = useChatUIStore(state => state.openrouterKey);
+  const openrouterKey = useChatUIStore(state => state.clientKeys.openrouter);
   const isStreaming = useChatUIStore(state => state.streamingThreadId === id);
   const { data: settings } = useUserSettings();
   const sidebarIconsDisabled = settings?.showSidebarIcons ?? false;

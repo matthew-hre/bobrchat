@@ -18,6 +18,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.39",
     "@ai-sdk/react": "^3.0.3",
     "@aws-sdk/client-s3": "^3.965.0",
     "@aws-sdk/lib-storage": "^3.992.0",
@@ -60,7 +61,6 @@
     "cmdk": "^1.1.1",
     "drizzle-orm": "^1.0.0-beta.9-e89174b",
     "file-type": "^21.3.0",
-
     "input-otp": "^1.4.2",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",

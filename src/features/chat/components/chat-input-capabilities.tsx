@@ -49,7 +49,7 @@ type CapabilitiesProps = {
   reasoningLevel: string;
   searchEnabled: boolean;
   pendingFilesCount: number;
-  hasOpenRouterKey: boolean;
+  hasAnyApiKey: boolean;
   hasParallelApiKey: boolean;
   isParallelApiLoading: boolean;
   onReasoningLevelChange: (level: string) => void;
@@ -63,7 +63,7 @@ export function ChatInputCapabilities({
   reasoningLevel,
   searchEnabled,
   pendingFilesCount,
-  hasOpenRouterKey,
+  hasAnyApiKey,
   hasParallelApiKey,
   isParallelApiLoading,
   onReasoningLevelChange,
@@ -100,7 +100,7 @@ export function ChatInputCapabilities({
 
         {(capabilities.supportsImages || capabilities.supportsFiles || capabilities.supportsPdf) && (
           <AttachButton
-            hasOpenRouterKey={hasOpenRouterKey}
+            hasAnyApiKey={hasAnyApiKey}
             pendingFilesCount={pendingFilesCount}
             onAttachClick={onAttachClick}
             acceptedFileTypesDescription={acceptedFileTypesDescription}
@@ -186,7 +186,7 @@ export function ChatInputCapabilities({
               <Button
                 type="button"
                 onClick={onAttachClick}
-                disabled={hasOpenRouterKey === false}
+                disabled={!hasAnyApiKey}
                 variant={pendingFilesCount > 0 ? "default" : "outline"}
                 className="w-full justify-start gap-2"
               >
@@ -323,12 +323,12 @@ function SearchButton({
 }
 
 function AttachButton({
-  hasOpenRouterKey,
+  hasAnyApiKey,
   pendingFilesCount,
   onAttachClick,
   acceptedFileTypesDescription,
 }: {
-  hasOpenRouterKey: boolean | null;
+  hasAnyApiKey: boolean;
   pendingFilesCount: number;
   onAttachClick: () => void;
   acceptedFileTypesDescription: string;
@@ -341,7 +341,7 @@ function AttachButton({
           variant="ghost"
           size="sm"
           onClick={onAttachClick}
-          disabled={hasOpenRouterKey === false}
+          disabled={!hasAnyApiKey}
           className={cn(
             `
               text-muted-foreground gap-2

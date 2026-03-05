@@ -5,7 +5,7 @@ import type { Model } from "@openrouter/sdk/models";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import { useApiKeyStatus } from "~/features/settings/hooks/use-api-status";
+import { useHasAnyApiKey } from "~/features/settings/hooks/use-api-status";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { MODELS_KEY } from "~/lib/queries/query-keys";
 
@@ -22,11 +22,14 @@ export function useModelsQuery(
   params: ModelsQueryParams,
   options: { enabled?: boolean } = {},
 ) {
-  const { hasKey } = useApiKeyStatus("openrouter");
+  const { hasKey, accessibleProviders } = useHasAnyApiKey();
+  const mergedParams = accessibleProviders
+    ? { ...params, providers: params.providers?.length ? params.providers : accessibleProviders }
+    : params;
 
   return useQuery<ModelsQueryResult>({
-    queryKey: [...MODELS_KEY, params],
-    queryFn: () => fetchModels(params),
+    queryKey: [...MODELS_KEY, mergedParams],
+    queryFn: () => fetchModels(mergedParams),
     enabled: hasKey && options.enabled !== false,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
@@ -38,7 +41,7 @@ export function useModelsQuery(
  * More efficient than loading all models
  */
 export function useFavoriteModels(): { models: Model[]; isLoading: boolean } {
-  const { hasKey } = useApiKeyStatus("openrouter");
+  const { hasKey } = useHasAnyApiKey();
   const { data: settings, isPending: isSettingsPending } = useUserSettings();
   const favoriteIds = settings?.favoriteModels ?? [];
 
@@ -60,7 +63,7 @@ export function useFavoriteModels(): { models: Model[]; isLoading: boolean } {
  * Get favorite models for list view (lightweight)
  */
 export function useFavoriteModelsForList(): { models: ModelListItem[]; isLoading: boolean } {
-  const { hasKey } = useApiKeyStatus("openrouter");
+  const { hasKey } = useHasAnyApiKey();
   const { data: settings, isLoading: isSettingsLoading } = useUserSettings();
   const favoriteIds = settings?.favoriteModels ?? [];
 
@@ -86,13 +89,16 @@ export function useInfiniteModelsQuery(
   params: InfiniteModelsQueryParams = {},
   options: { enabled?: boolean } = {},
 ) {
-  const { hasKey } = useApiKeyStatus("openrouter");
+  const { hasKey, accessibleProviders } = useHasAnyApiKey();
   const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
+  const mergedParams = accessibleProviders
+    ? { ...params, providers: params.providers?.length ? params.providers : accessibleProviders }
+    : params;
 
   const query = useInfiniteQuery<ModelsQueryResult>({
-    queryKey: [...MODELS_KEY, "infinite", { ...params, pageSize }],
+    queryKey: [...MODELS_KEY, "infinite", { ...mergedParams, pageSize }],
     queryFn: ({ pageParam }) =>
-      fetchModels({ ...params, pageSize, page: pageParam as number }),
+      fetchModels({ ...mergedParams, pageSize, page: pageParam as number }),
     initialPageParam: 1,
     getNextPageParam: lastPage =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
@@ -141,13 +147,16 @@ export function useInfiniteModelsListQuery(
   isFetchingNextPage: boolean;
   isLoading: boolean;
 } {
-  const { hasKey } = useApiKeyStatus("openrouter");
+  const { hasKey, accessibleProviders } = useHasAnyApiKey();
   const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
+  const mergedParams = accessibleProviders
+    ? { ...params, providers: params.providers?.length ? params.providers : accessibleProviders }
+    : params;
 
   const query = useInfiniteQuery<ModelsListQueryResult>({
-    queryKey: [...MODELS_KEY, "infinite-list", { ...params, pageSize }],
+    queryKey: [...MODELS_KEY, "infinite-list", { ...mergedParams, pageSize }],
     queryFn: ({ pageParam }) =>
-      fetchModelsForList({ ...params, pageSize, page: pageParam as number }),
+      fetchModelsForList({ ...mergedParams, pageSize, page: pageParam as number }),
     initialPageParam: 1,
     getNextPageParam: lastPage =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
