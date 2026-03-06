@@ -1,12 +1,8 @@
 import * as z from "zod";
 
-import { THREAD_ICONS } from "~/lib/db/schema/chat";
+import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
-/**
- * Supported API key providers.
- * Add new providers here to extend support across the application.
- */
-export type ApiKeyProvider = "openrouter" | "parallel";
+import { THREAD_ICONS } from "~/lib/db/schema/chat";
 
 export type LandingPageContentType = "suggestions" | "greeting" | "blank";
 

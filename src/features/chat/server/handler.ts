@@ -1,6 +1,7 @@
 import { NoSuchToolError } from "ai";
 
 import type { ChatUIMessage } from "~/features/chat/types";
+import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
 import { ensureThreadExists, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
 import { formatProviderError } from "~/features/chat/server/error";
@@ -11,8 +12,7 @@ import { getUserSettingsAndKeys } from "~/features/settings/queries";
 type ChatRequestBody = {
   messages: ChatUIMessage[];
   threadId?: string;
-  openrouterClientKey?: string;
-  parallelClientKey?: string;
+  clientKeys?: Partial<Record<ApiKeyProvider, string>>;
   searchEnabled?: boolean;
   reasoningLevel?: string;
   modelId?: string;
@@ -26,8 +26,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
   const {
     messages,
     threadId,
-    openrouterClientKey,
-    parallelClientKey,
+    clientKeys,
     searchEnabled,
     reasoningLevel,
     modelId,
@@ -41,10 +40,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
 
   const [threadStatus, { settings, resolvedKeys }] = await Promise.all([
     threadId ? ensureThreadExists(threadId, userId) : Promise.resolve(null),
-    getUserSettingsAndKeys(userId, {
-      openrouter: openrouterClientKey,
-      parallel: parallelClientKey,
-    }),
+    getUserSettingsAndKeys(userId, clientKeys),
   ]);
 
   const openrouterKey = resolvedKeys.openrouter;

@@ -28,9 +28,7 @@ type StorageType = "client" | "server";
 
 function useApiKeyState(provider: ApiKeyProvider) {
   const { data: settings, isLoading } = useUserSettings({ enabled: true });
-  const clientKey = useChatUIStore(s =>
-    provider === "openrouter" ? s.openrouterKey : s.parallelKey,
-  );
+  const clientKey = useChatUIStore(s => s.clientKeys[provider]);
 
   const hasClientKey = !!clientKey;
   const hasServerKey = settings?.configuredApiKeys?.[provider] ?? false;
@@ -46,12 +44,8 @@ export function useApiKeyForm(provider: ApiKeyProvider) {
   const setApiKeyMutation = useSetApiKey();
   const removeApiKeyMutation = useRemoveApiKey();
 
-  const setClientKey = useChatUIStore(state =>
-    provider === "openrouter" ? state.setOpenRouterKey : state.setParallelKey,
-  );
-  const removeClientKey = useChatUIStore(state =>
-    provider === "openrouter" ? state.removeOpenRouterKey : state.removeParallelKey,
-  );
+  const setKey = useChatUIStore(state => state.setClientApiKey);
+  const removeKey = useChatUIStore(state => state.removeClientApiKey);
 
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
@@ -83,7 +77,7 @@ export function useApiKeyForm(provider: ApiKeyProvider) {
         });
       }
       else {
-        setClientKey(result.apiKey);
+        setKey(provider, result.apiKey);
       }
       setApiKey("");
       setStorageType(null);
@@ -101,7 +95,7 @@ export function useApiKeyForm(provider: ApiKeyProvider) {
   const handleDelete = async () => {
     try {
       await removeApiKeyMutation.mutateAsync(provider);
-      removeClientKey();
+      removeKey(provider);
       setStorageType(null);
       toast.success("API key removed");
     }

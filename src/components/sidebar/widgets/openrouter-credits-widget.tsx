@@ -10,7 +10,7 @@ import { OPENROUTER_CREDITS_KEY } from "~/features/settings/hooks/use-user-setti
 
 export function OpenRouterCreditsWidget() {
   const { hasKey, source, isLoading: isKeyLoading } = useApiKeyStatus("openrouter");
-  const openrouterClientKey = useChatUIStore(s => s.openrouterKey) ?? undefined;
+  const openrouterClientKey = useChatUIStore(s => s.clientKeys.openrouter);
 
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: [...OPENROUTER_CREDITS_KEY, openrouterClientKey ?? "", source],
