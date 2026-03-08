@@ -97,6 +97,7 @@ export function ChatInput({
               onKeyDown={input.onKeyDown}
               onPaste={attachments.handlePaste}
               placeholder="Type your message here..."
+              autoFocus
               disabled={apiStatus.hasOpenRouterKey === false}
               className={cn(`
                 resize-none rounded-none border-0 px-3 py-3 pr-12 text-base
