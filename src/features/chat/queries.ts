@@ -432,6 +432,76 @@ export async function ensureThreadExists(
 }
 
 /**
+ * Ensure a thread exists for a user, creating it if missing.
+ * Includes subscription-based thread limit check before creation.
+ *
+ * @param threadId ID of the thread
+ * @param userId ID of the user
+ * @param title Optional title for new threads
+ */
+export async function ensureThreadExistsWithLimitCheck(
+  threadId: string,
+  userId: string,
+  title?: string,
+): Promise<
+  | { ok: true; exists: boolean; owned: boolean; created: boolean }
+  | { ok: false; reason: string; currentUsage: number; limit: number }
+> {
+  const existing = await db
+    .select({ id: threads.id, userId: threads.userId })
+    .from(threads)
+    .where(eq(threads.id, threadId))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return {
+      ok: true,
+      exists: true,
+      owned: existing[0].userId === userId,
+      created: false,
+    };
+  }
+
+  // Thread doesn't exist - check limit and create
+  return db.transaction(async (tx) => {
+    const subRow = await tx
+      .select({ tier: subscriptions.tier })
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId))
+      .limit(1);
+
+    const tier = subRow[0]?.tier ?? "free";
+    const threadLimit = TIER_LIMITS[tier].threads;
+
+    const threadCountResult = await tx
+      .select({ count: count() })
+      .from(threads)
+      .where(eq(threads.userId, userId));
+
+    const currentCount = threadCountResult[0]?.count ?? 0;
+
+    if (threadLimit !== null && currentCount >= threadLimit) {
+      return {
+        ok: false as const,
+        reason: `You've reached your limit of ${threadLimit} threads. Delete some threads or upgrade to continue.`,
+        currentUsage: currentCount,
+        limit: threadLimit,
+      };
+    }
+
+    const now = new Date();
+    await tx.insert(threads).values({
+      id: threadId,
+      userId,
+      title: title || "New Thread",
+      lastMessageAt: now,
+    });
+
+    return { ok: true as const, exists: true, owned: true, created: true };
+  });
+}
+
+/**
  * Get a thread by ID with basic info
  * Cached per-request using React cache() for deduplication.
  *

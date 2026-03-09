@@ -1,4 +1,3 @@
-import type { UIMessage } from "ai";
 import type { Metadata } from "next";
 
 import { redirect } from "next/navigation";
@@ -27,24 +26,32 @@ export default async function ChatServer({ params }: ChatServerProps) {
     redirect("/");
   }
 
-  // Fetch thread, messages, and parent thread in parallel
-  const [thread, initialMessages, parentThread] = await Promise.all([
-    getThreadById(id),
-    getMessagesByThreadId(id),
-    getParentThread(id),
-  ]);
+  const thread = await getThreadById(id);
 
-  // If thread exists, verify ownership
-  // If thread doesn't exist, allow access - it will be created on-demand by the chat API
-  // (This supports optimistic navigation where client navigates before server creates thread)
-  if (thread && thread.userId !== session.user.id) {
+  // New thread fast-path: skip pointless DB queries for threads that don't exist yet
+  if (!thread) {
+    return (
+      <ChatThread
+        params={Promise.resolve({ id })}
+        initialMessages={[]}
+        initialPendingMessage={null}
+        parentThread={null}
+        lastUsedModelId={null}
+        initialThread={null}
+      />
+    );
+  }
+
+  // Existing thread: verify ownership
+  if (thread.userId !== session.user.id) {
     redirect("/");
   }
 
-  // Note: Initial message is now retrieved on the client side from sessionStorage
-  // to avoid URL length limits. This is only passed to the component as null here.
-  // The client component (chat-thread.tsx) will retrieve it from sessionStorage.
-  const initialPendingMessage: UIMessage | null = null;
+  // Fetch messages and parent thread in parallel
+  const [initialMessages, parentThread] = await Promise.all([
+    getMessagesByThreadId(id),
+    getParentThread(id),
+  ]);
 
   // Derive the last-used model from the most recent user message that has a modelId
   const lastUsedModelId = initialMessages
@@ -56,24 +63,20 @@ export default async function ChatServer({ params }: ChatServerProps) {
     <ChatThread
       params={Promise.resolve({ id })}
       initialMessages={initialMessages}
-      initialPendingMessage={initialPendingMessage}
+      initialPendingMessage={null}
       parentThread={parentThread}
       lastUsedModelId={lastUsedModelId}
-      initialThread={
-        thread
-          ? {
-              id: thread.id,
-              title: thread.title,
-              icon: thread.icon,
-              lastMessageAt: thread.lastMessageAt?.toISOString() ?? null,
-              userId: thread.userId,
-              createdAt: thread.createdAt.toISOString(),
-              updatedAt: thread.updatedAt.toISOString(),
-              isShared: false,
-              tags: [],
-            }
-          : null
-      }
+      initialThread={{
+        id: thread.id,
+        title: thread.title,
+        icon: thread.icon,
+        lastMessageAt: thread.lastMessageAt?.toISOString() ?? null,
+        userId: thread.userId,
+        createdAt: thread.createdAt.toISOString(),
+        updatedAt: thread.updatedAt.toISOString(),
+        isShared: false,
+        tags: [],
+      }}
     />
   );
 }
