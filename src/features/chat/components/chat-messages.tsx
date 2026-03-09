@@ -34,7 +34,6 @@ export const ChatMessages = memo(({
   onRetryCreditError?: () => void;
   onDismissCreditError?: () => void;
 }) => {
-  const searchEnabled = useChatUIStore(state => state.searchEnabled);
   const stoppedAssistantMessageInfoById = useChatUIStore(state => state.stoppedAssistantMessageInfoById);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
