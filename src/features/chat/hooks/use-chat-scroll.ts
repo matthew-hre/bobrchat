@@ -16,16 +16,13 @@ function isNearBottom(container: HTMLElement, threshold: number = SCROLL_THRESHO
   return scrollHeight - scrollTop - clientHeight <= threshold;
 }
 
-function getScrollViewport(root: HTMLElement): HTMLElement | null {
-  return root.querySelector("[data-slot='scroll-area-viewport']");
-}
-
 export function useChatScroll(
   messages: unknown[],
   options: ScrollOptions = {},
 ) {
   const { shouldScroll = true, threadId } = options;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isInitialScrollComplete, setIsInitialScrollComplete] = useState(hasAppLoaded);
   const prevThreadIdRef = useRef<string | undefined>(threadId);
@@ -39,11 +36,7 @@ export function useChatScroll(
   }, []);
 
   useEffect(() => {
-    const root = scrollRef.current;
-    if (!root)
-      return;
-
-    const viewport = getScrollViewport(root);
+    const viewport = viewportRef.current;
     if (!viewport)
       return;
 
@@ -105,6 +98,7 @@ export function useChatScroll(
 
   return {
     scrollRef,
+    viewportRef,
     messagesEndRef,
     isInitialScrollComplete,
   };

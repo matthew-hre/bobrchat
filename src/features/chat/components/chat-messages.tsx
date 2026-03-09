@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 
 import type { ChatUIMessage } from "~/features/chat/types";
 
@@ -12,6 +12,11 @@ import type { EditedMessagePayload } from "./messages/inline-message-editor";
 import { AssistantMessage } from "./messages/assistant-message";
 import { EditableUserMessage } from "./messages/editable-user-message";
 import { LoadingSpinner } from "./ui/loading-spinner";
+
+type ChatRow
+  = | { kind: "user"; key: string; message: ChatUIMessage; previousModelId: string | null }
+    | { kind: "assistant"; key: string; message: ChatUIMessage; isLastMessage: boolean; creditError: { messageId: string } | null }
+    | { kind: "loading"; key: string };
 
 export const ChatMessages = memo(({
   messages,
@@ -41,6 +46,34 @@ export const ChatMessages = memo(({
 
   const filteredMessages = useFilteredMessages(messages);
 
+  const rows: ChatRow[] = useMemo(() => {
+    const result: ChatRow[] = filteredMessages.map((message, idx) => {
+      if (message.role === "user") {
+        const nextMessage = filteredMessages[idx + 1];
+        const previousModelId = message.modelId
+          || (nextMessage?.role === "assistant"
+            ? (nextMessage.metadata?.model || nextMessage.stoppedModelId || stoppedAssistantMessageInfoById[nextMessage.id]?.modelId || null)
+            : null);
+        return { kind: "user", key: message.id, message, previousModelId };
+      }
+
+      const isLastMessage = idx === filteredMessages.length - 1;
+      return {
+        kind: "assistant",
+        key: message.id,
+        message,
+        isLastMessage,
+        creditError: isLastMessage ? creditError ?? null : null,
+      };
+    });
+
+    if (isLoading) {
+      result.push({ kind: "loading", key: "loading" });
+    }
+
+    return result;
+  }, [filteredMessages, stoppedAssistantMessageInfoById, creditError, isLoading]);
+
   const handleStartEdit = (messageId: string) => {
     if (canEditMessages) {
       setEditingMessageId(messageId);
@@ -59,24 +92,22 @@ export const ChatMessages = memo(({
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 p-4 py-8">
-      {filteredMessages.map((message, messageIndex) => {
-        if (message.role === "user") {
-          const nextMessage = filteredMessages[messageIndex + 1];
-          const previousModelId = message.modelId
-            || (nextMessage?.role === "assistant"
-              ? (nextMessage.metadata?.model || nextMessage.stoppedModelId || stoppedAssistantMessageInfoById[nextMessage.id]?.modelId || null)
-              : null);
-
+    <div className="mx-auto w-full max-w-3xl p-4 py-8">
+      {rows.map((row) => {
+        if (row.kind === "user") {
           return (
-            <div key={message.id} data-message-id={message.id}>
+            <div
+              key={row.key}
+              data-message-id={row.message.id}
+              className="mb-4"
+            >
               <EditableUserMessage
-                message={message}
-                previousModelId={previousModelId}
-                isEditing={editingMessageId === message.id}
-                onStartEdit={() => handleStartEdit(message.id)}
+                message={row.message}
+                previousModelId={row.previousModelId}
+                isEditing={editingMessageId === row.message.id}
+                onStartEdit={() => handleStartEdit(row.message.id)}
                 onCancelEdit={handleCancelEdit}
-                onSubmitEdit={payload => handleSubmitEdit(message.id, payload)}
+                onSubmitEdit={payload => handleSubmitEdit(row.message.id, payload)}
                 canEdit={canEditMessages && !!onEditMessage}
                 isSubmitting={isEditSubmitting}
               />
@@ -84,22 +115,33 @@ export const ChatMessages = memo(({
           );
         }
 
-        return (
-          <div key={message.id} data-message-id={message.id}>
-            <AssistantMessage
-              message={message}
-              isLastMessage={messageIndex === filteredMessages.length - 1}
-              isLoading={isLoading ?? false}
-              onRegenerate={onRegenerate}
-              isRegenerating={isRegenerating}
-              creditError={creditError && messageIndex === filteredMessages.length - 1 ? creditError : null}
-              onRetryCreditError={onRetryCreditError}
-              onDismissCreditError={onDismissCreditError}
-            />
-          </div>
-        );
+        if (row.kind === "assistant") {
+          return (
+            <div
+              key={row.key}
+              data-message-id={row.message.id}
+              className="mb-4"
+            >
+              <AssistantMessage
+                message={row.message}
+                isLastMessage={row.isLastMessage}
+                isLoading={isLoading ?? false}
+                onRegenerate={onRegenerate}
+                isRegenerating={isRegenerating}
+                creditError={row.creditError}
+                onRetryCreditError={onRetryCreditError}
+                onDismissCreditError={onDismissCreditError}
+              />
+            </div>
+          );
+        }
+
+        if (row.kind === "loading") {
+          return <div key={row.key} className="mb-4"><LoadingSpinner /></div>;
+        }
+
+        return null;
       })}
-      {isLoading && <LoadingSpinner />}
     </div>
   );
 });

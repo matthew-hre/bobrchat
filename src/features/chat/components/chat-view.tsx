@@ -29,7 +29,7 @@ export function ChatView({
   parentThread?: { id: string; title: string } | null;
   children: React.ReactNode;
 }) {
-  const { scrollRef, messagesEndRef, isInitialScrollComplete } = useChatScroll(messages, { threadId });
+  const { scrollRef, viewportRef, messagesEndRef, isInitialScrollComplete } = useChatScroll(messages, { threadId });
 
   return (
     <div className="flex h-full max-h-screen flex-col">
@@ -37,7 +37,7 @@ export function ChatView({
       {parentThread && (
         <ParentThreadLink parentId={parentThread.id} parentTitle={parentThread.title} />
       )}
-      <ScrollArea className="min-h-0 flex-1" ref={scrollRef}>
+      <ScrollArea className="min-h-0 flex-1" ref={scrollRef} viewportRef={viewportRef}>
         <div className={cn(
           "origin-bottom transition-all duration-300 ease-out",
           isInitialScrollComplete && messages.length > 0
