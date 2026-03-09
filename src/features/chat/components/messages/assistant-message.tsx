@@ -38,7 +38,6 @@ type AssistantMessageProps = {
   message: ChatUIMessage;
   isLastMessage: boolean;
   isLoading: boolean;
-  searchEnabled: boolean;
   onRegenerate?: (messageId: string) => void;
   isRegenerating?: boolean;
   creditError?: { messageId: string } | null;
@@ -50,7 +49,6 @@ export const AssistantMessage = memo(({
   message,
   isLastMessage,
   isLoading,
-  searchEnabled,
   onRegenerate,
   isRegenerating,
   creditError,
@@ -84,7 +82,6 @@ export const AssistantMessage = memo(({
             isLast: isLastMessage,
             showRaw,
             isStopped,
-            searchEnabled,
             isLoading,
           }}
         />

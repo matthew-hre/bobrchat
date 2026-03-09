@@ -91,7 +91,6 @@ export const ChatMessages = memo(({
               message={message}
               isLastMessage={messageIndex === filteredMessages.length - 1}
               isLoading={isLoading ?? false}
-              searchEnabled={searchEnabled}
               onRegenerate={onRegenerate}
               isRegenerating={isRegenerating}
               creditError={creditError && messageIndex === filteredMessages.length - 1 ? creditError : null}
