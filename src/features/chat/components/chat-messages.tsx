@@ -13,10 +13,10 @@ import { AssistantMessage } from "./messages/assistant-message";
 import { EditableUserMessage } from "./messages/editable-user-message";
 import { LoadingSpinner } from "./ui/loading-spinner";
 
-type ChatRow =
-  | { kind: "user"; message: ChatUIMessage; previousModelId: string | null }
-  | { kind: "assistant"; message: ChatUIMessage; isLastMessage: boolean; creditError: { messageId: string } | null }
-  | { kind: "loading" };
+type ChatRow
+  = | { kind: "user"; key: string; message: ChatUIMessage; previousModelId: string | null }
+    | { kind: "assistant"; key: string; message: ChatUIMessage; isLastMessage: boolean; creditError: { messageId: string } | null }
+    | { kind: "loading"; key: string };
 
 export const ChatMessages = memo(({
   messages,
@@ -54,12 +54,13 @@ export const ChatMessages = memo(({
           || (nextMessage?.role === "assistant"
             ? (nextMessage.metadata?.model || nextMessage.stoppedModelId || stoppedAssistantMessageInfoById[nextMessage.id]?.modelId || null)
             : null);
-        return { kind: "user", message, previousModelId };
+        return { kind: "user", key: message.id, message, previousModelId };
       }
 
       const isLastMessage = idx === filteredMessages.length - 1;
       return {
         kind: "assistant",
+        key: message.id,
         message,
         isLastMessage,
         creditError: isLastMessage ? creditError ?? null : null,
@@ -67,7 +68,7 @@ export const ChatMessages = memo(({
     });
 
     if (isLoading) {
-      result.push({ kind: "loading" });
+      result.push({ kind: "loading", key: "loading" });
     }
 
     return result;
@@ -91,11 +92,15 @@ export const ChatMessages = memo(({
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 p-4 py-8">
+    <div className="mx-auto w-full max-w-3xl p-4 py-8">
       {rows.map((row) => {
         if (row.kind === "user") {
           return (
-            <div key={row.message.id} data-message-id={row.message.id}>
+            <div
+              key={row.key}
+              data-message-id={row.message.id}
+              className="mb-4"
+            >
               <EditableUserMessage
                 message={row.message}
                 previousModelId={row.previousModelId}
@@ -112,7 +117,11 @@ export const ChatMessages = memo(({
 
         if (row.kind === "assistant") {
           return (
-            <div key={row.message.id} data-message-id={row.message.id}>
+            <div
+              key={row.key}
+              data-message-id={row.message.id}
+              className="mb-4"
+            >
               <AssistantMessage
                 message={row.message}
                 isLastMessage={row.isLastMessage}
@@ -128,7 +137,7 @@ export const ChatMessages = memo(({
         }
 
         if (row.kind === "loading") {
-          return <LoadingSpinner key="loading" />;
+          return <div key={row.key} className="mb-4"><LoadingSpinner /></div>;
         }
 
         return null;
