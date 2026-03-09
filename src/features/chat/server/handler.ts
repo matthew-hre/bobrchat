@@ -3,7 +3,7 @@ import { createUIMessageStream, createUIMessageStreamResponse, NoSuchToolError }
 import type { ChatUIMessage } from "~/features/chat/types";
 import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
-import { ensureThreadExists, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
+import { ensureThreadExistsWithLimitCheck, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
 import { formatProviderError } from "~/features/chat/server/error";
 import { streamChatResponse } from "~/features/chat/server/service";
 import { generateThreadMetadata } from "~/features/chat/server/thread";
@@ -39,14 +39,26 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
   const baseModelId = modelId || "google/gemini-3-flash-preview";
 
   const [threadStatus, { settings, resolvedKeys }] = await Promise.all([
-    threadId ? ensureThreadExists(threadId, userId) : Promise.resolve(null),
+    threadId ? ensureThreadExistsWithLimitCheck(threadId, userId) : Promise.resolve(null),
     getUserSettingsAndKeys(userId, clientKeys),
   ]);
 
   const openrouterKey = resolvedKeys.openrouter;
   const parallelKey = searchEnabled ? resolvedKeys.parallel : undefined;
 
-  if (threadStatus && !threadStatus.owned) {
+  if (threadStatus && !threadStatus.ok) {
+    return new Response(JSON.stringify({
+      error: threadStatus.reason,
+      code: "THREAD_LIMIT_EXCEEDED",
+      currentUsage: threadStatus.currentUsage,
+      limit: threadStatus.limit,
+    }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  if (threadStatus && threadStatus.ok && !threadStatus.owned) {
     return new Response(JSON.stringify({ error: "Thread not found or unauthorized" }), {
       status: 403,
       headers: { "Content-Type": "application/json" },

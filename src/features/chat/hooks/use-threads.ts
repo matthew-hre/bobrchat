@@ -8,9 +8,8 @@ import { useMemo } from "react";
 import type { GroupedThreads, TagGroup } from "~/features/chat/utils/thread-grouper";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
-import { archiveThread, createNewThread, deleteThread, fetchThreadStats, regenerateThreadIcon, regenerateThreadName, renameThread, setThreadIcon } from "~/features/chat/actions";
+import { archiveThread, deleteThread, fetchThreadStats, regenerateThreadIcon, regenerateThreadName, renameThread, setThreadIcon } from "~/features/chat/actions";
 import { groupThreadsByDate, groupThreadsByTag } from "~/features/chat/utils/thread-grouper";
-import { SUBSCRIPTION_KEY } from "~/features/subscriptions/hooks/use-subscription";
 import { ARCHIVED_THREADS_KEY, THREADS_KEY } from "~/lib/queries/query-keys";
 
 export { ARCHIVED_THREADS_KEY, THREADS_KEY };
@@ -30,12 +29,6 @@ export type ThreadFromApi = {
 type ThreadsResponse = {
   threads: ThreadFromApi[];
   nextCursor: string | null;
-};
-
-type CreateThreadInput = {
-  threadId: string;
-  title?: string;
-  icon?: ThreadIcon;
 };
 
 async function fetchThreads({ pageParam, archived, tagIds, search }: { pageParam: string | undefined; archived?: boolean; tagIds?: string[]; search?: string }): Promise<ThreadsResponse> {
@@ -103,73 +96,6 @@ export function useThreads(options: { enabled?: boolean; archived?: boolean; tag
     data: groupedThreads,
     tagGroups,
   };
-}
-
-export type ThreadLimitError = {
-  error: string;
-  code: "THREAD_LIMIT_EXCEEDED";
-  currentUsage: number;
-  limit: number;
-};
-
-export function useCreateThread() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: CreateThreadInput) => {
-      const result = await createNewThread({ threadId: input.threadId, title: input.title, icon: input.icon });
-      if ("error" in result) {
-        throw result;
-      }
-      return result.threadId;
-    },
-    onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: THREADS_KEY });
-
-      const previous = queryClient.getQueryData<InfiniteData<ThreadsResponse>>(THREADS_KEY);
-
-      const now = new Date().toISOString();
-      const optimisticThread: ThreadFromApi = {
-        id: input.threadId,
-        title: input.title || "New Thread",
-        icon: input.icon ?? null,
-        lastMessageAt: now,
-        userId: "",
-        createdAt: now,
-        updatedAt: now,
-        isShared: false,
-        tags: [],
-      };
-
-      queryClient.setQueryData<InfiniteData<ThreadsResponse>>(THREADS_KEY, (old) => {
-        if (!old) {
-          return {
-            pages: [{ threads: [optimisticThread], nextCursor: null }],
-            pageParams: [undefined],
-          };
-        }
-
-        const [first, ...rest] = old.pages;
-        const withoutDup = first.threads.filter(t => t.id !== input.threadId);
-
-        return {
-          ...old,
-          pages: [{ ...first, threads: [optimisticThread, ...withoutDup] }, ...rest],
-        };
-      });
-
-      return { previous };
-    },
-    onError: (_err, _input, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(THREADS_KEY, context.previous);
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: THREADS_KEY });
-      queryClient.invalidateQueries({ queryKey: SUBSCRIPTION_KEY });
-    },
-  });
 }
 
 export function useThreadTitle(threadId: string, options: { initialThread?: ThreadFromApi | null } = {}): string | undefined {
