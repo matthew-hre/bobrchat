@@ -171,10 +171,7 @@ export function MessageParts({
         return null;
       })}
 
-      {/* Fallback for initial searching state before any parts exist (active mode only) */}
-      {isActive && isLoading && isLast && searchEnabled && parts.length === 0 && (
-        <SearchingSources id={`${messageId}-search-fallback`} sources={[]} isSearching={true} />
-      )}
+
     </>
   );
 }
