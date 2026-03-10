@@ -27,16 +27,31 @@ export function useChatScroll(
   const prevThreadIdRef = useRef<string | undefined>(threadId);
   const isUserNearBottomRef = useRef(true);
   const scrollToBottomRef = useRef<(() => void) | null>(null);
+  // Counter-based flag: > 0 means a programmatic scroll is in flight.
+  // Using a counter instead of a boolean avoids races when multiple
+  // programmatic scrolls overlap (e.g. rapid onChange from ResizeObserver).
+  const programmaticScrollCountRef = useRef(0);
 
   const registerScrollToBottom = useCallback((fn: () => void) => {
     scrollToBottomRef.current = fn;
   }, []);
 
   const scrollToBottom = useCallback(() => {
-    scrollToBottomRef.current?.();
+    const viewport = viewportRef.current;
+    if (!viewport)
+      return;
+    programmaticScrollCountRef.current++;
+    viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
+    // Reset after the scroll event fires
+    requestAnimationFrame(() => {
+      programmaticScrollCountRef.current = Math.max(0, programmaticScrollCountRef.current - 1);
+    });
   }, []);
 
   const handleScroll = useCallback((e: Event) => {
+    // Ignore programmatic scrolls — only user gestures can un-pin
+    if (programmaticScrollCountRef.current > 0)
+      return;
     const viewport = e.target as HTMLElement;
     if (!viewport)
       return;
@@ -101,5 +116,6 @@ export function useChatScroll(
     isInitialScrollComplete,
     isUserNearBottomRef,
     registerScrollToBottom,
+    scrollToBottom,
   };
 }

@@ -86,45 +86,30 @@ export const ChatMessages = memo(({
     return result;
   }, [filteredMessages, stoppedAssistantMessageInfoById, creditError, isLoading]);
 
+  const { registerScrollToBottom, isUserNearBottomRef, scrollToBottom } = scrollContext;
+
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollContext.viewportRef.current,
     estimateSize: index => estimateRowSize(rows[index]),
     overscan: 5,
     getItemKey: index => rows[index].key,
+    paddingStart: 32,
+    paddingEnd: 32,
+    onChange: () => {
+      // Any time virtual item sizes change (measurement corrections, LaTeX
+      // rendering, streaming content growth), re-pin to bottom if the user
+      // hasn't scrolled away.
+      if (!isUserNearBottomRef.current)
+        return;
+      scrollToBottom();
+    },
   });
-
-  // Register scroll-to-bottom with the scroll hook
-  const { registerScrollToBottom, isUserNearBottomRef } = scrollContext;
   useEffect(() => {
     registerScrollToBottom(() => {
-      if (rows.length > 0) {
-        virtualizer.scrollToIndex(rows.length - 1, { align: "end" });
-      }
+      scrollToBottom();
     });
-  }, [registerScrollToBottom, virtualizer, rows.length]);
-
-  // Pin to bottom while streaming: when new content causes height changes
-  const lastRowCount = useMemo(() => rows.length, [rows.length]);
-  useEffect(() => {
-    if (!isLoading || !isUserNearBottomRef.current)
-      return;
-
-    const viewport = scrollContext.viewportRef.current;
-    if (!viewport)
-      return;
-
-    let rafId: number;
-    const pinToBottom = () => {
-      if (isUserNearBottomRef.current) {
-        viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
-      }
-      rafId = requestAnimationFrame(pinToBottom);
-    };
-    rafId = requestAnimationFrame(pinToBottom);
-
-    return () => cancelAnimationFrame(rafId);
-  }, [isLoading, scrollContext.viewportRef, isUserNearBottomRef, lastRowCount]);
+  }, [registerScrollToBottom, scrollToBottom]);
 
   const handleStartEdit = (messageId: string) => {
     if (canEditMessages) {
@@ -151,7 +136,7 @@ export const ChatMessages = memo(({
 
   return (
     <div
-      className="mx-auto w-full max-w-3xl p-4 py-8"
+      className="mx-auto w-full max-w-3xl px-4"
       style={{
         height: `${virtualizer.getTotalSize()}px`,
         position: "relative",
