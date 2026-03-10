@@ -12,6 +12,14 @@ import { BetaBanner } from "./beta-banner";
 import { ChatInput } from "./chat-input";
 import { ParentThreadLink } from "./ui/parent-thread-link";
 
+export type ChatScrollContext = {
+  viewportRef: React.RefObject<HTMLDivElement | null>;
+  viewportElement: HTMLDivElement | null;
+  isUserNearBottomRef: React.RefObject<boolean>;
+  registerScrollToBottom: (fn: () => void) => void;
+  scrollToBottom: () => void;
+};
+
 export function ChatView({
   messages,
   sendMessage,
@@ -27,9 +35,11 @@ export function ChatView({
   onStop?: () => void;
   threadId?: string;
   parentThread?: { id: string; title: string } | null;
-  children: React.ReactNode;
+  children: (scrollContext: ChatScrollContext) => React.ReactNode;
 }) {
-  const { scrollRef, viewportRef, messagesEndRef, isInitialScrollComplete } = useChatScroll(messages, { threadId });
+  const { scrollRef, viewportRef, viewportCallbackRef, viewportElement, isInitialScrollComplete, isUserNearBottomRef, registerScrollToBottom, scrollToBottom } = useChatScroll(messages, { threadId });
+
+  const scrollContext: ChatScrollContext = { viewportRef, viewportElement, isUserNearBottomRef, registerScrollToBottom, scrollToBottom };
 
   return (
     <div className="flex h-full max-h-screen flex-col">
@@ -37,17 +47,16 @@ export function ChatView({
       {parentThread && (
         <ParentThreadLink parentId={parentThread.id} parentTitle={parentThread.title} />
       )}
-      <ScrollArea className="min-h-0 flex-1" ref={scrollRef} viewportRef={viewportRef}>
+      <ScrollArea className="min-h-0 flex-1" ref={scrollRef} viewportRef={viewportCallbackRef}>
         <div className={cn(
-          "origin-bottom transition-all duration-300 ease-out",
+          "transition-[opacity,transform] duration-300 ease-out",
           isInitialScrollComplete && messages.length > 0
-            ? "translate-y-0 scale-100 opacity-100"
-            : "translate-y-2 scale-99 opacity-0",
+            ? "translate-y-0 opacity-100"
+            : "translate-y-2 opacity-0",
         )}
         >
-          {children}
+          {children(scrollContext)}
         </div>
-        <div ref={messagesEndRef} />
       </ScrollArea>
       <div className="shrink-0">
         <ChatInput

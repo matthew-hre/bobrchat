@@ -1,12 +1,14 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatUIMessage } from "~/features/chat/types";
 
 import { useFilteredMessages } from "~/features/chat/hooks/use-filtered-messages";
 import { useChatUIStore } from "~/features/chat/store";
 
+import type { ChatScrollContext } from "./chat-view";
 import type { EditedMessagePayload } from "./messages/inline-message-editor";
 
 import { AssistantMessage } from "./messages/assistant-message";
@@ -18,6 +20,14 @@ type ChatRow
     | { kind: "assistant"; key: string; message: ChatUIMessage; isLastMessage: boolean; creditError: { messageId: string } | null }
     | { kind: "loading"; key: string };
 
+function estimateRowSize(row: ChatRow): number {
+  if (row.kind === "loading")
+    return 56;
+  if (row.kind === "user")
+    return 120;
+  return 220;
+}
+
 export const ChatMessages = memo(({
   messages,
   isLoading,
@@ -28,6 +38,7 @@ export const ChatMessages = memo(({
   creditError,
   onRetryCreditError,
   onDismissCreditError,
+  scrollContext,
 }: {
   messages: ChatUIMessage[];
   isLoading?: boolean;
@@ -38,6 +49,7 @@ export const ChatMessages = memo(({
   creditError?: { messageId: string } | null;
   onRetryCreditError?: () => void;
   onDismissCreditError?: () => void;
+  scrollContext: ChatScrollContext;
 }) => {
   const stoppedAssistantMessageInfoById = useChatUIStore(state => state.stoppedAssistantMessageInfoById);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -74,6 +86,47 @@ export const ChatMessages = memo(({
     return result;
   }, [filteredMessages, stoppedAssistantMessageInfoById, creditError, isLoading]);
 
+  const { registerScrollToBottom, isUserNearBottomRef, scrollToBottom } = scrollContext;
+
+  // Batch onChange → scrollToBottom into a single rAF per frame to avoid
+  // cascading scroll calls from rapid measurement corrections.
+  const onChangeRafRef = useRef(0);
+  const batchedScrollToBottom = useCallback(() => {
+    if (onChangeRafRef.current)
+      return;
+    onChangeRafRef.current = requestAnimationFrame(() => {
+      onChangeRafRef.current = 0;
+      if (isUserNearBottomRef.current) {
+        scrollToBottom();
+      }
+    });
+  }, [isUserNearBottomRef, scrollToBottom]);
+
+  useEffect(() => {
+    return () => {
+      if (onChangeRafRef.current) {
+        cancelAnimationFrame(onChangeRafRef.current);
+      }
+    };
+  }, []);
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollContext.viewportElement,
+    estimateSize: index => estimateRowSize(rows[index]),
+    overscan: 5,
+    getItemKey: index => rows[index].key,
+    paddingStart: 32,
+    paddingEnd: 32,
+    onChange: batchedScrollToBottom,
+  });
+
+  useEffect(() => {
+    registerScrollToBottom(() => {
+      scrollToBottom();
+    });
+  }, [registerScrollToBottom, scrollToBottom]);
+
   const handleStartEdit = (messageId: string) => {
     if (canEditMessages) {
       setEditingMessageId(messageId);
@@ -91,15 +144,39 @@ export const ChatMessages = memo(({
     }
   };
 
+  const measureElement = useCallback((node: HTMLElement | null) => {
+    if (node) {
+      virtualizer.measureElement(node);
+    }
+  }, [virtualizer]);
+
   return (
-    <div className="mx-auto w-full max-w-3xl p-4 py-8">
-      {rows.map((row) => {
+    <div
+      className="mx-auto w-full max-w-3xl px-4"
+      style={{
+        height: `${virtualizer.getTotalSize()}px`,
+        position: "relative",
+        width: "100%",
+      }}
+    >
+      {virtualizer.getVirtualItems().map((virtualRow) => {
+        const row = rows[virtualRow.index];
+
         if (row.kind === "user") {
           return (
             <div
               key={row.key}
+              ref={measureElement}
+              data-index={virtualRow.index}
               data-message-id={row.message.id}
-              className="mb-4"
+              className="pb-4"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
             >
               <EditableUserMessage
                 message={row.message}
@@ -119,8 +196,17 @@ export const ChatMessages = memo(({
           return (
             <div
               key={row.key}
+              ref={measureElement}
+              data-index={virtualRow.index}
               data-message-id={row.message.id}
-              className="mb-4"
+              className="pb-4"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
             >
               <AssistantMessage
                 message={row.message}
@@ -137,7 +223,23 @@ export const ChatMessages = memo(({
         }
 
         if (row.kind === "loading") {
-          return <div key={row.key} className="mb-4"><LoadingSpinner /></div>;
+          return (
+            <div
+              key={row.key}
+              ref={measureElement}
+              data-index={virtualRow.index}
+              className="pb-4"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <LoadingSpinner />
+            </div>
+          );
         }
 
         return null;
