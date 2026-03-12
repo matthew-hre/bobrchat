@@ -152,7 +152,7 @@ export const ChatMessages = memo(({
 
   return (
     <div
-      className="mx-auto w-full max-w-3xl px-4"
+      className="mx-auto w-full max-w-3xl"
       style={{
         height: `${virtualizer.getTotalSize()}px`,
         position: "relative",
@@ -169,7 +169,7 @@ export const ChatMessages = memo(({
               ref={measureElement}
               data-index={virtualRow.index}
               data-message-id={row.message.id}
-              className="pb-4"
+              className="px-4 pb-4"
               style={{
                 position: "absolute",
                 top: 0,
@@ -199,7 +199,7 @@ export const ChatMessages = memo(({
               ref={measureElement}
               data-index={virtualRow.index}
               data-message-id={row.message.id}
-              className="pb-4"
+              className="px-4 pb-4"
               style={{
                 position: "absolute",
                 top: 0,
@@ -228,7 +228,7 @@ export const ChatMessages = memo(({
               key={row.key}
               ref={measureElement}
               data-index={virtualRow.index}
-              className="pb-4"
+              className="px-4 pb-4"
               style={{
                 position: "absolute",
                 top: 0,
