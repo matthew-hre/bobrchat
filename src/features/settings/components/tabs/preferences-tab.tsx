@@ -13,6 +13,9 @@ import {
 import {
   DataManagementSection,
 } from "../sections/data-management-section";
+import {
+  ExperimentalSection,
+} from "../sections/experimental-section";
 
 export function PreferencesTab() {
   const { data: settings, isLoading } = useUserSettings({ enabled: true });
@@ -29,6 +32,10 @@ export function PreferencesTab() {
         <Separator />
 
         <AdvancedFeaturesSection settings={settings} />
+
+        <Separator />
+
+        <ExperimentalSection />
 
         <Separator />
 

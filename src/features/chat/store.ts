@@ -24,6 +24,10 @@ type ChatUIStore = {
   reasoningLevel: string;
   setReasoningLevel: (level: string) => void;
 
+  // Experimental features
+  handoffEnabled: boolean;
+  setHandoffEnabled: (enabled: boolean) => void;
+
   // Model selector popover
   modelSelectorOpen: boolean;
   setModelSelectorOpen: (open: boolean) => void;
@@ -82,6 +86,10 @@ export const useChatUIStore = create<ChatUIStore>()(
 
       reasoningLevel: "none",
       setReasoningLevel: level => set({ reasoningLevel: level }),
+
+      // Experimental features
+      handoffEnabled: false,
+      setHandoffEnabled: enabled => set({ handoffEnabled: enabled }),
 
       // Model selector popover
       modelSelectorOpen: false,
@@ -164,6 +172,7 @@ export const useChatUIStore = create<ChatUIStore>()(
         selectedModelId: state.selectedModelId,
         searchEnabled: state.searchEnabled,
         reasoningLevel: state.reasoningLevel,
+        handoffEnabled: state.handoffEnabled,
       }),
     },
   ),

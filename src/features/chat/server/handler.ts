@@ -18,6 +18,7 @@ type ChatRequestBody = {
   modelId?: string;
   supportsNativePdf?: boolean;
   supportsTools?: boolean;
+  handoffEnabled?: boolean;
   isRegeneration?: boolean;
   modelPricing?: { prompt: string; completion: string };
 };
@@ -32,6 +33,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     modelId,
     supportsNativePdf,
     supportsTools,
+    handoffEnabled,
     isRegeneration,
     modelPricing,
   }: ChatRequestBody = await req.json();
@@ -105,6 +107,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     threadId,
     modelPricing,
     supportsTools,
+    handoffEnabled,
   );
 
   if (threadId && messages.length === 1 && messages[0].role === "user") {
