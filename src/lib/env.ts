@@ -17,6 +17,7 @@ const schema = {
     R2_PUBLIC_URL: z.url(),
     RESEND_API_KEY: z.string(),
     OPENROUTER_API_KEY: z.string().optional(),
+    OPENAI_API_KEY: z.string().optional(),
     CRON_SECRET: z.string().optional(),
     POLAR_ACCESS_TOKEN: z.string().optional(),
     POLAR_SANDBOX: z.string().optional().transform(v => v === "true"),

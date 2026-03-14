@@ -29,6 +29,8 @@ export type ModelsQueryParams = {
   search?: string;
   capabilities?: CapabilityFilter[];
   providers?: string[];
+  /** When set, only return models that exist in modelProviderAvailability for these providers */
+  directProviders?: string[];
   sortOrder?: SortOrder;
   page?: number;
   pageSize?: number;

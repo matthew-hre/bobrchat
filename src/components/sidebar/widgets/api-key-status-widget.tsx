@@ -7,20 +7,26 @@ import { useApiKeyStatus } from "~/features/settings/hooks/use-api-status";
 export function ApiKeyStatusWidget() {
   const { hasKey: hasOpenRouterKey, isLoading: isOpenRouterLoading } = useApiKeyStatus("openrouter");
   const { hasKey: hasParallelKey, isLoading: isParallelLoading } = useApiKeyStatus("parallel");
+  const { hasKey: hasOpenAIKey, isLoading: isOpenAILoading } = useApiKeyStatus("openai");
 
-  const isLoading = isOpenRouterLoading || isParallelLoading;
+  const isLoading = isOpenRouterLoading || isParallelLoading || isOpenAILoading;
 
   const getApiKeyStatus = () => {
-    if (!hasOpenRouterKey && !hasParallelKey) {
+    const keyCount = [hasOpenRouterKey, hasOpenAIKey, hasParallelKey].filter(Boolean).length;
+    if (keyCount === 0) {
       return "No API Keys Set";
     }
-    if (hasOpenRouterKey && !hasParallelKey) {
-      return "OpenRouter Key Set";
+    if (keyCount === 3) {
+      return "All API Keys Set";
     }
-    if (!hasOpenRouterKey && hasParallelKey) {
-      return "No OpenRouter Key Set";
-    }
-    return "All API Keys Set";
+    const names: string[] = [];
+    if (hasOpenRouterKey)
+      names.push("OpenRouter");
+    if (hasOpenAIKey)
+      names.push("OpenAI");
+    if (hasParallelKey)
+      names.push("Parallel");
+    return `${names.join(", ")} ${keyCount === 1 ? "Key" : "Keys"} Set`;
   };
 
   if (isLoading) {

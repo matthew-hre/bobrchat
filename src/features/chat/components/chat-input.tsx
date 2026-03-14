@@ -42,7 +42,7 @@ export function ChatInput({
   return (
     <div className={cn(`bg-background p-4 pt-0`, className)}>
       <div className="mx-auto max-w-3xl space-y-3">
-        {apiStatus.hasOpenRouterKey === false && !apiStatus.isOpenRouterLoading && (
+        {!apiStatus.hasAnyChatKey && !apiStatus.isAnyChatKeyLoading && (
           <ApiWarningBadge />
         )}
         <form
@@ -98,7 +98,7 @@ export function ChatInput({
               onPaste={attachments.handlePaste}
               placeholder="Type your message here..."
               autoFocus
-              disabled={apiStatus.hasOpenRouterKey === false}
+              disabled={!apiStatus.hasAnyChatKey}
               className={cn(`
                 resize-none rounded-none border-0 px-3 py-3 pr-12 text-base
                 transition-all duration-200 ease-out
@@ -160,7 +160,8 @@ export function ChatInput({
               selectedModelId={model.selectedId || undefined}
               onSelectModelAction={model.setSelectedId}
               popoverWidth="w-full"
-              isLoading={model.isLoading || apiStatus.isOpenRouterLoading}
+              isLoading={model.isLoading || apiStatus.isAnyChatKeyLoading}
+              unavailableModelIds={model.unavailableModelIds}
             />
 
             <div className="flex-1" />
@@ -171,7 +172,7 @@ export function ChatInput({
                 reasoningLevel={features.reasoningLevel}
                 searchEnabled={features.searchEnabled}
                 pendingFilesCount={attachments.pendingFiles.length}
-                hasOpenRouterKey={apiStatus.hasOpenRouterKey}
+                hasOpenRouterKey={apiStatus.hasAnyChatKey}
                 hasParallelApiKey={apiStatus.hasParallelApiKey}
                 isParallelApiLoading={apiStatus.isParallelApiLoading}
                 onReasoningLevelChange={features.setReasoningLevel}
@@ -207,7 +208,7 @@ function ApiWarningBadge() {
     >
       <AlertCircle className="text-warning mt-0.5 size-5 shrink-0" />
       <div className="text-warning-foreground text-sm">
-        No API key configured. Set up your OpenRouter API key in
+        No API key configured. Set up an API key (OpenRouter or OpenAI) in
         <Link
           href="/settings?tab=integrations"
           className={`

@@ -3,10 +3,10 @@
 import type { Model } from "@openrouter/sdk/models";
 import type { SQL } from "drizzle-orm";
 
-import { and, arrayContains, count, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, arrayContains, count, desc, eq, exists, ilike, or, sql } from "drizzle-orm";
 
 import { db } from "~/lib/db";
-import { models } from "~/lib/db/schema";
+import { modelProviderAvailability, models } from "~/lib/db/schema";
 
 import type { ModelListItem, ModelsListQueryResult, ModelsQueryParams, ModelsQueryResult, SortOrder } from "../types";
 
@@ -91,6 +91,20 @@ function buildCapabilityConditions(capabilities: string[]): SQL[] {
   return conditions;
 }
 
+function buildDirectProvidersCondition(directProviders: string[]): SQL {
+  return exists(
+    db
+      .select({ one: sql`1` })
+      .from(modelProviderAvailability)
+      .where(
+        and(
+          eq(modelProviderAvailability.modelId, models.modelId),
+          or(...directProviders.map(p => eq(modelProviderAvailability.provider, p))),
+        ),
+      ),
+  );
+}
+
 /**
  * Query models from database with filtering, sorting, and pagination
  */
@@ -99,6 +113,7 @@ export async function queryModels(params: ModelsQueryParams = {}): Promise<Model
     search,
     capabilities = [],
     providers = [],
+    directProviders = [],
     sortOrder = "provider-asc",
     page = 1,
     pageSize = 50,
@@ -114,6 +129,10 @@ export async function queryModels(params: ModelsQueryParams = {}): Promise<Model
     conditions.push(
       or(...providers.map(p => eq(models.provider, p)))!,
     );
+  }
+
+  if (directProviders.length > 0) {
+    conditions.push(buildDirectProvidersCondition(directProviders));
   }
 
   conditions.push(...buildCapabilityConditions(capabilities));
@@ -233,6 +252,30 @@ export async function getModelById(modelId: string): Promise<Model | null> {
 }
 
 /**
+ * Given a list of model IDs, return the subset that are available
+ * on at least one of the specified direct providers.
+ */
+export async function getAvailableModelIds(
+  modelIds: string[],
+  directProviders: string[],
+): Promise<string[]> {
+  if (modelIds.length === 0 || directProviders.length === 0)
+    return [];
+
+  const rows = await db
+    .selectDistinct({ modelId: modelProviderAvailability.modelId })
+    .from(modelProviderAvailability)
+    .where(
+      and(
+        or(...modelIds.map(id => eq(modelProviderAvailability.modelId, id))),
+        or(...directProviders.map(p => eq(modelProviderAvailability.provider, p))),
+      ),
+    );
+
+  return rows.map(r => r.modelId);
+}
+
+/**
  * Get total model count
  */
 export async function getModelCount(): Promise<number> {
@@ -248,6 +291,7 @@ export async function queryModelsForList(params: ModelsQueryParams = {}): Promis
     search,
     capabilities = [],
     providers = [],
+    directProviders = [],
     sortOrder = "provider-asc",
     page = 1,
     pageSize = 50,
@@ -263,6 +307,10 @@ export async function queryModelsForList(params: ModelsQueryParams = {}): Promis
     conditions.push(
       or(...providers.map(p => eq(models.provider, p)))!,
     );
+  }
+
+  if (directProviders.length > 0) {
+    conditions.push(buildDirectProvidersCondition(directProviders));
   }
 
   conditions.push(...buildCapabilityConditions(capabilities));

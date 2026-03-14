@@ -1,10 +1,12 @@
 import { createUIMessageStream, createUIMessageStreamResponse, NoSuchToolError } from "ai";
 
+import type { ResolvedProvider } from "~/features/chat/server/providers";
 import type { ChatUIMessage } from "~/features/chat/types";
 import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
 import { ensureThreadExistsWithLimitCheck, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
 import { formatProviderError } from "~/features/chat/server/error";
+import { resolveProvider } from "~/features/chat/server/providers";
 import { streamChatResponse } from "~/features/chat/server/service";
 import { generateThreadMetadata } from "~/features/chat/server/thread";
 import { getUserSettingsAndKeys } from "~/features/settings/queries";
@@ -45,7 +47,6 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     getUserSettingsAndKeys(userId, clientKeys),
   ]);
 
-  const openrouterKey = resolvedKeys.openrouter;
   const parallelKey = searchEnabled ? resolvedKeys.parallel : undefined;
 
   if (threadStatus && !threadStatus.ok) {
@@ -67,7 +68,11 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     });
   }
 
-  if (!openrouterKey) {
+  let resolved;
+  try {
+    resolved = await resolveProvider(baseModelId, resolvedKeys);
+  }
+  catch {
     return new Response(JSON.stringify({ error: "No API key configured. Provide a browser key or store one on the server." }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
@@ -91,10 +96,12 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     }
   }
 
+  const openrouterKey = resolvedKeys.openrouter;
+
   const { stream, createMetadata } = await streamChatResponse(
     messages,
     baseModelId,
-    openrouterKey,
+    resolved,
     settings,
     userId,
     searchEnabled,
@@ -108,13 +115,14 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     modelPricing,
     supportsTools,
     handoffEnabled,
+    openrouterKey,
   );
 
   if (threadId && messages.length === 1 && messages[0].role === "user") {
     const wantsTitle = settings.autoThreadNaming;
     const wantsIcon = settings.autoThreadIcon && !settings.showSidebarIcons;
 
-    if (wantsTitle || wantsIcon) {
+    if ((wantsTitle || wantsIcon) && openrouterKey) {
       const firstMessage = messages[0];
       const userMessage = firstMessage.parts
         ? firstMessage.parts
@@ -136,6 +144,8 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     }
   }
 
+  const canFallback = resolved.providerType !== "openrouter" && !!openrouterKey;
+
   const onError = (error: unknown) => {
     if (!NoSuchToolError.isInstance(error)) {
       console.error("Chat stream error", error);
@@ -151,19 +161,62 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
         await saveMessage(threadId, userId, responseMessage);
       }
     },
-    execute: ({ writer }) => {
-      writer.merge(
-        stream.toUIMessageStream({
+    execute: async ({ writer }) => {
+      const toUIStream = (s: typeof stream, meta: typeof createMetadata) =>
+        s.toUIMessageStream({
           originalMessages: messages,
-          messageMetadata: ({ part }) => {
-            const metadata = createMetadata(part);
-            return metadata;
-          },
+          messageMetadata: ({ part }) => meta(part),
           sendSources: true,
           sendReasoning: true,
           onError,
-        }),
-      );
+        });
+
+      if (!canFallback) {
+        writer.merge(toUIStream(stream, createMetadata));
+        return;
+      }
+
+      const primaryStream = toUIStream(stream, createMetadata);
+      const reader = primaryStream.getReader();
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done)
+            break;
+          writer.write(value);
+        }
+      }
+      catch (error) {
+        console.error("Direct provider failed, falling back to OpenRouter", error);
+
+        const fallbackProvider: ResolvedProvider = {
+          providerType: "openrouter",
+          providerModelId: baseModelId,
+          apiKey: openrouterKey!,
+        };
+
+        const fallback = await streamChatResponse(
+          messages,
+          baseModelId,
+          fallbackProvider,
+          settings,
+          userId,
+          searchEnabled,
+          parallelKey,
+          {
+            useOcrForPdfs: settings.useOcrForPdfs,
+            supportsNativePdf: supportsNativePdf ?? false,
+          },
+          reasoningLevel,
+          threadId,
+          modelPricing,
+          supportsTools,
+          openrouterKey,
+        );
+
+        writer.merge(toUIStream(fallback.stream, fallback.createMetadata));
+      }
     },
   });
 

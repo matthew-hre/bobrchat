@@ -6,7 +6,7 @@ import { getRequiredSession } from "~/features/auth/lib/session";
 
 import type { ModelsListQueryResult, ModelsQueryParams, ModelsQueryResult } from "./types";
 
-import { getModelById, getModelsByIds, getModelsByIdsForList, getProviders, queryModels, queryModelsForList } from "./server/queries";
+import { getAvailableModelIds, getModelById, getModelsByIds, getModelsByIdsForList, getProviders, queryModels, queryModelsForList } from "./server/queries";
 
 /**
  * Fetch models from database with filtering, sorting, and pagination
@@ -53,6 +53,18 @@ export async function fetchModelsForList(params: ModelsQueryParams = {}): Promis
   await getRequiredSession();
 
   return queryModelsForList(params);
+}
+
+/**
+ * Check which model IDs are available on the given direct providers
+ */
+export async function fetchAvailableModelIds(
+  modelIds: string[],
+  directProviders: string[],
+): Promise<string[]> {
+  await getRequiredSession();
+
+  return getAvailableModelIds(modelIds, directProviders);
 }
 
 /**

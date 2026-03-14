@@ -5,7 +5,7 @@ import { generateText } from "ai";
 import { db } from "~/lib/db";
 import { threads } from "~/lib/db/schema/chat";
 
-import { getModelProvider } from "../../models";
+import { createOpenRouterProvider } from "../../providers";
 
 const HANDOFF_MODEL = "google/gemini-3.1-flash-lite-preview";
 
@@ -58,7 +58,7 @@ export async function generateHandoffPrompt(
   objective: string,
   openRouterApiKey: string,
 ): Promise<string> {
-  const provider = getModelProvider(openRouterApiKey);
+  const provider = createOpenRouterProvider(openRouterApiKey);
   const conversationContext = formatConversationForHandoff(messages);
 
   const result = await generateText({

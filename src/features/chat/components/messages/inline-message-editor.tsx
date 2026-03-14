@@ -69,10 +69,22 @@ export function InlineMessageEditor({
 
   const { hasKey: hasParallelApiKey, isLoading: isParallelApiLoading } = useApiKeyStatus("parallel");
 
-  const { models: favoriteModels } = useFavoriteModels();
+  const { models: favoriteModels, unavailableModelIds } = useFavoriteModels();
   const [selectedModelId, setSelectedModelId] = React.useState<string | null>(
     initialModelId || favoriteModels[0]?.id || null,
   );
+
+  // Auto-select first available model if current selection is unavailable
+  React.useEffect(() => {
+    if (favoriteModels.length === 0)
+      return;
+    if (selectedModelId && unavailableModelIds.has(selectedModelId)) {
+      const firstAvailable = favoriteModels.find(m => !unavailableModelIds.has(m.id));
+      if (firstAvailable) {
+        setSelectedModelId(firstAvailable.id);
+      }
+    }
+  }, [favoriteModels, selectedModelId, unavailableModelIds]);
   const selectedModel = favoriteModels.find(m => m.id === selectedModelId);
   const capabilities = getModelCapabilities(selectedModel);
   const canUpload = canUploadFiles(capabilities);
@@ -239,6 +251,7 @@ export function InlineMessageEditor({
             onSelectModelAction={setSelectedModelId}
             sideOffset={8}
             useLocalState
+            unavailableModelIds={unavailableModelIds}
           />
 
           {capabilities.supportsReasoning && (

@@ -35,10 +35,15 @@ export function useChatInputController({
 
   const { hasKey: hasOpenRouterKey, isLoading: isOpenRouterLoading }
     = useApiKeyStatus("openrouter");
+  const { hasKey: hasOpenAIKey, isLoading: isOpenAILoading }
+    = useApiKeyStatus("openai");
   const { hasKey: hasParallelApiKey, isLoading: isParallelApiLoading }
     = useApiKeyStatus("parallel");
 
-  const { models: favoriteModels, isLoading: isModelsLoading }
+  const hasAnyChatKey = (hasOpenRouterKey || hasOpenAIKey) ?? false;
+  const isAnyChatKeyLoading = isOpenRouterLoading || isOpenAILoading;
+
+  const { models: favoriteModels, isLoading: isModelsLoading, unavailableModelIds }
     = useFavoriteModels();
 
   const {
@@ -53,6 +58,20 @@ export function useChatInputController({
   } = useChatUIStore();
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // Auto-select first available model if current selection is unavailable
+  React.useEffect(() => {
+    if (favoriteModels.length === 0)
+      return;
+    const currentIsUnavailable = selectedModelId && unavailableModelIds.has(selectedModelId);
+    const currentNotInFavorites = selectedModelId && !favoriteModels.some(m => m.id === selectedModelId);
+    if (!selectedModelId || currentIsUnavailable || currentNotInFavorites) {
+      const firstAvailable = favoriteModels.find(m => !unavailableModelIds.has(m.id));
+      if (firstAvailable) {
+        setSelectedModelId(firstAvailable.id);
+      }
+    }
+  }, [favoriteModels, selectedModelId, unavailableModelIds, setSelectedModelId]);
 
   const selectedModel = React.useMemo(
     () => favoriteModels.find(m => m.id === selectedModelId),
@@ -120,7 +139,7 @@ export function useChatInputController({
 
   const canSend
     = !isLoading
-      && hasOpenRouterKey !== false
+      && hasAnyChatKey
       && selectedModel !== undefined
       && hasContent
       && !hasUploadingFiles;
@@ -201,8 +220,9 @@ export function useChatInputController({
     },
 
     apiStatus: {
+      hasAnyChatKey,
+      isAnyChatKeyLoading,
       hasOpenRouterKey,
-      isOpenRouterLoading,
       hasParallelApiKey,
       isParallelApiLoading,
     },
@@ -215,6 +235,7 @@ export function useChatInputController({
       capabilities,
       canUpload,
       acceptedTypes,
+      unavailableModelIds,
     },
 
     features: {

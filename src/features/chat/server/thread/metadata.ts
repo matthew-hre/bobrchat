@@ -5,7 +5,7 @@ import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { THREAD_ICONS } from "~/lib/db/schema/chat";
 
-import { getModelProvider } from "../models";
+import { createOpenRouterProvider } from "../providers";
 
 const ICON_DESCRIPTIONS: Record<ThreadIcon, string> = {
   "message-circle": "general thread or casual conversation",
@@ -40,7 +40,7 @@ export async function generateThreadTitle(message: string, apiKey: string): Prom
   }
 
   try {
-    const provider = getModelProvider(apiKey);
+    const provider = createOpenRouterProvider(apiKey);
     const model = provider("google/gemini-3.1-flash-lite-preview");
 
     const { text } = await generateText({
@@ -68,7 +68,7 @@ export async function generateThreadIcon(message: string, apiKey: string): Promi
   }
 
   try {
-    const provider = getModelProvider(apiKey);
+    const provider = createOpenRouterProvider(apiKey);
     const model = provider("google/gemini-3.1-flash-lite-preview");
 
     const iconList = THREAD_ICONS.map(icon => `- ${icon}: ${ICON_DESCRIPTIONS[icon]}`).join("\n");
@@ -113,7 +113,7 @@ export async function generateThreadMetadata(message: string, apiKey: string): P
   }
 
   try {
-    const provider = getModelProvider(apiKey);
+    const provider = createOpenRouterProvider(apiKey);
     const model = provider("google/gemini-3.1-flash-lite-preview");
 
     const iconList = THREAD_ICONS.map(icon => `- ${icon}: ${ICON_DESCRIPTIONS[icon]}`).join("\n");

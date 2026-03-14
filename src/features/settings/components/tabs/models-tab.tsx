@@ -35,7 +35,12 @@ import { ModelsSearchBar } from "./models-search-bar";
 type MobileTab = "available" | "favorites";
 
 export function ModelsTab() {
-  const { hasKey: hasOpenRouterKey, isLoading: isKeyLoading } = useApiKeyStatus("openrouter");
+  const { hasKey: hasOpenRouterKey, isLoading: isOpenRouterKeyLoading } = useApiKeyStatus("openrouter");
+  const { hasKey: hasOpenAIKey, isLoading: isOpenAIKeyLoading } = useApiKeyStatus("openai");
+  const hasAnyKey = hasOpenRouterKey || hasOpenAIKey;
+  const isKeyLoading = isOpenRouterKeyLoading || isOpenAIKeyLoading;
+
+  const directProviderFilter = !hasOpenRouterKey && hasOpenAIKey ? ["openai"] : undefined;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [capabilityFilters, setCapabilityFilters] = useState<CapabilityFilter[]>([]);
@@ -52,6 +57,7 @@ export function ModelsTab() {
   } = useInfiniteModelsListQuery({
     search: searchQuery || undefined,
     capabilities: capabilityFilters.length > 0 ? capabilityFilters : undefined,
+    directProviders: directProviderFilter,
     sortOrder,
     pageSize: 50,
   });
@@ -136,12 +142,12 @@ export function ModelsTab() {
           <div className="bg-muted mb-4 rounded-full p-3">
             <SparklesIcon className="text-muted-foreground size-6" />
           </div>
-          {!isKeyLoading && !hasOpenRouterKey
+          {!isKeyLoading && !hasAnyKey
             ? (
                 <>
                   <h3 className="mb-1 font-medium">No API key configured</h3>
                   <p className="text-muted-foreground mb-6 text-sm">
-                    Add your OpenRouter API key in the Integrations tab to browse available models.
+                    Add an API key in the Integrations tab to browse available models.
                   </p>
                 </>
               )
@@ -286,7 +292,7 @@ export function ModelsTab() {
       <div className="flex min-h-0 flex-1 flex-col">
         {mobileTab === "available" && (
           <div className="flex flex-1 flex-col overflow-hidden">
-            {hasOpenRouterKey && (
+            {hasAnyKey && (
               <div className={`
                 bg-background sticky top-0 z-10 shrink-0 px-6 pt-4 pb-2
               `}

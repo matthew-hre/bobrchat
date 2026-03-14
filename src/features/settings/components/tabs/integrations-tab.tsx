@@ -1,7 +1,6 @@
 "use client";
 
 import { Accordion } from "~/components/ui/accordion";
-import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
@@ -17,6 +16,14 @@ const modelProviders: ApiKeyConfig[] = [
     placeholder: "sk-or-v1-...",
     logo: "/logos/providers/openrouter.svg",
     link: { href: "https://openrouter.ai/keys", label: "openrouter.ai/keys" },
+  },
+  {
+    provider: "openai",
+    label: "OpenAI",
+    description: "Use your OpenAI API key for direct access to GPT models without going through OpenRouter.",
+    placeholder: "sk-...",
+    logo: "/logos/providers/openai.svg",
+    link: { href: "https://platform.openai.com/api-keys", label: "platform.openai.com/api-keys" },
   },
 ];
 
@@ -54,8 +61,6 @@ export function IntegrationsTab() {
             ))}
           </Accordion>
         </section>
-
-        <Separator />
 
         <section className="space-y-2">
           <h4 className={`

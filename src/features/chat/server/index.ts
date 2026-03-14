@@ -14,9 +14,6 @@ export {
 } from "./metrics";
 export type { ExtractToolCall, SearchToolCall } from "./metrics";
 
-// Models
-export { getModelProvider } from "./models";
-
 // Prompt
 export { generatePrompt } from "./prompt";
 
@@ -27,8 +24,6 @@ export type { PdfEngineConfig, ReasoningLevel } from "./service";
 // Stream
 export {
   createStreamHandlers,
-  getPdfPluginConfig,
-  getReasoningConfig,
   processStreamChunk,
 } from "./stream";
 

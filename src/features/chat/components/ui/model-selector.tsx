@@ -42,6 +42,7 @@ type ModelSelectorProps = {
   sideOffset?: number;
   isLoading?: boolean;
   useLocalState?: boolean;
+  unavailableModelIds?: Set<string>;
 };
 
 export function NoModelsToolip({ models, isLoading, children }: { models: Model[]; isLoading?: boolean; children: React.ReactNode }) {
@@ -82,6 +83,7 @@ export function ModelSelector({
   sideOffset = 81,
   isLoading = false,
   useLocalState = false,
+  unavailableModelIds,
 }: ModelSelectorProps) {
   const { data: settings } = useUserSettings();
   const globalOpen = useChatUIStore(s => s.modelSelectorOpen);
@@ -203,11 +205,14 @@ export function ModelSelector({
                   <CommandGroup>
                     {models.map((model) => {
                       const capabilities = getModelCapabilities(model);
+                      const isUnavailable = unavailableModelIds?.has(model.id) ?? false;
                       return (
                         <CommandItem
                           key={model.id}
                           value={`${model.name} ${model.id}`}
+                          disabled={isUnavailable}
                           onSelect={() => {
+                            if (isUnavailable) return;
                             onSelectModelAction(model.id);
                             setOpen(false);
                           }}
@@ -216,6 +221,7 @@ export function ModelSelector({
                             selectedModelId === model.id
                               ? "bg-primary/10 text-primary"
                               : "",
+                            isUnavailable && "opacity-50",
                           )}
                         >
                            <div className="flex-1">
@@ -224,6 +230,11 @@ export function ModelSelector({
                                <div className="text-sm font-medium">
                                  {formatModelName(model.name, settings?.hideModelProviderNames ?? false)}
                                </div>
+                               {isUnavailable && (
+                                 <span className="text-muted-foreground ml-1 text-xs">
+                                   (no API key)
+                                 </span>
+                               )}
                              </div>
                              <div className="text-xs text-muted-foreground">
                                {model.id}

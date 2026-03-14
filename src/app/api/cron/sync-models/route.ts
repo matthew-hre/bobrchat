@@ -1,7 +1,7 @@
 /* eslint-disable node/no-process-env */
 import { NextResponse } from "next/server";
 
-import { syncModelsFromOpenRouter } from "~/features/models/server/sync-models";
+import { syncDirectProviderAvailability, syncModelsFromOpenRouter } from "~/features/models/server/sync-models";
 import { serverEnv } from "~/lib/env";
 
 // Cron endpoint to sync models from OpenRouter
@@ -25,9 +25,19 @@ export async function GET(request: Request) {
     );
   }
 
+  const providerResult = await syncDirectProviderAvailability();
+
   return NextResponse.json({
     success: true,
     modelCount: result.modelCount,
     durationMs: result.durationMs,
+    directProviderSync: {
+      success: providerResult.success,
+      upserted: providerResult.upserted,
+      removed: providerResult.removed,
+      durationMs: providerResult.durationMs,
+      ...(providerResult.skipped && { skipped: true }),
+      ...(providerResult.error && { error: providerResult.error }),
+    },
   });
 }

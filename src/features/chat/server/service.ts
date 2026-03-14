@@ -5,10 +5,17 @@ import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import type { ChatUIMessage } from "~/features/chat/types";
 import type { UserSettingsData } from "~/features/settings/types";
 
+import type { ResolvedProvider } from "./providers";
+
 import { calculateResponseMetadata } from "./metrics";
-import { getModelProvider } from "./models";
 import { generatePrompt } from "./prompt";
-import { createStreamHandlers, getPdfPluginConfig, getReasoningConfig, processStreamChunk } from "./stream";
+import {
+  buildOpenAIProviderOptions,
+  buildOpenRouterProviderOptions,
+  createOpenAIProvider,
+  createOpenRouterProvider,
+} from "./providers";
+import { createStreamHandlers, processStreamChunk } from "./stream";
 import { createHandoffTool, createSearchTools } from "./tools";
 import { getTotalPdfPageCount, hasPdfAttachment, processMessageFiles } from "./uploads";
 
@@ -21,8 +28,7 @@ export type PdfEngineConfig = {
  * Streams a chat response from the AI model.
  *
  * @param messages The chat messages to send to the model.
- * @param modelId The ID of the model to use.
- * @param openRouterApiKey The resolved OpenRouter API key.
+ * @param resolvedProvider The resolved provider to use (from resolveProvider()).
  * @param userSettings The user's settings (pre-fetched to avoid duplicate DB queries).
  * @param searchEnabled Whether web search is enabled for this request.
  * @param parallelApiKey The Parallel Web API key for web search functionality.
@@ -35,7 +41,7 @@ export type ReasoningLevel = "xhigh" | "high" | "medium" | "low" | "minimal" | "
 export async function streamChatResponse(
   messages: ChatUIMessage[],
   modelId: string,
-  openRouterApiKey: string,
+  resolvedProvider: ResolvedProvider,
   userSettings: UserSettingsData,
   userId: string,
   searchEnabled?: boolean,
@@ -46,17 +52,16 @@ export async function streamChatResponse(
   modelPricing?: { prompt: string; completion: string },
   supportsTools?: boolean,
   handoffEnabled?: boolean,
+  openRouterApiKey?: string,
 ) {
-  if (!openRouterApiKey) {
-    throw new Error("No API key configured. Please set up your OpenRouter API key in settings.");
-  }
-
   const startTime = Date.now();
   let firstTokenTime: number | null = null;
   const searchCalls: Array<{ resultCount: number }> = [];
   const extractCalls: Array<{ urlCount: number }> = [];
 
-  const provider = getModelProvider(openRouterApiKey);
+  const provider = resolvedProvider.providerType === "openai"
+    ? createOpenAIProvider(resolvedProvider.apiKey)
+    : createOpenRouterProvider(resolvedProvider.apiKey);
 
   const hasPdf = hasPdfAttachment(messages);
   const useOcr = hasPdf && pdfEngineConfig?.useOcrForPdfs && !pdfEngineConfig?.supportsNativePdf;
@@ -95,24 +100,22 @@ export async function streamChatResponse(
   );
 
   const searchTools = searchEnabled && parallelApiKey ? createSearchTools(parallelApiKey) : {};
-  const handoffTools = threadId && handoffEnabled ? createHandoffTool(userId, threadId, messages, openRouterApiKey) : {};
+  const handoffTools = threadId && handoffEnabled && openRouterApiKey ? createHandoffTool(userId, threadId, messages, openRouterApiKey) : {};
   const tools = (Object.keys({ ...searchTools, ...handoffTools }).length > 0) && supportsTools
     ? { ...searchTools, ...handoffTools }
     : undefined;
 
+  const providerOptions = resolvedProvider.providerType === "openai"
+    ? buildOpenAIProviderOptions({ reasoningLevel })
+    : buildOpenRouterProviderOptions({ hasPdf, pdfEngineConfig, reasoningLevel });
+
   const result = streamText({
-    model: provider(modelId),
+    model: provider(resolvedProvider.providerModelId),
     system: systemPrompt,
     messages: convertedMessages,
     tools,
     stopWhen: stepCountIs(8),
-    providerOptions: {
-      openrouter: {
-        usage: { include: true },
-        ...getPdfPluginConfig(hasPdf, pdfEngineConfig),
-        ...getReasoningConfig(reasoningLevel),
-      },
-    },
+    providerOptions,
     onChunk({ chunk }) {
       processStreamChunk(chunk, streamHandlers);
     },
