@@ -10,8 +10,10 @@ import type { ResolvedProvider } from "./providers";
 import { calculateResponseMetadata } from "./metrics";
 import { generatePrompt } from "./prompt";
 import {
+  buildAnthropicProviderOptions,
   buildOpenAIProviderOptions,
   buildOpenRouterProviderOptions,
+  createAnthropicProvider,
   createOpenAIProvider,
   createOpenRouterProvider,
 } from "./providers";
@@ -61,7 +63,9 @@ export async function streamChatResponse(
 
   const provider = resolvedProvider.providerType === "openai"
     ? createOpenAIProvider(resolvedProvider.apiKey)
-    : createOpenRouterProvider(resolvedProvider.apiKey);
+    : resolvedProvider.providerType === "anthropic"
+      ? createAnthropicProvider(resolvedProvider.apiKey)
+      : createOpenRouterProvider(resolvedProvider.apiKey);
 
   const hasPdf = hasPdfAttachment(messages);
   const useOcr = hasPdf && pdfEngineConfig?.useOcrForPdfs && !pdfEngineConfig?.supportsNativePdf;
@@ -123,7 +127,9 @@ export async function streamChatResponse(
 
   const providerOptions = resolvedProvider.providerType === "openai"
     ? buildOpenAIProviderOptions({ reasoningLevel })
-    : buildOpenRouterProviderOptions({ hasPdf, pdfEngineConfig, reasoningLevel });
+    : resolvedProvider.providerType === "anthropic"
+      ? buildAnthropicProviderOptions({ reasoningLevel })
+      : buildOpenRouterProviderOptions({ hasPdf, pdfEngineConfig, reasoningLevel });
 
   const result = streamText({
     model: provider(resolvedProvider.providerModelId),

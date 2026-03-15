@@ -5,6 +5,7 @@
     "": {
       "name": "ai-sdk-test",
       "dependencies": {
+        "@ai-sdk/anthropic": "^3.0.58",
         "@ai-sdk/openai": "^3.0.41",
         "@ai-sdk/react": "^3.0.3",
         "@aws-sdk/client-s3": "^3.965.0",
@@ -97,6 +98,8 @@
     "unrs-resolver",
   ],
   "packages": {
+    "@ai-sdk/anthropic": ["@ai-sdk/anthropic@3.0.58", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-/53SACgmVukO4bkms4dpxpRlYhW8Ct6QZRe6sj1Pi5H00hYhxIrqfiLbZBGxkdRvjsBQeP/4TVGsXgH5rQeb8Q=="],
+
     "@ai-sdk/gateway": ["@ai-sdk/gateway@3.0.39", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.14", "@vercel/oidc": "3.1.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-SeCZBAdDNbWpVUXiYgOAqis22p5MEYfrjRw0hiBa5hM+7sDGYQpMinUjkM8kbPXMkY+AhKLrHleBl+SuqpzlgA=="],
 
     "@ai-sdk/openai": ["@ai-sdk/openai@3.0.41", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-IZ42A+FO+vuEQCVNqlnAPYQnnUpUfdJIwn1BEDOBywiEHa23fw7PahxVtlX9zm3/zMvTW4JKPzWyvAgDu+SQ2A=="],

@@ -37,10 +37,13 @@ type MobileTab = "available" | "favorites";
 export function ModelsTab() {
   const { hasKey: hasOpenRouterKey, isLoading: isOpenRouterKeyLoading } = useApiKeyStatus("openrouter");
   const { hasKey: hasOpenAIKey, isLoading: isOpenAIKeyLoading } = useApiKeyStatus("openai");
-  const hasAnyKey = hasOpenRouterKey || hasOpenAIKey;
-  const isKeyLoading = isOpenRouterKeyLoading || isOpenAIKeyLoading;
+  const { hasKey: hasAnthropicKey, isLoading: isAnthropicKeyLoading } = useApiKeyStatus("anthropic");
+  const hasAnyKey = hasOpenRouterKey || hasOpenAIKey || hasAnthropicKey;
+  const isKeyLoading = isOpenRouterKeyLoading || isOpenAIKeyLoading || isAnthropicKeyLoading;
 
-  const directProviderFilter = !hasOpenRouterKey && hasOpenAIKey ? ["openai"] : undefined;
+  const directProviderFilter = !hasOpenRouterKey && (hasOpenAIKey || hasAnthropicKey)
+    ? [hasOpenAIKey && "openai", hasAnthropicKey && "anthropic"].filter(Boolean) as string[]
+    : undefined;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [capabilityFilters, setCapabilityFilters] = useState<CapabilityFilter[]>([]);

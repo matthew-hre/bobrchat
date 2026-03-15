@@ -24,7 +24,8 @@ export function useModelsQuery(
 ) {
   const { hasKey: hasOpenRouterKey } = useApiKeyStatus("openrouter");
   const { hasKey: hasOpenAIKey } = useApiKeyStatus("openai");
-  const hasAnyChatKey = hasOpenRouterKey || hasOpenAIKey;
+  const { hasKey: hasAnthropicKey } = useApiKeyStatus("anthropic");
+  const hasAnyChatKey = hasOpenRouterKey || hasOpenAIKey || hasAnthropicKey;
 
   return useQuery<ModelsQueryResult>({
     queryKey: [...MODELS_KEY, params],
@@ -44,7 +45,8 @@ export function useModelsQuery(
 export function useFavoriteModels(): { models: Model[]; isLoading: boolean; unavailableModelIds: Set<string> } {
   const { hasKey: hasOpenRouterKey } = useApiKeyStatus("openrouter");
   const { hasKey: hasOpenAIKey } = useApiKeyStatus("openai");
-  const hasAnyChatKey = hasOpenRouterKey || hasOpenAIKey;
+  const { hasKey: hasAnthropicKey } = useApiKeyStatus("anthropic");
+  const hasAnyChatKey = hasOpenRouterKey || hasOpenAIKey || hasAnthropicKey;
   const { data: settings, isPending: isSettingsPending } = useUserSettings();
   const favoriteIds = useMemo(() => settings?.favoriteModels ?? [], [settings?.favoriteModels]);
 
@@ -61,8 +63,10 @@ export function useFavoriteModels(): { models: Model[]; isLoading: boolean; unav
     const providers: string[] = [];
     if (hasOpenAIKey)
       providers.push("openai");
+    if (hasAnthropicKey)
+      providers.push("anthropic");
     return providers;
-  }, [hasOpenAIKey]);
+  }, [hasOpenAIKey, hasAnthropicKey]);
 
   // Only check availability when user doesn't have OpenRouter (which supports everything)
   const needsAvailabilityCheck = !hasOpenRouterKey && directProviders.length > 0 && favoriteIds.length > 0;
@@ -100,7 +104,8 @@ export function useFavoriteModels(): { models: Model[]; isLoading: boolean; unav
 export function useFavoriteModelsForList(): { models: ModelListItem[]; isLoading: boolean } {
   const { hasKey: hasOpenRouterKey } = useApiKeyStatus("openrouter");
   const { hasKey: hasOpenAIKey } = useApiKeyStatus("openai");
-  const hasAnyChatKey = hasOpenRouterKey || hasOpenAIKey;
+  const { hasKey: hasAnthropicKey } = useApiKeyStatus("anthropic");
+  const hasAnyChatKey = hasOpenRouterKey || hasOpenAIKey || hasAnthropicKey;
   const { data: settings, isLoading: isSettingsLoading } = useUserSettings();
   const favoriteIds = settings?.favoriteModels ?? [];
 
@@ -128,7 +133,8 @@ export function useInfiniteModelsQuery(
 ) {
   const { hasKey: hasOpenRouterKey } = useApiKeyStatus("openrouter");
   const { hasKey: hasOpenAIKey } = useApiKeyStatus("openai");
-  const hasAnyChatKey = hasOpenRouterKey || hasOpenAIKey;
+  const { hasKey: hasAnthropicKey } = useApiKeyStatus("anthropic");
+  const hasAnyChatKey = hasOpenRouterKey || hasOpenAIKey || hasAnthropicKey;
   const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
 
   const query = useInfiniteQuery<ModelsQueryResult>({
@@ -185,7 +191,8 @@ export function useInfiniteModelsListQuery(
 } {
   const { hasKey: hasOpenRouterKey } = useApiKeyStatus("openrouter");
   const { hasKey: hasOpenAIKey } = useApiKeyStatus("openai");
-  const hasAnyChatKey = hasOpenRouterKey || hasOpenAIKey;
+  const { hasKey: hasAnthropicKey } = useApiKeyStatus("anthropic");
+  const hasAnyChatKey = hasOpenRouterKey || hasOpenAIKey || hasAnthropicKey;
   const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
 
   const query = useInfiniteQuery<ModelsListQueryResult>({

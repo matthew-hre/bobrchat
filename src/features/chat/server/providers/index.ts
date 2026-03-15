@@ -16,6 +16,7 @@ import { TOOL_MODEL_OPTIONS, UTILITY_MODELS } from "./types";
  */
 const DIRECT_PROVIDER_MAP: Record<string, { keyProvider: ApiKeyProvider; providerType: ProviderType }> = {
   openai: { keyProvider: "openai", providerType: "openai" },
+  anthropic: { keyProvider: "anthropic", providerType: "anthropic" },
 };
 
 /**
@@ -98,6 +99,15 @@ export function resolveUtilityProvider(
     };
   }
 
+  const anthropicKey = resolvedKeys.anthropic;
+  if (anthropicKey) {
+    return {
+      providerType: "anthropic",
+      providerModelId: UTILITY_MODELS.anthropic,
+      apiKey: anthropicKey,
+    };
+  }
+
   return undefined;
 }
 
@@ -124,6 +134,11 @@ export function resolveToolProvider(
     return { providerType: "openai", providerModelId: option.openaiModelId, apiKey: resolvedKeys.openai };
   }
 
+  // Try direct Anthropic
+  if (option.anthropicModelId && resolvedKeys.anthropic) {
+    return { providerType: "anthropic", providerModelId: option.anthropicModelId, apiKey: resolvedKeys.anthropic };
+  }
+
   // Fall back to OpenRouter
   if (resolvedKeys.openrouter && option.providers.includes("openrouter")) {
     return { providerType: "openrouter", providerModelId: option.openrouterModelId, apiKey: resolvedKeys.openrouter };
@@ -133,6 +148,7 @@ export function resolveToolProvider(
   return resolveUtilityProvider(resolvedKeys);
 }
 
+export { buildAnthropicProviderOptions, createAnthropicProvider } from "./anthropic";
 export { buildOpenAIProviderOptions, createOpenAIProvider } from "./openai";
 export { buildOpenRouterProviderOptions, createOpenRouterProvider } from "./openrouter";
 export { TOOL_MODEL_OPTIONS, UTILITY_MODELS } from "./types";
