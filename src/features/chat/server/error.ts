@@ -62,6 +62,14 @@ export function formatProviderError(error: unknown): string {
     if (error instanceof Error) {
       return error.message;
     }
+    // Handle plain error objects with nested error.message (e.g. provider SSE errors)
+    if (typeof error === "object" && error !== null) {
+      const obj = error as Record<string, unknown>;
+      const nested = obj.error as Record<string, unknown> | undefined;
+      if (nested && typeof nested.message === "string") {
+        return nested.message;
+      }
+    }
     return "An unexpected error occurred";
   }
 

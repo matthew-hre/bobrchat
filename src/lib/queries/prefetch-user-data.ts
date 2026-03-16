@@ -12,6 +12,7 @@ export async function prefetchUserData(userId: string) {
   // Start all independent fetches in parallel
   const settingsPromise = getUserSettings(userId);
   const hasOpenRouterPromise = hasEncryptedKey(userId, "openrouter");
+  const hasOpenAIPromise = hasEncryptedKey(userId, "openai");
   const hasParallelPromise = hasEncryptedKey(userId, "parallel");
   const threadsPromise = queryClient.prefetchInfiniteQuery({
     queryKey: THREADS_KEY,
@@ -28,9 +29,10 @@ export async function prefetchUserData(userId: string) {
   });
 
   // Wait for settings + API key status (needed to determine favorite IDs)
-  const [settings, hasOpenRouter, hasParallel] = await Promise.all([
+  const [settings, hasOpenRouter, hasOpenAI, hasParallel] = await Promise.all([
     settingsPromise,
     hasOpenRouterPromise,
+    hasOpenAIPromise,
     hasParallelPromise,
   ]);
 
@@ -46,6 +48,7 @@ export async function prefetchUserData(userId: string) {
     ...settings,
     configuredApiKeys: {
       openrouter: hasOpenRouter,
+      openai: hasOpenAI,
       parallel: hasParallel,
     },
   });
