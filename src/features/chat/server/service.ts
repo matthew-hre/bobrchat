@@ -78,12 +78,16 @@ export async function streamChatResponse(
   // Strip reasoning parts from assistant messages to avoid "Thought signature is not valid"
   // errors with Gemini models. Thinking tokens have cryptographic signatures that become
   // invalid after passing through proxies like OpenRouter.
-  const messagesWithoutReasoning = processedMessages.map((msg) => {
-    if (msg.role !== "assistant" || !msg.parts)
-      return msg;
-    const filteredParts = msg.parts.filter(part => part.type !== "reasoning");
-    return { ...msg, parts: filteredParts };
-  });
+  // OpenAI's Responses API requires reasoning items to be sent back with conversation history,
+  // so we only strip them for non-OpenAI providers.
+  const messagesWithoutReasoning = resolvedProvider.providerType === "openai"
+    ? processedMessages
+    : processedMessages.map((msg) => {
+      if (msg.role !== "assistant" || !msg.parts)
+        return msg;
+      const filteredParts = msg.parts.filter(part => part.type !== "reasoning");
+      return { ...msg, parts: filteredParts };
+    });
 
   const convertedMessages = await convertToModelMessages(messagesWithoutReasoning);
 
