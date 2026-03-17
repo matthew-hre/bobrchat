@@ -2,9 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "bobrchat",
     name: "BobrChat",
     short_name: "BobrChat",
-    description: "Fast, Minimal AI Chat Interface",
+    description: "Fast, Minimal AI Chat Interface. Bring your own API key and chat with Claude, GPT, Gemini, and more.",
     start_url: "/",
     display: "standalone",
     background_color: "#0a0a0f",

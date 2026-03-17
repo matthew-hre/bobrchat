@@ -5,8 +5,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/auth/", "/chat/"],
+      disallow: ["/api/", "/auth/", "/chat/", "/settings/", "/callback/", "/signup/", "/login/"],
     },
+    host: "https://bobrchat.com",
     sitemap: "https://bobrchat.com/sitemap.xml",
   };
 }

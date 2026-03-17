@@ -17,8 +17,8 @@ export const metadata: Metadata = {
     template: "%s | BobrChat",
   },
   description:
-    "BobrChat is a fast, minimal AI chat interface with support for multiple models. Experience seamless threads with Claude, GPT, and more.",
-  keywords: ["AI chat", "chatbot", "Claude", "GPT", "AI assistant", "bobrchat", "chat interface"],
+    "BobrChat is a fast, minimal AI chat interface with support for multiple models. Bring your own API key and pay only what you use. Chat with Claude, GPT, Gemini, and more.",
+  keywords: ["AI chat", "chatbot", "Claude", "GPT", "Gemini", "AI assistant", "bobrchat", "chat interface", "bring your own key", "OpenRouter"],
   authors: [{ name: "BobrChat" }],
   creator: "BobrChat",
   appleWebApp: {
@@ -27,6 +27,9 @@ export const metadata: Metadata = {
     title: "BobrChat",
   },
   metadataBase: new URL("https://bobrchat.com"),
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -34,15 +37,15 @@ export const metadata: Metadata = {
     siteName: "BobrChat",
     title: "BobrChat - Fast, Minimal AI Chat Interface",
     description:
-      "A fast, minimal AI chat interface with support for multiple models. Experience seamless threads with Claude, GPT, and more.",
-    images: [{ url: "https://og.bobrchat.com/", width: 1200, height: 630 }],
+      "Bring your own API key and pay only what you use. Chat with Claude, GPT, Gemini, and more in a clean, minimal interface.",
+    images: [{ url: "https://og.bobrchat.com/", width: 1200, height: 630, alt: "BobrChat - Fast, Minimal AI Chat Interface" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "BobrChat - Fast, Minimal AI Chat Interface",
     description:
-      "A fast, minimal AI chat interface with support for multiple models. Experience seamless threads with Claude, GPT, and more.",
-    images: ["https://og.bobrchat.com/"],
+      "Bring your own API key and pay only what you use. Chat with Claude, GPT, Gemini, and more in a clean, minimal interface.",
+    images: [{ url: "https://og.bobrchat.com/", alt: "BobrChat - Fast, Minimal AI Chat Interface" }],
   },
 };
 

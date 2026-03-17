@@ -16,6 +16,79 @@ import { CostBreakdownMockup } from "./mockups/cost-breakdown-mockup";
 import { ModelSelectorMockup } from "./mockups/model-selector-mockup";
 import { ParallelSearchMockup } from "./mockups/parallel-search-mockup";
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "BobrChat",
+  "url": "https://bobrchat.com",
+  "description": "Fast, minimal AI chat interface. Bring your own API key and pay only what you use. Chat with Claude, GPT, Gemini, and more.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Web",
+  "offers": [
+    {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "name": "Free",
+      "description": "100 threads, 10 MB storage",
+    },
+    {
+      "@type": "Offer",
+      "price": "2.99",
+      "priceCurrency": "USD",
+      "name": "Plus",
+      "description": "Unlimited threads, 100 MB storage, priority support",
+    },
+  ],
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is this actually cheaper?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For most users, yes. The average user spends around $5-$10 per month on AI usage. Most paid AI chat services charge a flat fee of $20 or more, regardless of usage. With BobrChat, you only pay for what you use.",
+      },
+    },
+    {
+      "@type": "Question",
+      "name": "How does \"Pay only what you use\" work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Paid AI services usually charge a flat $20 monthly fee, whether you send one message or one thousand. BobrChat connects to your OpenRouter account, which bills you by the token. If you only spend $4 on tokens this month, you only pay $4.",
+      },
+    },
+    {
+      "@type": "Question",
+      "name": "Is it safe to give you my API key?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. You control how your data is handled. If you choose \"Browser Only,\" your key stays in your local storage and is never stored on our servers. If you choose \"Encrypted Server,\" your key is encrypted before being stored so you can use it across different devices.",
+      },
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use providers other than OpenRouter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Currently, we support OpenRouter for access to hundreds of models with one key. We are actively adding support for other providers like Anthropic, OpenAI, and Google Gemini.",
+      },
+    },
+    {
+      "@type": "Question",
+      "name": "Why would I use this instead of OpenRouter's chat?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Personal preference. OpenRouter's interface is great, however it's overkill for the average chat experience. BobrChat focuses on a clean, simple chat UI with essential features like cost tracking, model switching, and file uploads.",
+      },
+    },
+  ],
+};
+
 export function LandingPage() {
   return (
     <div className={`
@@ -23,6 +96,14 @@ export function LandingPage() {
       ${rethinkSans.className}
     `}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
@@ -41,7 +122,7 @@ export function LandingPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col items-center px-6 py-16">
+      <main className="flex flex-1 flex-col items-center px-6 py-16">
         <div className="w-full max-w-4xl">
           {/* Hero */}
           <div className="mb-16 space-y-6 text-center">
@@ -303,7 +384,7 @@ export function LandingPage() {
             </p>
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Footer */}
       <footer className="text-muted-foreground px-6 py-8 text-center text-xs">

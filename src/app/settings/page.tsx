@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
+
 import { SettingsPage } from "~/features/settings/components/settings-page";
+
+export const metadata: Metadata = {
+  title: "Settings",
+  robots: { index: false, follow: false },
+};
 
 type SearchParams = Promise<{
   tab?: string;

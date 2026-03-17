@@ -88,5 +88,6 @@ export async function generateMetadata({ params }: ChatServerProps): Promise<Met
 
   return {
     title: thread ? `${thread.title} - BobrChat` : "Chat",
+    robots: { index: false, follow: false },
   };
 }
