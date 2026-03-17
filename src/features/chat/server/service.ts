@@ -1,4 +1,4 @@
-import type { TextStreamPart, ToolSet } from "ai";
+import type { ModelMessage, TextStreamPart, ToolSet } from "ai";
 
 import { convertToModelMessages, stepCountIs, streamText } from "ai";
 
@@ -37,6 +37,30 @@ export type PdfEngineConfig = {
  * @returns An object containing the text stream and a function to create metadata for each message part.
  */
 export type ReasoningLevel = "xhigh" | "high" | "medium" | "low" | "minimal" | "none";
+
+function stripOpenRouterReasoningDetails(providerOptions: unknown): unknown {
+  if (!providerOptions || typeof providerOptions !== "object") {
+    return providerOptions;
+  }
+
+  const metadata = providerOptions as Record<string, unknown>;
+  const openrouter = metadata.openrouter;
+
+  if (!openrouter || typeof openrouter !== "object") {
+    return providerOptions;
+  }
+
+  const openrouterMetadata = openrouter as Record<string, unknown>;
+  if (!("reasoning_details" in openrouterMetadata)) {
+    return providerOptions;
+  }
+
+  const { reasoning_details: _reasoningDetails, ...restOpenRouter } = openrouterMetadata;
+  return {
+    ...metadata,
+    openrouter: restOpenRouter,
+  };
+}
 
 export async function streamChatResponse(
   messages: ChatUIMessage[],
@@ -125,13 +149,70 @@ export async function streamChatResponse(
     ? buildOpenAIProviderOptions({ reasoningLevel })
     : buildOpenRouterProviderOptions({ hasPdf, pdfEngineConfig, reasoningLevel });
 
+  // Strip reasoning content from model messages to prevent stale thinking block signatures
+  // from being replayed. Used both for initial message history and between multi-step executions.
+  const stripReasoningFromModelMessages = resolvedProvider.providerType === "openai"
+    ? undefined
+    : (msgs: ModelMessage[]): ModelMessage[] => msgs.map((msg) => {
+        const currentMessageProviderOptions = (msg as { providerOptions?: unknown }).providerOptions;
+        const sanitizedMessageProviderOptions = stripOpenRouterReasoningDetails(currentMessageProviderOptions);
+
+        if (typeof msg.content === "string") {
+          if (sanitizedMessageProviderOptions === currentMessageProviderOptions) {
+            return msg;
+          }
+
+          return {
+            ...msg,
+            providerOptions: sanitizedMessageProviderOptions,
+          } as typeof msg;
+        }
+
+        const sanitizedContent = msg.content
+          .filter(part => msg.role !== "assistant" || part.type !== "reasoning")
+          .map((part) => {
+            if (!("providerOptions" in part) || !part.providerOptions) {
+              return part;
+            }
+
+            const sanitizedPartProviderOptions = stripOpenRouterReasoningDetails(part.providerOptions);
+            if (sanitizedPartProviderOptions === part.providerOptions) {
+              return part;
+            }
+
+            return {
+              ...part,
+              providerOptions: sanitizedPartProviderOptions,
+            } as typeof part;
+          });
+
+        if (sanitizedMessageProviderOptions === currentMessageProviderOptions && sanitizedContent === msg.content) {
+          return msg;
+        }
+
+        return {
+          ...msg,
+          providerOptions: sanitizedMessageProviderOptions,
+          content: sanitizedContent,
+        } as typeof msg;
+      });
+
+  const sanitizedConvertedMessages = stripReasoningFromModelMessages
+    ? stripReasoningFromModelMessages(convertedMessages)
+    : convertedMessages;
+
   const result = streamText({
     model: provider(resolvedProvider.providerModelId),
     system: systemPrompt,
-    messages: convertedMessages,
+    messages: sanitizedConvertedMessages,
     tools,
     stopWhen: stepCountIs(8),
     providerOptions,
+    prepareStep: stripReasoningFromModelMessages
+      ? ({ messages: stepMessages }) => {
+          return { messages: stripReasoningFromModelMessages(stepMessages) };
+        }
+      : undefined,
     onChunk({ chunk }) {
       processStreamChunk(chunk, streamHandlers);
     },

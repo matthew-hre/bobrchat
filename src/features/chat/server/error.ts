@@ -30,6 +30,10 @@ const ERROR_PATTERN_HINTS: Array<{ pattern: RegExp; message: string }> = [
     pattern: /Thought signature is not valid/i,
     message: "This model's thinking tokens became invalid. Please try again or start a new thread.",
   },
+  {
+    pattern: /Invalid `signature` in `thinking` block/i,
+    message: "This model's thinking tokens became invalid. Please try again or start a new thread.",
+  },
 ];
 
 const STATUS_CODE_MESSAGES: Record<number, string> = {
