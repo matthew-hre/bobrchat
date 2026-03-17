@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 let hasAppLoaded = false;
 
-const SCROLL_THRESHOLD = 100;
+const SCROLL_THRESHOLD = 50;
 
 type ScrollOptions = {
   shouldScroll?: boolean;
@@ -35,10 +35,11 @@ export function useChatScroll(
   const prevThreadIdRef = useRef<string | undefined>(threadId);
   const isUserNearBottomRef = useRef(true);
   const scrollToBottomRef = useRef<(() => void) | null>(null);
-  // Counter-based flag: > 0 means a programmatic scroll is in flight.
-  // Using a counter instead of a boolean avoids races when multiple
-  // programmatic scrolls overlap (e.g. rapid onChange from ResizeObserver).
-  const programmaticScrollCountRef = useRef(0);
+  // Tracks whether the user is actively scrolling via an input gesture
+  // (wheel, touch, pointer drag). While true, programmatic scrolls are
+  // suppressed so even a single scroll tick can unpin.
+  const userScrollingRef = useRef(false);
+  const userScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const registerScrollToBottom = useCallback((fn: () => void) => {
     scrollToBottomRef.current = fn;
@@ -48,32 +49,55 @@ export function useChatScroll(
     const viewport = viewportRef.current;
     if (!viewport)
       return;
-    programmaticScrollCountRef.current++;
+    // Never fight the user — if they're actively scrolling, skip.
+    if (userScrollingRef.current)
+      return;
     viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
-    // Reset after the scroll event fires
-    requestAnimationFrame(() => {
-      programmaticScrollCountRef.current = Math.max(0, programmaticScrollCountRef.current - 1);
-    });
   }, []);
 
-  const handleScroll = useCallback((e: Event) => {
-    // Ignore programmatic scrolls — only user gestures can un-pin
-    if (programmaticScrollCountRef.current > 0)
-      return;
-    const viewport = e.target as HTMLElement;
+  // Mark that the user is actively scrolling. Any scroll-position check
+  // that fires while this flag is set will update `isUserNearBottomRef`
+  // and programmatic scrolls will be skipped.
+  const markUserScrolling = useCallback(() => {
+    userScrollingRef.current = true;
+    clearTimeout(userScrollTimeoutRef.current);
+    // After 150ms of inactivity we consider the gesture finished and
+    // re-evaluate the pinned state based on final scroll position.
+    userScrollTimeoutRef.current = setTimeout(() => {
+      userScrollingRef.current = false;
+      const viewport = viewportRef.current;
+      if (viewport) {
+        isUserNearBottomRef.current = isNearBottom(viewport);
+      }
+    }, 150);
+  }, []);
+
+  const handleUserScrollGesture = useCallback(() => {
+    markUserScrolling();
+    const viewport = viewportRef.current;
     if (!viewport)
       return;
     isUserNearBottomRef.current = isNearBottom(viewport);
-  }, []);
+  }, [markUserScrolling]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport)
       return;
 
-    viewport.addEventListener("scroll", handleScroll, { passive: true });
-    return () => viewport.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+    // Listen for actual user-initiated scroll gestures only.
+    // The "scroll" event fires for both programmatic and user scrolls,
+    // so we avoid it and instead listen for input-level events.
+    viewport.addEventListener("wheel", handleUserScrollGesture, { passive: true });
+    viewport.addEventListener("touchmove", handleUserScrollGesture, { passive: true });
+    viewport.addEventListener("pointerdown", handleUserScrollGesture);
+    return () => {
+      viewport.removeEventListener("wheel", handleUserScrollGesture);
+      viewport.removeEventListener("touchmove", handleUserScrollGesture);
+      viewport.removeEventListener("pointerdown", handleUserScrollGesture);
+      clearTimeout(userScrollTimeoutRef.current);
+    };
+  }, [handleUserScrollGesture]);
 
   // Auto-scroll on new messages when user is near bottom.
   // Skip the initial mount — the initial-scroll effect handles that.
