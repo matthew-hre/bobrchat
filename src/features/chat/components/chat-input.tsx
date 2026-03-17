@@ -84,7 +84,7 @@ export function ChatInput({
               <FilePreview
                 files={attachments.pendingFiles}
                 onRemoveAction={attachments.handleRemoveFile}
-                supportsNativePdf={model.capabilities.supportsNativePdf}
+                supportsNativePdf={model.effectiveSupportsNativePdf}
               />
             </div>
           )}
@@ -208,7 +208,7 @@ function ApiWarningBadge() {
     >
       <AlertCircle className="text-warning mt-0.5 size-5 shrink-0" />
       <div className="text-warning-foreground text-sm">
-        No API key configured. Set up an API key (OpenRouter or OpenAI) in
+        No API key configured. Set up an API key (OpenRouter, OpenAI, or Anthropic) in
         <Link
           href="/settings?tab=integrations"
           className={`

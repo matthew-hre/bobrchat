@@ -68,7 +68,15 @@ export async function streamChatResponse(
       : createOpenRouterProvider(resolvedProvider.apiKey);
 
   const hasPdf = hasPdfAttachment(messages);
-  const useOcr = hasPdf && pdfEngineConfig?.useOcrForPdfs && !pdfEngineConfig?.supportsNativePdf;
+
+  // Direct providers (OpenAI, Anthropic) handle PDFs natively — they don't
+  // need OpenRouter's file-parser plugin or OCR pipeline.
+  const isDirectProvider = resolvedProvider.providerType === "openai" || resolvedProvider.providerType === "anthropic";
+  const effectivePdfConfig: PdfEngineConfig | undefined = isDirectProvider
+    ? { useOcrForPdfs: false, supportsNativePdf: true }
+    : pdfEngineConfig;
+
+  const useOcr = hasPdf && effectivePdfConfig?.useOcrForPdfs && !effectivePdfConfig?.supportsNativePdf;
   const ocrPageCountPromise = useOcr ? getTotalPdfPageCount(messages) : Promise.resolve(0);
 
   const systemPrompt = generatePrompt(userSettings);
@@ -129,7 +137,7 @@ export async function streamChatResponse(
     ? buildOpenAIProviderOptions({ reasoningLevel })
     : resolvedProvider.providerType === "anthropic"
       ? buildAnthropicProviderOptions({ reasoningLevel })
-      : buildOpenRouterProviderOptions({ hasPdf, pdfEngineConfig, reasoningLevel });
+      : buildOpenRouterProviderOptions({ hasPdf, pdfEngineConfig: effectivePdfConfig, reasoningLevel });
 
   const result = streamText({
     model: provider(resolvedProvider.providerModelId),

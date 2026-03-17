@@ -4,7 +4,7 @@ import { generateText } from "ai";
 
 import type { ResolvedProvider } from "~/features/chat/server/providers";
 
-import { createOpenAIProvider, createOpenRouterProvider } from "~/features/chat/server/providers";
+import { createAnthropicProvider, createOpenAIProvider, createOpenRouterProvider } from "~/features/chat/server/providers";
 import { db } from "~/lib/db";
 import { threads } from "~/lib/db/schema/chat";
 
@@ -59,7 +59,9 @@ export async function generateHandoffPrompt(
 ): Promise<string> {
   const factory = utilityProvider.providerType === "openai"
     ? createOpenAIProvider(utilityProvider.apiKey)
-    : createOpenRouterProvider(utilityProvider.apiKey);
+    : utilityProvider.providerType === "anthropic"
+      ? createAnthropicProvider(utilityProvider.apiKey)
+      : createOpenRouterProvider(utilityProvider.apiKey);
 
   const conversationContext = formatConversationForHandoff(messages);
 

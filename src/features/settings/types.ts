@@ -23,7 +23,7 @@ const accentColorSchema = z.union([
   z.number().min(0).max(360),
 ]);
 
-export const toolModelIds = ["gemini-flash-lite", "claude-haiku", "gpt-5-nano", "gpt-5-mini"] as const;
+export const toolModelIds = ["gemini-flash-lite", "claude-haiku", "claude-3-haiku", "gpt-5-nano", "gpt-5-mini"] as const;
 export type ToolModelId = (typeof toolModelIds)[number];
 
 export const preferencesSchema = z.object({
