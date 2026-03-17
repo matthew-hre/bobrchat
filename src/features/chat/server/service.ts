@@ -75,19 +75,31 @@ export async function streamChatResponse(
 
   const processedMessages = await processMessageFiles(messages, userId);
 
-  // Strip reasoning parts from assistant messages to avoid "Thought signature is not valid"
-  // errors with Gemini models. Thinking tokens have cryptographic signatures that become
-  // invalid after passing through proxies like OpenRouter.
+  // Strip reasoning data from assistant messages to avoid "Invalid signature in thinking block"
+  // errors. Thinking tokens have cryptographic signatures that become invalid when replayed
+  // in subsequent requests through proxies like OpenRouter.
   // OpenAI's Responses API requires reasoning items to be sent back with conversation history,
   // so we only strip them for non-OpenAI providers.
   const messagesWithoutReasoning = resolvedProvider.providerType === "openai"
     ? processedMessages
     : processedMessages.map((msg) => {
-      if (msg.role !== "assistant" || !msg.parts)
-        return msg;
-      const filteredParts = msg.parts.filter(part => part.type !== "reasoning");
-      return { ...msg, parts: filteredParts };
-    });
+        if (msg.role !== "assistant" || !msg.parts)
+          return msg;
+        const filteredParts = msg.parts.filter(part => part.type !== "reasoning");
+        // Strip reasoning_details from tool part callProviderMetadata to prevent
+        // stale thinking signatures from leaking through tool-call providerOptions
+        for (const part of filteredParts) {
+          if ("callProviderMetadata" in part && part.callProviderMetadata) {
+            const meta = part.callProviderMetadata as Record<string, unknown>;
+            const openrouter = meta.openrouter;
+            if (openrouter && typeof openrouter === "object" && "reasoning_details" in (openrouter as Record<string, unknown>)) {
+              const { reasoning_details: _, ...rest } = openrouter as Record<string, unknown>;
+              (part as { callProviderMetadata: Record<string, unknown> }).callProviderMetadata = { ...meta, openrouter: rest };
+            }
+          }
+        }
+        return { ...msg, parts: filteredParts };
+      });
 
   const convertedMessages = await convertToModelMessages(messagesWithoutReasoning);
 
