@@ -10,8 +10,10 @@ import type { ResolvedProvider } from "./providers";
 import { calculateResponseMetadata } from "./metrics";
 import { generatePrompt } from "./prompt";
 import {
+  buildAnthropicProviderOptions,
   buildOpenAIProviderOptions,
   buildOpenRouterProviderOptions,
+  createAnthropicProvider,
   createOpenAIProvider,
   createOpenRouterProvider,
 } from "./providers";
@@ -85,10 +87,20 @@ export async function streamChatResponse(
 
   const provider = resolvedProvider.providerType === "openai"
     ? createOpenAIProvider(resolvedProvider.apiKey)
-    : createOpenRouterProvider(resolvedProvider.apiKey);
+    : resolvedProvider.providerType === "anthropic"
+      ? createAnthropicProvider(resolvedProvider.apiKey)
+      : createOpenRouterProvider(resolvedProvider.apiKey);
 
   const hasPdf = hasPdfAttachment(messages);
-  const useOcr = hasPdf && pdfEngineConfig?.useOcrForPdfs && !pdfEngineConfig?.supportsNativePdf;
+
+  // Direct providers (OpenAI, Anthropic) handle PDFs natively — they don't
+  // need OpenRouter's file-parser plugin or OCR pipeline.
+  const isDirectProvider = resolvedProvider.providerType === "openai" || resolvedProvider.providerType === "anthropic";
+  const effectivePdfConfig: PdfEngineConfig | undefined = isDirectProvider
+    ? { useOcrForPdfs: false, supportsNativePdf: true }
+    : pdfEngineConfig;
+
+  const useOcr = hasPdf && effectivePdfConfig?.useOcrForPdfs && !effectivePdfConfig?.supportsNativePdf;
   const ocrPageCountPromise = useOcr ? getTotalPdfPageCount(messages) : Promise.resolve(0);
 
   const systemPrompt = generatePrompt(userSettings);
@@ -147,7 +159,9 @@ export async function streamChatResponse(
 
   const providerOptions = resolvedProvider.providerType === "openai"
     ? buildOpenAIProviderOptions({ reasoningLevel })
-    : buildOpenRouterProviderOptions({ hasPdf, pdfEngineConfig, reasoningLevel });
+    : resolvedProvider.providerType === "anthropic"
+      ? buildAnthropicProviderOptions({ reasoningLevel })
+      : buildOpenRouterProviderOptions({ hasPdf, pdfEngineConfig: effectivePdfConfig, reasoningLevel });
 
   // Strip reasoning content from model messages to prevent stale thinking block signatures
   // from being replayed. Used both for initial message history and between multi-step executions.

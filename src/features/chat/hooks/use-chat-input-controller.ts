@@ -37,11 +37,13 @@ export function useChatInputController({
     = useApiKeyStatus("openrouter");
   const { hasKey: hasOpenAIKey, isLoading: isOpenAILoading }
     = useApiKeyStatus("openai");
+  const { hasKey: hasAnthropicKey, isLoading: isAnthropicLoading }
+    = useApiKeyStatus("anthropic");
   const { hasKey: hasParallelApiKey, isLoading: isParallelApiLoading }
     = useApiKeyStatus("parallel");
 
-  const hasAnyChatKey = (hasOpenRouterKey || hasOpenAIKey) ?? false;
-  const isAnyChatKeyLoading = isOpenRouterLoading || isOpenAILoading;
+  const hasAnyChatKey = (hasOpenRouterKey || hasOpenAIKey || hasAnthropicKey) ?? false;
+  const isAnyChatKeyLoading = isOpenRouterLoading || isOpenAILoading || isAnthropicLoading;
 
   const { models: favoriteModels, isLoading: isModelsLoading, unavailableModelIds }
     = useFavoriteModels();
@@ -82,6 +84,21 @@ export function useChatInputController({
     () => getModelCapabilities(selectedModel),
     [selectedModel],
   );
+
+  // Direct providers (OpenAI, Anthropic) handle PDFs natively — override
+  // the OpenRouter-derived capability when the user has a matching key.
+  const willUseDirectProvider = React.useMemo(() => {
+    if (!selectedModelId)
+      return false;
+    const prefix = selectedModelId.split("/")[0];
+    if (prefix === "openai" && hasOpenAIKey)
+      return true;
+    if (prefix === "anthropic" && hasAnthropicKey)
+      return true;
+    return false;
+  }, [selectedModelId, hasOpenAIKey, hasAnthropicKey]);
+
+  const effectiveSupportsNativePdf = capabilities.supportsNativePdf || willUseDirectProvider;
 
   React.useEffect(() => {
     if (searchEnabled && !capabilities.supportsSearch) {
@@ -233,6 +250,7 @@ export function useChatInputController({
       setSelectedId: setSelectedModelId,
       isLoading: isModelsLoading,
       capabilities,
+      effectiveSupportsNativePdf,
       canUpload,
       acceptedTypes,
       unavailableModelIds,

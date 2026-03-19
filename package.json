@@ -18,6 +18,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.58",
     "@ai-sdk/openai": "^3.0.41",
     "@ai-sdk/react": "^3.0.3",
     "@aws-sdk/client-s3": "^3.965.0",

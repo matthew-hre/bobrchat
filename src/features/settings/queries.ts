@@ -73,7 +73,7 @@ export async function getUserSettingsAndKeys(
   const { settings, encryptedApiKeys } = await getUserSettingsRow(userId);
 
   const resolvedKeys: ResolvedUserData["resolvedKeys"] = {};
-  const providers: ApiKeyProvider[] = ["openrouter", "openai", "parallel"];
+  const providers: ApiKeyProvider[] = ["openrouter", "openai", "anthropic", "parallel"];
 
   for (const provider of providers) {
     if (clientKeys?.[provider]) {

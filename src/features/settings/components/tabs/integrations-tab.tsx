@@ -25,6 +25,14 @@ const modelProviders: ApiKeyConfig[] = [
     logo: "/logos/providers/openai.svg",
     link: { href: "https://platform.openai.com/api-keys", label: "platform.openai.com/api-keys" },
   },
+  {
+    provider: "anthropic",
+    label: "Anthropic",
+    description: "Use your Anthropic API key for direct access to Claude models without going through OpenRouter.",
+    placeholder: "sk-ant-...",
+    logo: "/logos/providers/anthropic.svg",
+    link: { href: "https://console.anthropic.com/settings/keys", label: "console.anthropic.com/settings/keys" },
+  },
 ];
 
 const searchProviders: ApiKeyConfig[] = [

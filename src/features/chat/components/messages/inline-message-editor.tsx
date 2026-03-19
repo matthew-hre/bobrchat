@@ -68,6 +68,8 @@ export function InlineMessageEditor({
   const keyboardShortcut = settings?.sendMessageKeyboardShortcut || "enter";
 
   const { hasKey: hasParallelApiKey, isLoading: isParallelApiLoading } = useApiKeyStatus("parallel");
+  const { hasKey: hasOpenAIKey } = useApiKeyStatus("openai");
+  const { hasKey: hasAnthropicKey } = useApiKeyStatus("anthropic");
 
   const { models: favoriteModels, unavailableModelIds } = useFavoriteModels();
   const [selectedModelId, setSelectedModelId] = React.useState<string | null>(
@@ -87,6 +89,19 @@ export function InlineMessageEditor({
   }, [favoriteModels, selectedModelId, unavailableModelIds]);
   const selectedModel = favoriteModels.find(m => m.id === selectedModelId);
   const capabilities = getModelCapabilities(selectedModel);
+
+  // Direct providers handle PDFs natively
+  const willUseDirectProvider = React.useMemo(() => {
+    if (!selectedModelId)
+      return false;
+    const prefix = selectedModelId.split("/")[0];
+    if (prefix === "openai" && hasOpenAIKey)
+      return true;
+    if (prefix === "anthropic" && hasAnthropicKey)
+      return true;
+    return false;
+  }, [selectedModelId, hasOpenAIKey, hasAnthropicKey]);
+  const effectiveSupportsNativePdf = capabilities.supportsNativePdf || willUseDirectProvider;
   const canUpload = canUploadFiles(capabilities);
   const acceptedTypes = getAcceptedFileTypes(capabilities);
 
@@ -208,7 +223,7 @@ export function InlineMessageEditor({
           <FilePreview
             files={allAttachments}
             onRemoveAction={handleRemoveAttachment}
-            supportsNativePdf={capabilities.supportsNativePdf}
+            supportsNativePdf={effectiveSupportsNativePdf}
           />
         </div>
       )}

@@ -8,15 +8,16 @@ export function ApiKeyStatusWidget() {
   const { hasKey: hasOpenRouterKey, isLoading: isOpenRouterLoading } = useApiKeyStatus("openrouter");
   const { hasKey: hasParallelKey, isLoading: isParallelLoading } = useApiKeyStatus("parallel");
   const { hasKey: hasOpenAIKey, isLoading: isOpenAILoading } = useApiKeyStatus("openai");
+  const { hasKey: hasAnthropicKey, isLoading: isAnthropicLoading } = useApiKeyStatus("anthropic");
 
-  const isLoading = isOpenRouterLoading || isParallelLoading || isOpenAILoading;
+  const isLoading = isOpenRouterLoading || isParallelLoading || isOpenAILoading || isAnthropicLoading;
 
   const getApiKeyStatus = () => {
-    const keyCount = [hasOpenRouterKey, hasOpenAIKey, hasParallelKey].filter(Boolean).length;
+    const keyCount = [hasOpenRouterKey, hasOpenAIKey, hasAnthropicKey, hasParallelKey].filter(Boolean).length;
     if (keyCount === 0) {
       return "No API Keys Set";
     }
-    if (keyCount === 3) {
+    if (keyCount === 4) {
       return "All API Keys Set";
     }
     const names: string[] = [];
@@ -24,6 +25,8 @@ export function ApiKeyStatusWidget() {
       names.push("OpenRouter");
     if (hasOpenAIKey)
       names.push("OpenAI");
+    if (hasAnthropicKey)
+      names.push("Anthropic");
     if (hasParallelKey)
       names.push("Parallel");
     return `${names.join(", ")} ${keyCount === 1 ? "Key" : "Keys"} Set`;

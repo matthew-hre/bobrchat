@@ -7,7 +7,7 @@ import { THREAD_ICONS } from "~/lib/db/schema/chat";
 
 import type { ResolvedProvider } from "../providers";
 
-import { createOpenAIProvider, createOpenRouterProvider } from "../providers";
+import { createAnthropicProvider, createOpenAIProvider, createOpenRouterProvider } from "../providers";
 
 const ICON_DESCRIPTIONS: Record<ThreadIcon, string> = {
   "message-circle": "general thread or casual conversation",
@@ -35,7 +35,9 @@ export type ThreadMetadata = {
 function createProvider(resolved: ResolvedProvider) {
   const factory = resolved.providerType === "openai"
     ? createOpenAIProvider(resolved.apiKey)
-    : createOpenRouterProvider(resolved.apiKey);
+    : resolved.providerType === "anthropic"
+      ? createAnthropicProvider(resolved.apiKey)
+      : createOpenRouterProvider(resolved.apiKey);
   return factory(resolved.providerModelId);
 }
 

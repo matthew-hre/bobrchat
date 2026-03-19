@@ -253,6 +253,173 @@ export async function syncDirectProviderAvailability(): Promise<{
 }
 
 /**
+ * Finds the best matching Anthropic API model ID for a stripped OpenRouter ID.
+ *
+ * OpenRouter uses short IDs (e.g. "claude-sonnet-4") while Anthropic's API
+ * returns date-suffixed IDs (e.g. "claude-sonnet-4-20250514") or versionless
+ * IDs (e.g. "claude-sonnet-4-6"). Matches by prefix, preferring exact matches,
+ * then the latest date-suffixed variant.
+ */
+function findAnthropicModelMatch(strippedId: string, apiModelIds: string[]): string | undefined {
+  // OpenRouter uses dots (e.g. "claude-3.5-sonnet") while Anthropic uses
+  // dashes (e.g. "claude-3-5-sonnet"). Normalize dots to dashes for matching.
+  const normalized = strippedId.replaceAll(".", "-");
+
+  for (const id of [strippedId, normalized]) {
+    const exact = apiModelIds.find(apiId => apiId === id);
+    if (exact)
+      return exact;
+
+    const candidates = apiModelIds
+      .filter(apiId => apiId.startsWith(`${id}-`))
+      .sort();
+
+    if (candidates.length > 0)
+      return candidates[candidates.length - 1];
+  }
+
+  return undefined;
+}
+
+/**
+ * Sync direct provider availability for Anthropic models.
+ * Fetches the Anthropic model list and cross-references with our models table
+ * to determine which models can be routed directly through Anthropic.
+ */
+export async function syncAnthropicProviderAvailability(): Promise<{
+  success: boolean;
+  upserted: number;
+  removed: number;
+  durationMs: number;
+  skipped?: boolean;
+  error?: string;
+}> {
+  const startTime = Date.now();
+
+  const anthropicKey = serverEnv.ANTHROPIC_API_KEY;
+  if (!anthropicKey) {
+    return {
+      success: true,
+      upserted: 0,
+      removed: 0,
+      durationMs: Date.now() - startTime,
+      skipped: true,
+    };
+  }
+
+  try {
+    // Fetch all Anthropic models with pagination
+    const anthropicApiModelIds: string[] = [];
+    let afterId: string | undefined;
+
+    while (true) {
+      const url = new URL("https://api.anthropic.com/v1/models");
+      if (afterId) {
+        url.searchParams.set("after_id", afterId);
+      }
+
+      const response = await fetch(url.toString(), {
+        headers: {
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Anthropic API returned ${response.status}: ${await response.text()}`);
+      }
+
+      const data = await response.json() as {
+        data: { id: string }[];
+        has_more: boolean;
+        last_id: string;
+      };
+
+      for (const model of data.data) {
+        anthropicApiModelIds.push(model.id);
+      }
+
+      if (!data.has_more) {
+        break;
+      }
+      afterId = data.last_id;
+    }
+
+    // Get all Anthropic models from our models table
+    const anthropicModels = await db
+      .select({ modelId: models.modelId })
+      .from(models)
+      .where(eq(models.provider, "anthropic"));
+
+    let upserted = 0;
+    let removed = 0;
+    const now = new Date();
+
+    for (const { modelId } of anthropicModels) {
+      const strippedId = modelId.replace(/^anthropic\//, "");
+
+      if (isOpenRouterOnlyVariant(strippedId)) {
+        continue;
+      }
+
+      // Anthropic API returns date-suffixed IDs (e.g. "claude-sonnet-4-20250514")
+      // while OpenRouter uses short IDs (e.g. "anthropic/claude-sonnet-4").
+      // Match by finding an API model whose ID starts with the stripped local ID.
+      const matchedApiId = findAnthropicModelMatch(strippedId, anthropicApiModelIds);
+
+      if (matchedApiId) {
+        await db
+          .insert(modelProviderAvailability)
+          .values({
+            modelId,
+            provider: "anthropic",
+            providerModelId: matchedApiId,
+            lastVerifiedAt: now,
+          })
+          .onConflictDoUpdate({
+            target: [modelProviderAvailability.modelId, modelProviderAvailability.provider],
+            set: {
+              providerModelId: matchedApiId,
+              lastVerifiedAt: now,
+            },
+          });
+        upserted++;
+      }
+      else {
+        await db
+          .delete(modelProviderAvailability)
+          .where(
+            and(
+              eq(modelProviderAvailability.modelId, modelId),
+              eq(modelProviderAvailability.provider, "anthropic"),
+            ),
+          );
+        removed++;
+      }
+    }
+
+    return {
+      success: true,
+      upserted,
+      removed,
+      durationMs: Date.now() - startTime,
+    };
+  }
+  catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to sync Anthropic provider availability:", error);
+
+    return {
+      success: false,
+      upserted: 0,
+      removed: 0,
+      durationMs: Date.now() - startTime,
+      error: errorMessage,
+    };
+  }
+}
+
+/**
  * Get the last successful sync time
  */
 export async function getLastSyncTime(): Promise<Date | null> {

@@ -108,11 +108,15 @@ export function ToolsSection({ settings }: ToolsSectionProps) {
     if (settings.configuredApiKeys?.openai || clientKeys.openai) {
       providers.add("openai");
     }
+    if (settings.configuredApiKeys?.anthropic || clientKeys.anthropic) {
+      providers.add("anthropic");
+    }
 
     // If no keys configured at all, show everything so the user can see options
     if (providers.size === 0) {
       providers.add("openrouter");
       providers.add("openai");
+      providers.add("anthropic");
     }
 
     return providers;
