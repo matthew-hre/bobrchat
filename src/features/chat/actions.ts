@@ -5,45 +5,12 @@ import type { ChatUIMessage } from "~/features/chat/types";
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
 import { deleteFile } from "~/features/attachments/lib/storage";
-import { deleteUserAttachmentsByIds, getThreadStats, listThreadAttachments, resolveUserAttachmentsByStoragePaths } from "~/features/attachments/queries";
+import { deleteUserAttachmentsByIds, getThreadStats, listThreadAttachments } from "~/features/attachments/queries";
 import { getRequiredSession } from "~/features/auth/lib/session";
 import { addTagToThread, archiveThreadById, createTag, createThreadWithLimitCheck, deleteMessagesAfterCount, deleteTagById, deleteThreadById, getMessagesByThreadId, listTagsByUserId, removeTagFromThread, renameThreadById, saveMessage, updateTagById, updateThreadIcon } from "~/features/chat/queries";
 import { resolveToolProvider } from "~/features/chat/server/providers";
 import { generateThreadIcon, generateThreadTitle } from "~/features/chat/server/thread";
 import { getShareByThreadId, revokeThreadShare, upsertThreadShare } from "~/features/chat/sharing-queries";
-import { serverEnv } from "~/lib/env";
-
-function extractStoragePathsFromThreadMessages(messages: ChatUIMessage[]): string[] {
-  const storagePaths: string[] = [];
-  const prefix = `${serverEnv.R2_PUBLIC_URL}/`;
-
-  for (const message of messages) {
-    const parts = (message as unknown as { parts?: unknown }).parts;
-    if (!Array.isArray(parts))
-      continue;
-
-    for (const part of parts) {
-      if (!part || typeof part !== "object")
-        continue;
-
-      const maybe = part as { type?: unknown; storagePath?: unknown; url?: unknown };
-      if (maybe.type !== "file")
-        continue;
-
-      if (typeof maybe.storagePath === "string" && maybe.storagePath.length > 0) {
-        storagePaths.push(maybe.storagePath);
-        continue;
-      }
-
-      if (typeof maybe.url === "string" && maybe.url.startsWith(prefix)) {
-        storagePaths.push(maybe.url.slice(prefix.length));
-      }
-    }
-  }
-
-  return Array.from(new Set(storagePaths));
-}
-
 /**
  * Creates a new thread for the authenticated user (idempotent).
  * Accepts an optional client-generated threadId for optimistic updates.
@@ -106,26 +73,7 @@ export async function deleteThread(threadId: string): Promise<void> {
 
   const userId = session.user.id;
 
-  // Fetch messages and linked attachments in parallel
-  const [threadMessages, fromLinked] = await Promise.all([
-    getMessagesByThreadId(threadId),
-    listThreadAttachments({ userId, threadId }),
-  ]);
-
-  // Extract storage paths from message content (only if there are messages)
-  const extractedPaths = extractStoragePathsFromThreadMessages(threadMessages);
-
-  // Only resolve paths if we found any in message content
-  let fromMessageUrls = { ids: [] as string[], storagePaths: [] as string[] };
-  if (extractedPaths.length > 0) {
-    fromMessageUrls = await resolveUserAttachmentsByStoragePaths({
-      userId,
-      storagePaths: extractedPaths,
-    });
-  }
-
-  const ids = Array.from(new Set([...fromLinked.ids, ...fromMessageUrls.ids]));
-  const storagePaths = Array.from(new Set([...fromLinked.storagePaths, ...fromMessageUrls.storagePaths]));
+  const { ids, storagePaths } = await listThreadAttachments({ userId, threadId });
 
   // Run file deletion, attachment record deletion, and thread deletion in parallel
   // Thread deletion will cascade to messages, which is safe since we've already extracted attachment info

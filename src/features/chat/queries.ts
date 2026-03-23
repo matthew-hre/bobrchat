@@ -118,14 +118,27 @@ export const getMessagesByThreadId = cache(async (threadId: string): Promise<Cha
       const version = row.keyVersion ?? keyMeta.version;
       const salt = saltsByVersion.get(version);
       if (!salt) {
-        throw new Error(`Missing salt for key version ${version}`);
+        message = {
+          role: "assistant",
+          parts: [{ type: "text", text: "[This message could not be decrypted — the encryption key is no longer available.]" }],
+        } as ChatUIMessage;
       }
-      const cachedKey = derivedKeys.get(version) ?? await deriveUserKey(userId, salt);
-      derivedKeys.set(version, cachedKey);
-      message = decryptMessageWithKey(
-        { iv: row.iv, ciphertext: row.ciphertext, authTag: row.authTag },
-        cachedKey,
-      );
+      else {
+        try {
+          const cachedKey = derivedKeys.get(version) ?? await deriveUserKey(userId, salt);
+          derivedKeys.set(version, cachedKey);
+          message = decryptMessageWithKey(
+            { iv: row.iv, ciphertext: row.ciphertext, authTag: row.authTag },
+            cachedKey,
+          );
+        }
+        catch {
+          message = {
+            role: "assistant",
+            parts: [{ type: "text", text: "[This message could not be decrypted — the encryption key is no longer available.]" }],
+          } as ChatUIMessage;
+        }
+      }
     }
     else {
       message = row.content as ChatUIMessage;
