@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import type { ThreadFromApi } from "~/features/chat/hooks/use-threads";
 import type { ChatUIMessage } from "~/features/chat/types";
+import type { UserSettingsData } from "~/features/settings/types";
 
 import { ChatMessages } from "~/features/chat/components/chat-messages";
 import { ChatView } from "~/features/chat/components/chat-view";
@@ -16,7 +17,7 @@ import { THREADS_KEY, useThreadTitle } from "~/features/chat/hooks/use-threads";
 import { isInsufficientCreditsError, parseAIError } from "~/features/chat/lib/parse-ai-error";
 import { useChatUIStore } from "~/features/chat/store";
 import { getModelCapabilities, useFavoriteModels } from "~/features/models";
-import { OPENROUTER_CREDITS_KEY } from "~/features/settings/hooks/use-user-settings";
+import { OPENROUTER_CREDITS_KEY, USER_SETTINGS_KEY } from "~/features/settings/hooks/use-user-settings";
 import { UpgradePromptDialog } from "~/features/subscriptions/components/upgrade-prompt-dialog";
 
 type ChatThreadProps = {
@@ -171,6 +172,19 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
       if (!isError) {
         setCreditError(null);
         setLastSendMessageId(null);
+
+        const settings = queryClient.getQueryData<UserSettingsData>(USER_SETTINGS_KEY);
+        if (settings?.desktopNotifications && document.hidden && Notification.permission === "granted") {
+          const textPart = message.parts?.find(p => p.type === "text") as { type: "text"; text: string } | undefined;
+          const body = textPart?.text
+            ? textPart.text.slice(0, 100) + (textPart.text.length > 100 ? "…" : "")
+            : "Your response is ready.";
+          const notification = new Notification("bobrchat.com", { body, icon: "/favicon.ico" });
+          notification.onclick = () => {
+            window.focus();
+            notification.close();
+          };
+        }
       }
     },
   });

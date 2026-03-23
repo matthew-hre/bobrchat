@@ -44,6 +44,21 @@ export function AdvancedFeaturesSection({ settings }: AdvancedFeaturesSectionPro
         enabled={settings.autoCreateFilesFromPaste}
         onToggle={enabled => save({ autoCreateFilesFromPaste: enabled })}
       />
+      <ToggleItem
+        label="Desktop Notifications"
+        description="Notify me when a response finishes while I'm in another tab."
+        enabled={settings.desktopNotifications}
+        onToggle={async (enabled) => {
+          if (enabled && "Notification" in window) {
+            const permission = await Notification.requestPermission();
+            if (permission !== "granted") {
+              toast.error("Notification permission denied. Enable it in your browser settings.");
+              return;
+            }
+          }
+          save({ desktopNotifications: enabled });
+        }}
+      />
     </SettingsSection>
   );
 }

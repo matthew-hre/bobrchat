@@ -118,6 +118,7 @@ export async function createDefaultUserSettings(userId: string): Promise<UserSet
     toolIconModel: "gemini-flash-lite",
     handoffEnabled: false,
     toolHandoffModel: "gemini-flash-lite",
+    desktopNotifications: false,
   };
 
   await updateUserSettings(userId, defaultSettings);

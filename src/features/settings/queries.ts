@@ -28,6 +28,7 @@ const DEFAULT_SETTINGS: UserSettingsData = {
   toolIconModel: "gemini-flash-lite",
   handoffEnabled: false,
   toolHandoffModel: "gemini-flash-lite",
+  desktopNotifications: false,
 };
 
 export type ResolvedUserData = {
