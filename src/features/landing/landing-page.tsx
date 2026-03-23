@@ -116,7 +116,7 @@ export function LandingPage() {
           />
           <span className="text-lg font-semibold tracking-tight">BobrChat</span>
         </div>
-        <Link href="/auth">
+        <Link href="/login">
           <Button size="sm">Sign in</Button>
         </Link>
       </nav>
@@ -142,9 +142,9 @@ export function LandingPage() {
               interface for the models you want to use.
             </p>
             <div className="flex justify-center gap-3 pt-2">
-              <Link href="/auth">
+              <Link href="/signup">
                 <Button size="lg" className="gap-2">
-                  Get Started
+                  Sign Up
                   <ArrowRightIcon className="size-4" />
                 </Button>
               </Link>
@@ -333,9 +333,9 @@ export function LandingPage() {
                   <li>100 threads</li>
                   <li>10 MB storage</li>
                 </ul>
-                <Link href="/auth" className="mt-auto">
+                <Link href="/signup" className="mt-auto">
                   <Button variant="outline" className="w-full gap-2">
-                    Get Started
+                    Sign Up
                     <ArrowRightIcon className="size-4" />
                   </Button>
                 </Link>
@@ -370,9 +370,9 @@ export function LandingPage() {
                   </li>
                   <li>Priority support</li>
                 </ul>
-                <Link href="/auth" className="mt-auto pt-6">
+                <Link href="/signup" className="mt-auto pt-6">
                   <Button className="w-full gap-2">
-                    Get Started
+                    Sign Up
                     <ArrowRightIcon className="size-4" />
                   </Button>
                 </Link>
