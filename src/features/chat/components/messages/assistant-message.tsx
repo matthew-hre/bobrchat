@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, RefreshCwIcon } from "lucide-react";
-import { memo } from "react";
+import { memo, useCallback, useState } from "react";
 
 import type { ChatUIMessage } from "~/features/chat/types";
 
@@ -13,8 +13,10 @@ import {
   isToolPart,
 } from "~/features/chat/types";
 import { extractMessageText, MessageParts, MessagePartsContainer, normalizeReasoningText } from "~/features/chat/ui/parts";
+import { useLongPress } from "~/lib/hooks";
 
 import { MessageMetrics } from "../ui/message-metrics";
+import { MessageMetricsSheet } from "../ui/message-metrics-sheet";
 
 function hasRenderableAssistantContent(parts: ChatUIMessage["parts"]) {
   for (const part of parts) {
@@ -60,6 +62,10 @@ export const AssistantMessage = memo(({
 
   const textContent = extractMessageText(message.parts);
 
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const onLongPress = useCallback(() => setSheetOpen(true), []);
+  const longPressProps = useLongPress({ onLongPress });
+
   const persistedStopped = message.stoppedByUser === true;
   const stoppedModelId = message.stoppedModelId as string | null | undefined;
   const isStopped = persistedStopped || !!stoppedInfo;
@@ -72,7 +78,7 @@ export const AssistantMessage = memo(({
   const showCreditErrorNotice = !!creditError;
 
   return (
-    <div className="group markdown text-base">
+    <div className="group markdown text-base" {...longPressProps}>
       <MessagePartsContainer showRaw={showRaw}>
         <MessageParts
           messageId={message.id}
@@ -155,7 +161,6 @@ export const AssistantMessage = memo(({
         </div>
       )}
 
-      {/* TODO: Add mobile support for message metrics - hidden on touch devices */}
       {(message.metadata || isStopped) && (
         <div className="touch-device-hidden">
           <MessageMetrics
@@ -170,6 +175,18 @@ export const AssistantMessage = memo(({
           />
         </div>
       )}
+
+      <MessageMetricsSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        messageId={message.id}
+        metadata={message.metadata}
+        fallbackModel={stoppedModelId || stoppedInfo?.modelId || (isStopped ? "unknown" : null)}
+        content={textContent}
+        onRetry={() => onRegenerate?.(message.id)}
+        isRetrying={isRegenerating}
+        stopped={isStopped}
+      />
     </div>
   );
 });

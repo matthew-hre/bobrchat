@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { AppFileUIPart, ChatUIMessage } from "~/features/chat/types";
 
 import { isFilePart, isTextPart } from "~/features/chat/types";
+import { useLongPress } from "~/lib/hooks";
 import { cn } from "~/lib/utils";
 
 import type { EditedMessagePayload, ExistingAttachment } from "./inline-message-editor";
 
 import { UserMessageMetrics } from "../ui/user-message-metrics";
+import { UserMessageMetricsSheet } from "../ui/user-message-metrics-sheet";
 import { InlineMessageEditor } from "./inline-message-editor";
 import { UserMessage } from "./user-message";
 
@@ -68,8 +70,12 @@ export function EditableUserMessage({
     [message],
   );
 
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const onLongPress = useCallback(() => setSheetOpen(true), []);
+  const longPressProps = useLongPress({ onLongPress });
+
   return (
-    <div className="group flex w-full flex-col items-end gap-2">
+    <div className="group flex w-full flex-col items-end gap-2" {...longPressProps}>
       <div className={cn(`
         relative w-full max-w-[80%]
         md:max-w-[70%]
@@ -120,11 +126,20 @@ export function EditableUserMessage({
       </div>
 
       {!isEditing && (
-        <UserMessageMetrics
-          content={textContent}
-          onEdit={canEdit ? onStartEdit : undefined}
-        />
+        <div className="touch-device-hidden">
+          <UserMessageMetrics
+            content={textContent}
+            onEdit={canEdit ? onStartEdit : undefined}
+          />
+        </div>
       )}
+
+      <UserMessageMetricsSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        content={textContent}
+        onEdit={canEdit ? onStartEdit : undefined}
+      />
     </div>
   );
 }
