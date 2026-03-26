@@ -125,7 +125,7 @@ export function UpgradePromptDialog({
 
         <DialogFooter className="sm:justify-between">
           <Button variant="ghost" asChild>
-            <Link href="/settings?tab=preferences">Manage threads</Link>
+            <Link href="/settings?section=thread-behavior">Manage threads</Link>
           </Button>
           <Button variant="outline" onClick={() => onOpenChangeAction(false)}>
             Maybe later

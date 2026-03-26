@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 
 type SearchParams = Promise<{
   tab?: string;
+  section?: string;
 }>;
 
 export default async function SettingsRoute({
@@ -16,13 +17,12 @@ export default async function SettingsRoute({
 }: {
   searchParams: SearchParams;
 }) {
-  const { tab } = await searchParams;
-  const validTabs = ["interface", "preferences", "integrations", "models", "attachments", "auth"];
-  const initialTab = validTabs.includes(tab ?? "") ? (tab as "interface" | "preferences" | "integrations" | "models" | "attachments" | "auth") : "interface";
+  const { tab, section } = await searchParams;
+  const initialSection = section ?? tab ?? "appearance";
 
   return (
     <div className="flex h-screen w-screen">
-      <SettingsPage initialTab={initialTab} />
+      <SettingsPage initialTab={initialSection} />
     </div>
   );
 }
