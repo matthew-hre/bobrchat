@@ -14,7 +14,7 @@ export function AdvancedPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full max-w-2xl space-y-8 p-6">
+      <div className="mx-auto w-full max-w-3xl space-y-8 p-6">
         <AdvancedFeaturesSection settings={settings} />
       </div>
     </div>
@@ -24,7 +24,7 @@ export function AdvancedPage() {
 function AdvancedPageSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full max-w-2xl space-y-6 p-6">
+      <div className="mx-auto w-full max-w-3xl space-y-6 p-6">
         <div className="space-y-3">
           <Skeleton className="h-4 w-28" />
           <Skeleton className="h-8 w-full" />

@@ -234,7 +234,7 @@ export function ModelsTab() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Tab Switcher */}
-      <div className="w-full px-6 pt-6">
+      <div className="mx-auto w-full max-w-3xl px-6 pt-6">
         <div className="bg-muted/50 inline-flex w-full gap-1 rounded-lg p-1">
           <button
             onClick={() => setMobileTab("available")}
@@ -297,7 +297,8 @@ export function ModelsTab() {
           <div className="flex flex-1 flex-col overflow-hidden">
             {hasAnyKey && (
               <div className={`
-                bg-background sticky top-0 z-10 shrink-0 px-6 pt-4 pb-2
+                bg-background sticky top-0 z-10 mx-auto w-full max-w-3xl
+                shrink-0 px-6 pt-4 pb-2
               `}
               >
                 <ModelsSearchBar
@@ -311,14 +312,18 @@ export function ModelsTab() {
                 />
               </div>
             )}
-            <div className="flex-1 overflow-y-auto px-6 pb-6" onScroll={handleScroll}>
-              {renderAllModels()}
+            <div className="flex-1 overflow-y-auto" onScroll={handleScroll}>
+              <div className="mx-auto max-w-3xl px-6 pb-6">
+                {renderAllModels()}
+              </div>
             </div>
           </div>
         )}
         {mobileTab === "favorites" && (
-          <div className="flex-1 overflow-y-auto p-6">
-            {renderFavoriteModels()}
+          <div className="flex-1 overflow-y-auto">
+            <div className="mx-auto max-w-3xl p-6">
+              {renderFavoriteModels()}
+            </div>
           </div>
         )}
       </div>

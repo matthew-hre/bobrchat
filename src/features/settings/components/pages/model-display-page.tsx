@@ -31,7 +31,7 @@ export function ModelDisplayPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full max-w-2xl space-y-8 p-6">
+      <div className="mx-auto w-full max-w-3xl space-y-8 p-6">
         <SettingsSection
           title="Model Display"
           description="Configure how model names are displayed."
@@ -51,7 +51,7 @@ export function ModelDisplayPage() {
 function ModelDisplayPageSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full max-w-2xl space-y-6 p-6">
+      <div className="mx-auto w-full max-w-3xl space-y-6 p-6">
         <div className="space-y-2">
           <Skeleton className="h-4 w-36" />
           <Skeleton className="h-9 w-full" />

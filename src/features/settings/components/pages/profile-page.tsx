@@ -18,6 +18,7 @@ import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
+import { DataManagementSection } from "../sections/data-management-section";
 import { DeleteAccountSection } from "../sections/delete-account-section";
 import { SettingsSection } from "../ui/settings-section";
 import { SubscriptionCard } from "../ui/subscription-card";
@@ -75,7 +76,7 @@ export function ProfilePage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full max-w-2xl space-y-8 p-6">
+      <div className="mx-auto w-full max-w-3xl space-y-8 p-6">
         <WorkOsWidgets
           queryClient={queryClient}
           theme={{
@@ -115,6 +116,10 @@ export function ProfilePage() {
 
         <Separator />
 
+        <DataManagementSection />
+
+        <Separator />
+
         <DeleteAccountSection />
       </div>
     </div>
@@ -124,7 +129,7 @@ export function ProfilePage() {
 function ProfilePageSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full max-w-2xl space-y-8 p-6">
+      <div className="mx-auto w-full max-w-3xl space-y-8 p-6">
         <div className="space-y-6">
           <div className="space-y-1">
             <Skeleton className="h-4 w-20" />

@@ -245,7 +245,7 @@ export function AttachmentsTab() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full space-y-4 p-6">
+      <div className="mx-auto w-full max-w-3xl space-y-4 p-6">
         <StorageBar />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">

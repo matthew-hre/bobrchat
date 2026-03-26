@@ -55,7 +55,7 @@ export function IntegrationsTab() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full space-y-6 p-6">
+      <div className="mx-auto w-full max-w-3xl space-y-6 p-6">
         <section className="space-y-2">
           <h4 className={`
             text-muted-foreground text-xs font-medium tracking-wide uppercase
@@ -91,7 +91,7 @@ export function IntegrationsTab() {
 function IntegrationsTabSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full space-y-6 p-6">
+      <div className="mx-auto w-full max-w-3xl space-y-6 p-6">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Skeleton className="size-5" />
