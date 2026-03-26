@@ -6,12 +6,21 @@ import type { PreferencesUpdate } from "~/features/settings/types";
 
 import { Kbd } from "~/components/ui/kbd";
 import { Label } from "~/components/ui/label";
+import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Slider } from "~/components/ui/slider";
 import { useUpdatePreferences, useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
 import { SelectionCardItem } from "../ui/selection-card-item";
 import { SettingsSection } from "../ui/settings-section";
+
+const keyboardShortcuts = [
+  { label: "Toggle Sidebar", keys: ["Ctrl", "B"] },
+  { label: "Focus Search", keys: ["/"] },
+  { label: "Model Selector", keys: ["Ctrl", "M"] },
+  { label: "Open Settings", keys: ["Ctrl", ","] },
+  { label: "Unfocus Input", keys: ["Esc"] },
+];
 
 const sendMessageKeyboardShortcutOptions = [
   { value: "enter" as const, label: <Kbd>Enter</Kbd> },
@@ -83,6 +92,29 @@ export function InputPage() {
             onChange={value => save({ sendMessageKeyboardShortcut: value })}
             layout="flex"
           />
+        </SettingsSection>
+
+        <Separator />
+
+        <SettingsSection
+          title="Keyboard Shortcuts"
+          description="Quick reference for available keyboard shortcuts."
+        >
+          <div className="space-y-2">
+            {keyboardShortcuts.map(shortcut => (
+              <div
+                key={shortcut.label}
+                className="flex items-center justify-between text-sm"
+              >
+                <span className="text-muted-foreground">{shortcut.label}</span>
+                <div className="flex gap-1">
+                  {shortcut.keys.map(key => (
+                    <Kbd key={key}>{key}</Kbd>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </SettingsSection>
       </div>
     </div>

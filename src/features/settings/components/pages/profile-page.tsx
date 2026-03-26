@@ -13,10 +13,12 @@ import { useCallback, useEffect } from "react";
 
 import type { AccentColor } from "~/features/settings/types";
 
+import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
 import { SettingsSection } from "../ui/settings-section";
+import { SubscriptionCard } from "../ui/subscription-card";
 
 const ACCENT_COLOR_MAP = {
   green: "grass",
@@ -71,7 +73,7 @@ export function ProfilePage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full p-6">
+      <div className="w-full space-y-8 p-6">
         <WorkOsWidgets
           queryClient={queryClient}
           theme={{
@@ -90,6 +92,15 @@ export function ProfilePage() {
             <UserProfile authToken={authToken} />
           </SettingsSection>
         </WorkOsWidgets>
+
+        <Separator />
+
+        <SettingsSection
+          title="Subscription"
+          description="View your current plan and usage."
+        >
+          <SubscriptionCard />
+        </SettingsSection>
       </div>
     </div>
   );
