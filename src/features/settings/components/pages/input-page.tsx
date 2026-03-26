@@ -59,7 +59,7 @@ export function InputPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full space-y-8 p-6">
+      <div className="w-full max-w-2xl space-y-8 p-6">
         <SettingsSection
           title="Input & Controls"
           description="Configure input behavior and keyboard shortcuts."
@@ -124,7 +124,7 @@ export function InputPage() {
 function InputPageSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full space-y-6 p-6">
+      <div className="w-full max-w-2xl space-y-6 p-6">
         <div className="space-y-2">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-9 w-full" />

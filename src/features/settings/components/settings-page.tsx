@@ -1,5 +1,9 @@
 "use client";
 
+import type {
+  ShieldIcon,
+} from "lucide-react";
+
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
@@ -7,13 +11,14 @@ import {
   DatabaseIcon,
   KeyboardIcon,
   KeyIcon,
+  LayoutListIcon,
   LogOutIcon,
   MenuIcon,
   MessageSquarePlusIcon,
   PaletteIcon,
-  ShieldIcon,
+  PanelLeftIcon,
   SparklesIcon,
-  UserIcon,
+  TypeIcon,
   WrenchIcon,
 } from "lucide-react";
 import Image from "next/image";
@@ -39,12 +44,14 @@ import { usePreviousRoute } from "~/features/settings/previous-route-context";
 import { cn } from "~/lib/utils";
 
 import { AdvancedPage } from "./pages/advanced-page";
-import { AppearancePage } from "./pages/appearance-page";
 import { DataPage } from "./pages/data-page";
+import { FontsPage } from "./pages/fonts-page";
 import { InputPage } from "./pages/input-page";
+import { ModelDisplayPage } from "./pages/model-display-page";
 import { NewThreadPage } from "./pages/new-thread-page";
 import { ProfilePage } from "./pages/profile-page";
-import { SecurityPage } from "./pages/security-page";
+import { SidebarPage } from "./pages/sidebar-page";
+import { ThemePage } from "./pages/theme-page";
 import { ThreadBehaviorPage } from "./pages/thread-behavior-page";
 import { ToolsPage } from "./pages/tools-page";
 import { AttachmentsTab } from "./tabs/attachments-tab";
@@ -53,7 +60,10 @@ import { ModelsTab } from "./tabs/models-tab";
 import { UserAvatar } from "./ui/user-avatar";
 
 type SectionId
-  = | "appearance"
+  = | "theme"
+    | "fonts"
+    | "sidebar"
+    | "model-display"
     | "input"
     | "new-thread"
     | "thread-behavior"
@@ -62,7 +72,6 @@ type SectionId
     | "models"
     | "integrations"
     | "profile"
-    | "security"
     | "attachments"
     | "data";
 
@@ -81,7 +90,10 @@ const navGroups: NavGroup[] = [
   {
     label: "Appearance",
     items: [
-      { id: "appearance", label: "Theme & Colors", icon: PaletteIcon },
+      { id: "theme", label: "Theme & Colors", icon: PaletteIcon },
+      { id: "fonts", label: "Fonts", icon: TypeIcon },
+      { id: "sidebar", label: "Sidebar", icon: PanelLeftIcon },
+      { id: "model-display", label: "Model Display", icon: LayoutListIcon },
       { id: "input", label: "Input & Controls", icon: KeyboardIcon },
     ],
   },
@@ -104,8 +116,6 @@ const navGroups: NavGroup[] = [
   {
     label: "Account",
     items: [
-      { id: "profile", label: "Profile", icon: UserIcon },
-      { id: "security", label: "Security", icon: ShieldIcon },
       { id: "attachments", label: "Attachments", icon: DatabaseIcon },
       { id: "data", label: "Data Management", icon: DatabaseIcon },
     ],
@@ -114,26 +124,29 @@ const navGroups: NavGroup[] = [
 
 const allNavItems = navGroups.flatMap(g => g.items);
 
-// Map old tab param values to new section IDs for backwards compat
-const tabToSection: Record<string, SectionId> = {
-  interface: "appearance",
+// Map old tab/section param values to new section IDs for backwards compat
+const sectionAliases: Record<string, SectionId> = {
+  interface: "theme",
+  appearance: "theme",
   preferences: "thread-behavior",
   integrations: "integrations",
   models: "models",
   attachments: "attachments",
   auth: "profile",
+  security: "profile",
 };
 
 type SettingsPageProps = {
   initialTab?: string;
 };
 
-export function SettingsPage({ initialTab = "appearance" }: SettingsPageProps) {
+export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
   const queryClient = useQueryClient();
   const { previousRoute } = usePreviousRoute();
-  const resolvedInitial = tabToSection[initialTab] ?? (initialTab as SectionId);
+  const resolvedInitial = sectionAliases[initialTab] ?? (initialTab as SectionId);
+  const isValidSection = resolvedInitial === "profile" || allNavItems.some(i => i.id === resolvedInitial);
   const [activeSection, setActiveSection] = useState<SectionId>(
-    allNavItems.some(i => i.id === resolvedInitial) ? resolvedInitial : "appearance",
+    isValidSection ? resolvedInitial : "theme",
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -157,6 +170,7 @@ export function SettingsPage({ initialTab = "appearance" }: SettingsPageProps) {
   }, [queryClient]);
 
   const activeNavItem = allNavItems.find(item => item.id === activeSection);
+  const activeLabel = activeSection === "profile" ? "Profile & Security" : activeNavItem?.label;
 
   return (
     <div className="flex h-full w-full overflow-auto">
@@ -258,17 +272,17 @@ export function SettingsPage({ initialTab = "appearance" }: SettingsPageProps) {
       <main className="flex min-w-0 flex-1 flex-col">
         {/* Desktop Header */}
         <header className={`
-          bg-background hidden border-b px-6 pt-6 pb-3
+          bg-background hidden border-b px-6 pt-3 pb-4
           md:block
         `}
         >
-          <h1 className="text-lg font-semibold">{activeNavItem?.label}</h1>
+          <h1 className="text-lg font-semibold">{activeLabel}</h1>
         </header>
 
         {/* Mobile Header */}
         <header className={`
-          bg-sidebar text-sidebar-foreground border-sidebar-border flex
-          min-h-14 items-center gap-3 border-b px-3
+          bg-sidebar text-sidebar-foreground border-sidebar-border flex min-h-14
+          items-center gap-3 border-b px-3
           md:hidden
         `}
         >
@@ -374,7 +388,7 @@ export function SettingsPage({ initialTab = "appearance" }: SettingsPageProps) {
             </SheetContent>
           </Sheet>
 
-          <span className="text-base font-semibold">{activeNavItem?.label}</span>
+          <span className="text-base font-semibold">{activeLabel}</span>
 
           <div className="ml-auto">
             <Button
@@ -397,7 +411,10 @@ export function SettingsPage({ initialTab = "appearance" }: SettingsPageProps) {
           activeSection === "models" && "flex min-h-0 flex-col",
         )}
         >
-          {activeSection === "appearance" && <AppearancePage />}
+          {activeSection === "theme" && <ThemePage />}
+          {activeSection === "fonts" && <FontsPage />}
+          {activeSection === "sidebar" && <SidebarPage />}
+          {activeSection === "model-display" && <ModelDisplayPage />}
           {activeSection === "input" && <InputPage />}
           {activeSection === "new-thread" && <NewThreadPage />}
           {activeSection === "thread-behavior" && <ThreadBehaviorPage />}
@@ -406,7 +423,6 @@ export function SettingsPage({ initialTab = "appearance" }: SettingsPageProps) {
           {activeSection === "models" && <ModelsTab />}
           {activeSection === "integrations" && <IntegrationsTab />}
           {activeSection === "profile" && <ProfilePage />}
-          {activeSection === "security" && <SecurityPage />}
           {activeSection === "attachments" && <AttachmentsTab />}
           {activeSection === "data" && <DataPage />}
         </div>
@@ -460,8 +476,8 @@ function DesktopProfileCard({
       onClick={onClick}
       className={cn(
         `
-          flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2
-          text-left transition-colors
+          flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left
+          transition-colors
         `,
         isActive
           ? "bg-accent text-accent-foreground"

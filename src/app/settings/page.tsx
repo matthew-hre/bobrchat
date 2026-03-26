@@ -18,7 +18,7 @@ export default async function SettingsRoute({
   searchParams: SearchParams;
 }) {
   const { tab, section } = await searchParams;
-  const initialSection = section ?? tab ?? "appearance";
+  const initialSection = section ?? tab ?? "theme";
 
   return (
     <div className="flex h-screen w-screen">

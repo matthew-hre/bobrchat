@@ -6,6 +6,7 @@ import "@workos-inc/widgets/styles.css";
 import { useAccessToken, useAuth } from "@workos-inc/authkit-nextjs/components";
 import {
   UserProfile,
+  UserSecurity,
   WorkOsWidgets,
 } from "@workos-inc/widgets";
 import { useTheme } from "next-themes";
@@ -17,6 +18,7 @@ import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
+import { DeleteAccountSection } from "../sections/delete-account-section";
 import { SettingsSection } from "../ui/settings-section";
 import { SubscriptionCard } from "../ui/subscription-card";
 
@@ -45,7 +47,7 @@ export function ProfilePage() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const widgetMutationKeys = new Set(["updateMe", "updateMember"]);
+    const widgetMutationKeys = new Set(["updateMe", "updateMember", "createTotpFactor", "deleteTotpFactor"]);
     const unsubscribe = queryClient.getMutationCache().subscribe((event) => {
       if (event.type === "updated" && event.mutation.state.status === "success") {
         const key = event.mutation.options.mutationKey?.[0];
@@ -73,7 +75,7 @@ export function ProfilePage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full space-y-8 p-6">
+      <div className="w-full max-w-2xl space-y-8 p-6">
         <WorkOsWidgets
           queryClient={queryClient}
           theme={{
@@ -91,6 +93,15 @@ export function ProfilePage() {
           >
             <UserProfile authToken={authToken} />
           </SettingsSection>
+
+          <Separator />
+
+          <SettingsSection
+            title="Security"
+            description="Manage your password and multi-factor authentication."
+          >
+            <UserSecurity authToken={authToken} />
+          </SettingsSection>
         </WorkOsWidgets>
 
         <Separator />
@@ -101,6 +112,10 @@ export function ProfilePage() {
         >
           <SubscriptionCard />
         </SettingsSection>
+
+        <Separator />
+
+        <DeleteAccountSection />
       </div>
     </div>
   );
@@ -109,7 +124,7 @@ export function ProfilePage() {
 function ProfilePageSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full space-y-8 p-6">
+      <div className="w-full max-w-2xl space-y-8 p-6">
         <div className="space-y-6">
           <div className="space-y-1">
             <Skeleton className="h-4 w-20" />

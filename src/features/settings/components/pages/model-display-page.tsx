@@ -7,16 +7,10 @@ import type { PreferencesUpdate } from "~/features/settings/types";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useUpdatePreferences, useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
-import { SelectionCardItem } from "../ui/selection-card-item";
 import { SettingsSection } from "../ui/settings-section";
+import { ToggleItem } from "../ui/toggle-item";
 
-const landingPageOptions = [
-  { value: "suggestions" as const, label: "Prompts", description: "Show some suggested prompts" },
-  { value: "greeting" as const, label: "Greeting", description: "Simple welcome message" },
-  { value: "blank" as const, label: "Blank", description: "Render nothing: blank slate" },
-];
-
-export function NewThreadPage() {
+export function ModelDisplayPage() {
   const { data: settings, isLoading } = useUserSettings({ enabled: true });
   const updatePreferences = useUpdatePreferences();
 
@@ -32,22 +26,21 @@ export function NewThreadPage() {
   };
 
   if (isLoading || !settings) {
-    return <NewThreadPageSkeleton />;
+    return <ModelDisplayPageSkeleton />;
   }
 
   return (
     <div className="flex h-full flex-col">
       <div className="w-full max-w-2xl space-y-8 p-6">
         <SettingsSection
-          title="New Thread"
-          description="Configure what you see when starting a new thread."
+          title="Model Display"
+          description="Configure how model names are displayed."
         >
-          <SelectionCardItem
-            label="Landing Page Content"
-            options={landingPageOptions}
-            value={settings.landingPageContent}
-            onChange={value => save({ landingPageContent: value })}
-            layout="flex"
+          <ToggleItem
+            label="Hide Provider Names"
+            description="Show only model names with logos instead of 'Provider: Model Name'."
+            enabled={settings.hideModelProviderNames ?? false}
+            onToggle={enabled => save({ hideModelProviderNames: enabled })}
           />
         </SettingsSection>
       </div>
@@ -55,17 +48,13 @@ export function NewThreadPage() {
   );
 }
 
-function NewThreadPageSkeleton() {
+function ModelDisplayPageSkeleton() {
   return (
     <div className="flex h-full flex-col">
       <div className="w-full max-w-2xl space-y-6 p-6">
         <div className="space-y-2">
           <Skeleton className="h-4 w-36" />
-          <div className="flex gap-2">
-            <Skeleton className="h-12 w-24" />
-            <Skeleton className="h-12 w-24" />
-            <Skeleton className="h-12 w-24" />
-          </div>
+          <Skeleton className="h-9 w-full" />
         </div>
       </div>
     </div>

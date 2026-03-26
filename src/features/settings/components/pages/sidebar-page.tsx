@@ -1,5 +1,6 @@
 "use client";
 
+import { CoinsIcon, HardDriveIcon, KeyIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { PreferencesUpdate } from "~/features/settings/types";
@@ -9,14 +10,15 @@ import { useUpdatePreferences, useUserSettings } from "~/features/settings/hooks
 
 import { SelectionCardItem } from "../ui/selection-card-item";
 import { SettingsSection } from "../ui/settings-section";
+import { ToggleItem } from "../ui/toggle-item";
 
-const landingPageOptions = [
-  { value: "suggestions" as const, label: "Prompts", description: "Show some suggested prompts" },
-  { value: "greeting" as const, label: "Greeting", description: "Simple welcome message" },
-  { value: "blank" as const, label: "Blank", description: "Render nothing: blank slate" },
+const profileCardWidgetOptions = [
+  { value: "apiKeyStatus" as const, label: "API Key Status", icon: KeyIcon, description: "Shows which API keys are configured" },
+  { value: "openrouterCredits" as const, label: "OpenRouter Credits", icon: CoinsIcon, description: "Shows remaining OpenRouter credit balance" },
+  { value: "storageQuota" as const, label: "Storage Quota", icon: HardDriveIcon, description: "Shows attachment storage usage" },
 ];
 
-export function NewThreadPage() {
+export function SidebarPage() {
   const { data: settings, isLoading } = useUserSettings({ enabled: true });
   const updatePreferences = useUpdatePreferences();
 
@@ -32,21 +34,29 @@ export function NewThreadPage() {
   };
 
   if (isLoading || !settings) {
-    return <NewThreadPageSkeleton />;
+    return <SidebarPageSkeleton />;
   }
 
   return (
     <div className="flex h-full flex-col">
       <div className="w-full max-w-2xl space-y-8 p-6">
         <SettingsSection
-          title="New Thread"
-          description="Configure what you see when starting a new thread."
+          title="Sidebar"
+          description="Configure sidebar appearance."
         >
+          <ToggleItem
+            label="Disable Sidebar Icons"
+            description="Hide icons next to threads in the sidebar. Hides relevant settings."
+            enabled={settings.showSidebarIcons}
+            onToggle={enabled => save({ showSidebarIcons: enabled })}
+          />
+
           <SelectionCardItem
-            label="Landing Page Content"
-            options={landingPageOptions}
-            value={settings.landingPageContent}
-            onChange={value => save({ landingPageContent: value })}
+            label="Profile Card Widget"
+            description="Choose what to display below your name in the sidebar."
+            options={profileCardWidgetOptions}
+            value={settings.profileCardWidget}
+            onChange={value => save({ profileCardWidget: value })}
             layout="flex"
           />
         </SettingsSection>
@@ -55,10 +65,14 @@ export function NewThreadPage() {
   );
 }
 
-function NewThreadPageSkeleton() {
+function SidebarPageSkeleton() {
   return (
     <div className="flex h-full flex-col">
       <div className="w-full max-w-2xl space-y-6 p-6">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-9 w-full" />
+        </div>
         <div className="space-y-2">
           <Skeleton className="h-4 w-36" />
           <div className="flex gap-2">

@@ -16,7 +16,7 @@ export function ThreadBehaviorPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full space-y-8 p-6">
+      <div className="w-full max-w-2xl space-y-8 p-6">
         <ChatBehaviorSection settings={settings} tier={subscription?.tier} />
       </div>
     </div>
@@ -26,7 +26,7 @@ export function ThreadBehaviorPage() {
 function ThreadBehaviorPageSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="w-full space-y-6 p-6">
+      <div className="w-full max-w-2xl space-y-6 p-6">
         <div className="space-y-3">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-9 w-full" />
