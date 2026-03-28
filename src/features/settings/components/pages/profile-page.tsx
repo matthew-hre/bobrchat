@@ -18,10 +18,8 @@ import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
-import { DataManagementSection } from "../sections/data-management-section";
 import { DeleteAccountSection } from "../sections/delete-account-section";
 import { SettingsSection } from "../ui/settings-section";
-import { SubscriptionCard } from "../ui/subscription-card";
 
 const ACCENT_COLOR_MAP = {
   green: "grass",
@@ -103,24 +101,11 @@ export function ProfilePage() {
           >
             <UserSecurity authToken={authToken} />
           </SettingsSection>
-        </WorkOsWidgets>
-
-        <Separator />
-
-        <SettingsSection
-          title="Subscription"
-          description="View your current plan and usage."
-        >
-          <SubscriptionCard />
-        </SettingsSection>
-
-        <Separator />
-
-        <DataManagementSection />
 
         <Separator />
 
         <DeleteAccountSection />
+                </WorkOsWidgets>
       </div>
     </div>
   );

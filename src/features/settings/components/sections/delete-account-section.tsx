@@ -1,11 +1,14 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Button, Card, Flex, Grid, Inset, Text } from "@radix-ui/themes";
 import { KeyRoundIcon, Trash2Icon, TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { deleteAccount } from "~/features/auth/actions";
+import { deleteAllThreads } from "~/features/settings/actions";
+import { THREADS_KEY } from "~/lib/queries/query-keys";
 
 import { ConfirmationDialog } from "../ui/confirmation-dialog";
 import { SettingsSection } from "../ui/settings-section";
@@ -31,7 +34,14 @@ function IconPanel({ children }: { children?: React.ReactNode }) {
 }
 
 export function DeleteAccountSection() {
+  const queryClient = useQueryClient();
   const [isRotating, setIsRotating] = useState(false);
+
+  const handleDeleteAllThreads = async () => {
+    const { deletedCount } = await deleteAllThreads();
+    await queryClient.invalidateQueries({ queryKey: THREADS_KEY });
+    toast.success(`Deleted ${deletedCount} thread${deletedCount === 1 ? "" : "s"}`);
+  };
 
   const handleRotateKey = async () => {
     setIsRotating(true);
@@ -89,6 +99,35 @@ export function DeleteAccountSection() {
                 confirmLabel="Rotate Key"
                 loadingLabel="Rotating..."
                 onConfirm={handleRotateKey}
+              />
+            </Grid>
+          </Inset>
+          <Inset side="x" px="current" className="woswidgets-card-list-item" clip="padding-box">
+            <Grid columns="auto 1fr auto" align="center" gap="4" px="4" py="4">
+              <IconPanel>
+                <Trash2Icon className="size-4" style={{ color: "var(--gray-11)" }} />
+              </IconPanel>
+              <Flex direction="column">
+                <Text size="2" highContrast weight="bold" as="p" mb="-2px">
+                  Delete All Threads
+                </Text>
+                <Text size="2" color="gray">
+                  Permanently delete all your thread history and messages.
+                </Text>
+              </Flex>
+              <ConfirmationDialog
+                trigger={(
+                  <Button highContrast variant="surface" color="red">
+                    Delete Threads
+                  </Button>
+                )}
+                title="Delete All Threads"
+                description="This will permanently delete all your threads and messages. This action cannot be undone."
+                icon={Trash2Icon}
+                confirmLabel="Delete All Threads"
+                loadingLabel="Deleting..."
+                onConfirm={handleDeleteAllThreads}
+                variant="destructive"
               />
             </Grid>
           </Inset>

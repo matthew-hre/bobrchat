@@ -13,8 +13,10 @@ import { prefetchUserData } from "~/lib/queries/prefetch-user-data";
 
 export default async function MainLayout({
   children,
+  modal,
 }: {
   children: React.ReactNode;
+  modal: React.ReactNode;
 }) {
   const cookieStore = await cookies();
   const sidebarWidthValue = cookieStore.get("sidebar_width")?.value;
@@ -41,6 +43,7 @@ export default async function MainLayout({
               <main className="w-full">
                 {children}
               </main>
+              {modal}
             </UserSettingsProvider>
             <ThemeInitializer
               theme={settings?.theme}

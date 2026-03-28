@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   BoltIcon,
+  CreditCardIcon,
   DatabaseIcon,
   KeyboardIcon,
   KeyIcon,
@@ -18,8 +19,8 @@ import {
   PaletteIcon,
   PanelLeftIcon,
   SparklesIcon,
-  TypeIcon,
   WrenchIcon,
+  XIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -40,17 +41,17 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { handleSignOut as signOutAction } from "~/features/auth/actions";
 import { useSession } from "~/features/auth/lib/auth-client";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
+import { useSubscription } from "~/features/subscriptions/hooks/use-subscription";
 import { usePreviousRoute } from "~/features/settings/previous-route-context";
 import { cn } from "~/lib/utils";
 
 import { AdvancedPage } from "./pages/advanced-page";
-import { DataPage } from "./pages/data-page";
-import { FontsPage } from "./pages/fonts-page";
 import { InputPage } from "./pages/input-page";
 import { ModelDisplayPage } from "./pages/model-display-page";
 import { NewThreadPage } from "./pages/new-thread-page";
 import { ProfilePage } from "./pages/profile-page";
 import { SidebarPage } from "./pages/sidebar-page";
+import { SubscriptionPage } from "./pages/subscription-page";
 import { ThemePage } from "./pages/theme-page";
 import { ThreadBehaviorPage } from "./pages/thread-behavior-page";
 import { ToolsPage } from "./pages/tools-page";
@@ -60,8 +61,8 @@ import { ModelsTab } from "./tabs/models-tab";
 import { UserAvatar } from "./ui/user-avatar";
 
 type SectionId
-  = | "theme"
-    | "fonts"
+  = | "subscription"
+    | "theme"
     | "sidebar"
     | "model-display"
     | "input"
@@ -72,8 +73,7 @@ type SectionId
     | "models"
     | "integrations"
     | "profile"
-    | "attachments"
-    | "data";
+    | "attachments";
 
 type NavItem = {
   id: SectionId;
@@ -88,10 +88,15 @@ type NavGroup = {
 
 const navGroups: NavGroup[] = [
   {
+    label: "Subscription",
+    items: [
+      { id: "subscription", label: "Plan & Usage", icon: CreditCardIcon },
+    ],
+  },
+  {
     label: "Appearance",
     items: [
       { id: "theme", label: "Theme & Colors", icon: PaletteIcon },
-      { id: "fonts", label: "Fonts", icon: TypeIcon },
       { id: "sidebar", label: "Sidebar", icon: PanelLeftIcon },
       { id: "model-display", label: "Model Display", icon: LayoutListIcon },
       { id: "input", label: "Input & Controls", icon: KeyboardIcon },
@@ -117,7 +122,6 @@ const navGroups: NavGroup[] = [
     label: "Account",
     items: [
       { id: "attachments", label: "Attachments", icon: DatabaseIcon },
-      { id: "data", label: "Data Management", icon: DatabaseIcon },
     ],
   },
 ];
@@ -128,19 +132,24 @@ const allNavItems = navGroups.flatMap(g => g.items);
 const sectionAliases: Record<string, SectionId> = {
   interface: "theme",
   appearance: "theme",
+  fonts: "theme",
+  data: "profile",
   preferences: "thread-behavior",
   integrations: "integrations",
   models: "models",
   attachments: "attachments",
   auth: "profile",
   security: "profile",
+  billing: "subscription",
 };
 
 type SettingsPageProps = {
   initialTab?: string;
+  isModal?: boolean;
+  onClose?: () => void;
 };
 
-export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
+export function SettingsPage({ initialTab = "theme", isModal = false, onClose }: SettingsPageProps) {
   const queryClient = useQueryClient();
   const { previousRoute } = usePreviousRoute();
   const resolvedInitial = sectionAliases[initialTab] ?? (initialTab as SectionId);
@@ -151,6 +160,7 @@ export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { data: settings } = useUserSettings({ enabled: true });
+  const { data: subscription } = useSubscription();
 
   useLayoutEffect(() => {
     if (settings?.accentColor) {
@@ -191,9 +201,11 @@ export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
         <ScrollArea className="flex-1">
           <div className="flex flex-col gap-1 py-4">
             {/* Back to Thread */}
-            <div className="px-4 pb-2">
-              <BackToChatButton />
-            </div>
+            {!isModal && (
+              <div className="px-4 pb-2">
+                <BackToChatButton />
+              </div>
+            )}
 
             {/* Profile Card — clickable, navigates to Profile section */}
             <div className="px-2">
@@ -203,7 +215,7 @@ export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
               />
             </div>
 
-            <Separator className="mx-4 my-2" />
+            <Separator className="my-2" />
 
             {/* Navigation Groups */}
             {navGroups.map(group => (
@@ -240,6 +252,17 @@ export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
                       >
                         <Icon className="size-4 shrink-0" />
                         {item.label}
+                        {item.id === "subscription" && subscription?.tier && (
+                          <span className={cn(
+                            "ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase leading-none",
+                            subscription.tier === "free"
+                              ? "bg-muted text-muted-foreground"
+                              : "bg-primary/10 text-primary",
+                          )}
+                          >
+                            {subscription.tier}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -247,7 +270,7 @@ export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
               </div>
             ))}
 
-            <Separator className="mx-4 my-2" />
+            <Separator className="my-2" />
 
             {/* Sign Out */}
             <div className="px-2">
@@ -272,17 +295,29 @@ export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
       <main className="flex min-w-0 flex-1 flex-col">
         {/* Desktop Header */}
         <header className={`
-          bg-background hidden border-b px-6 pt-3 pb-4
-          md:block
+          bg-background hidden items-center justify-between border-b px-8 pt-5
+          pb-5
+          md:flex
         `}
         >
           <h1 className="text-lg font-semibold">{activeLabel}</h1>
+          {isModal && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="size-7"
+              title="Close settings"
+              onClick={onClose}
+            >
+              <XIcon className="size-4" />
+            </Button>
+          )}
         </header>
 
         {/* Mobile Header */}
         <header className={`
           bg-sidebar text-sidebar-foreground border-sidebar-border flex min-h-14
-          items-center gap-3 border-b px-3
+          items-center gap-3 border-b px-4
           md:hidden
         `}
         >
@@ -360,6 +395,17 @@ export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
                             >
                               <Icon className="size-4" />
                               {item.label}
+                              {item.id === "subscription" && subscription?.tier && (
+                                <span className={cn(
+                                  "ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase leading-none",
+                                  subscription.tier === "free"
+                                    ? "bg-muted text-muted-foreground"
+                                    : "bg-primary/10 text-primary",
+                                )}
+                                >
+                                  {subscription.tier}
+                                </span>
+                              )}
                             </button>
                           );
                         })}
@@ -391,17 +437,31 @@ export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
           <span className="text-base font-semibold">{activeLabel}</span>
 
           <div className="ml-auto">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="size-7"
-              title="Back to chat"
-              asChild
-            >
-              <Link href={previousRoute}>
-                <ArrowLeftIcon className="size-4" />
-              </Link>
-            </Button>
+            {isModal
+              ? (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-7"
+                    title="Close settings"
+                    onClick={onClose}
+                  >
+                    <XIcon className="size-4" />
+                  </Button>
+                )
+              : (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-7"
+                    title="Back to chat"
+                    asChild
+                  >
+                    <Link href={previousRoute}>
+                      <ArrowLeftIcon className="size-4" />
+                    </Link>
+                  </Button>
+                )}
           </div>
         </header>
 
@@ -411,8 +471,8 @@ export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
           activeSection === "models" && "flex min-h-0 flex-col",
         )}
         >
+          {activeSection === "subscription" && <SubscriptionPage />}
           {activeSection === "theme" && <ThemePage />}
-          {activeSection === "fonts" && <FontsPage />}
           {activeSection === "sidebar" && <SidebarPage />}
           {activeSection === "model-display" && <ModelDisplayPage />}
           {activeSection === "input" && <InputPage />}
@@ -424,7 +484,6 @@ export function SettingsPage({ initialTab = "theme" }: SettingsPageProps) {
           {activeSection === "integrations" && <IntegrationsTab />}
           {activeSection === "profile" && <ProfilePage />}
           {activeSection === "attachments" && <AttachmentsTab />}
-          {activeSection === "data" && <DataPage />}
         </div>
       </main>
     </div>
