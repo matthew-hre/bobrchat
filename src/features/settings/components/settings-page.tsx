@@ -8,16 +8,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   BoltIcon,
+  BrainIcon,
   CreditCardIcon,
   DatabaseIcon,
   KeyboardIcon,
-  KeyIcon,
   LogOutIcon,
   MenuIcon,
   MessageSquarePlusIcon,
   PaletteIcon,
   PanelLeftIcon,
-  SparklesIcon,
+  PlugIcon,
+  SlidersIcon,
   WrenchIcon,
   XIcon,
 } from "lucide-react";
@@ -109,9 +110,9 @@ const navGroups: NavGroup[] = [
   {
     label: "AI",
     items: [
-      { id: "models", label: "Models", icon: SparklesIcon },
-      { id: "integrations", label: "Integrations", icon: KeyIcon },
-      { id: "advanced", label: "Advanced Features", icon: SparklesIcon },
+      { id: "models", label: "Models", icon: BrainIcon },
+      { id: "integrations", label: "Integrations", icon: PlugIcon },
+      { id: "advanced", label: "Advanced Features", icon: SlidersIcon },
     ],
   },
   {
