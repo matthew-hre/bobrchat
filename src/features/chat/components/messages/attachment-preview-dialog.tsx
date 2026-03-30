@@ -1,7 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { FileIcon, Loader2, XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { CodeToolbar } from "~/components/code/code-toolbar";
 import { HighlightedCode } from "~/components/code/highlighted-code";
@@ -39,32 +40,23 @@ function extractAttachmentId(url: string): string | null {
 }
 
 function useFileContent(url: string) {
-  const [content, setContent] = useState<string | null>(null);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    setContent(null);
-    setError(false);
-
-    let fetchUrl = url;
-    if (!url.startsWith("blob:")) {
-      const id = extractAttachmentId(url);
-      if (id) {
-        fetchUrl = `/api/attachments/content?id=${encodeURIComponent(id)}`;
+  return useQuery({
+    queryKey: ["file-content", url],
+    queryFn: async () => {
+      let fetchUrl = url;
+      if (!url.startsWith("blob:")) {
+        const id = extractAttachmentId(url);
+        if (id) {
+          fetchUrl = `/api/attachments/content?id=${encodeURIComponent(id)}`;
+        }
       }
-    }
 
-    fetch(fetchUrl)
-      .then((res) => {
-        if (!res.ok)
-          throw new Error("Failed to fetch");
-        return res.text();
-      })
-      .then(setContent)
-      .catch(() => setError(true));
-  }, [url]);
-
-  return { content, error };
+      const res = await fetch(fetchUrl);
+      if (!res.ok)
+        throw new Error("Failed to fetch");
+      return res.text();
+    },
+  });
 }
 
 function TextPreviewHeader({
@@ -110,12 +102,12 @@ function TextPreview({
   filename: string;
   onClose: () => void;
 }) {
-  const { content, error } = useFileContent(url);
+  const { data: content, isError } = useFileContent(url);
   const [wrap, setWrap] = useState(false);
 
   const language = getLanguageFromFilename(filename);
 
-  if (error) {
+  if (isError) {
     return (
       <div className={`
         bg-background border-border w-full overflow-hidden rounded-lg border
@@ -132,7 +124,7 @@ function TextPreview({
     );
   }
 
-  if (content === null) {
+  if (content === undefined) {
     return (
       <div className={`
         bg-background border-border w-full overflow-hidden rounded-lg border
