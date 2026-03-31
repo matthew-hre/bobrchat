@@ -42,7 +42,6 @@ import { THREAD_ICONS } from "~/lib/db/schema/chat";
 import { cn } from "~/lib/utils";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { CreateTagDialog } from "./create-tag-dialog";
 
 const ICON_COMPONENTS = {
   "message-circle": MessageCircle,
@@ -130,7 +129,6 @@ function ThreadItemComponent({
   const [newTitle, setNewTitle] = useState(title);
   const [menuOpen, setMenuOpen] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
-  const [createTagDialogOpen, setCreateTagDialogOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: stats, isLoading: statsLoading } = useThreadStats(menuOpen || tooltipOpen ? id : null);
@@ -431,9 +429,9 @@ function ThreadItemComponent({
               );
             })}
             {allTags && allTags.length > 0 && <ContextMenuSeparator />}
-            <ContextMenuItem onClick={() => setCreateTagDialogOpen(true)}>
+            <ContextMenuItem onClick={() => router.push("/settings?section=tags")}>
               <PlusIcon className="size-3.5" />
-              Create Tag
+              Manage Tags
             </ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuSub>
@@ -452,7 +450,6 @@ function ThreadItemComponent({
           Delete
         </ContextMenuItem>
       </ContextMenuContent>
-      <CreateTagDialog open={createTagDialogOpen} onOpenChange={setCreateTagDialogOpen} />
     </ContextMenu>
   );
 };
