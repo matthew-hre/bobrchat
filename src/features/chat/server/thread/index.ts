@@ -1,1 +1,1 @@
-export { generateThreadIcon, generateThreadMetadata, generateThreadTitle } from "./metadata";
+export { generateThreadIcon, generateThreadMetadata, generateThreadTags, generateThreadTitle } from "./metadata";

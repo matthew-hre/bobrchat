@@ -52,9 +52,9 @@ import { NewThreadPage } from "./pages/new-thread-page";
 import { ProfilePage } from "./pages/profile-page";
 import { SidebarPage } from "./pages/sidebar-page";
 import { SubscriptionPage } from "./pages/subscription-page";
+import { TagsPage } from "./pages/tags-page";
 import { ThemePage } from "./pages/theme-page";
 import { ThreadAutomationPage } from "./pages/thread-automation-page";
-import { TagsPage } from "./pages/tags-page";
 import { ToolsPage } from "./pages/tools-page";
 import { AttachmentsTab } from "./tabs/attachments-tab";
 import { IntegrationsTab } from "./tabs/integrations-tab";
@@ -488,7 +488,7 @@ export function SettingsPage({ initialTab = "theme", isModal = false, onClose }:
           {activeSection === "input" && <InputPage />}
           {activeSection === "new-thread" && <NewThreadPage />}
           {activeSection === "thread-automation" && <ThreadAutomationPage />}
-          {activeSection === "tags" && <TagsPage />}
+          {activeSection === "tags" && <TagsPage settings={settings ?? undefined} />}
           {activeSection === "tools" && <ToolsPage />}
           {activeSection === "advanced" && <AdvancedPage />}
           {activeSection === "models" && <ModelsTab />}

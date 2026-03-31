@@ -1,21 +1,31 @@
 "use client";
 
-import { CheckIcon, PaletteIcon, PencilIcon, PlusIcon, TagsIcon, Trash2Icon, XIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { AlertTriangleIcon, CheckIcon, PaletteIcon, PencilIcon, PlusIcon, TagsIcon, Trash2Icon, XIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type { ColorPreset } from "~/components/ui/color-picker";
+import type { PreferencesUpdate, ToolModelId, UserSettingsData } from "~/features/settings/types";
 
 import { Button } from "~/components/ui/button";
 import { ColorPicker, hueToOklch } from "~/components/ui/color-picker";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { Textarea } from "~/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useCreateTag, useDeleteTag, useTags, useUpdateTag } from "~/features/chat/hooks/use-tags";
+import { TOOL_MODEL_OPTIONS } from "~/features/chat/server/providers/types";
+import { useChatUIStore } from "~/features/chat/store";
+import { getToolModelPricing } from "~/features/settings/actions";
+import { useUpdatePreferences } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
 import { SettingsSection } from "../ui/settings-section";
+import { ToggleItem } from "../ui/toggle-item";
 
 const TAG_COLOR_PRESETS: ColorPreset[] = [
   { value: "#ef4444", color: "#ef4444", label: "Red" },
@@ -28,7 +38,7 @@ const TAG_COLOR_PRESETS: ColorPreset[] = [
   { value: "#ec4899", color: "#ec4899", label: "Pink" },
 ];
 
-function TagRow({ tag }: { tag: { id: string; name: string; color: string; description: string | null } }) {
+function TagRow({ tag, autoTagging }: { tag: { id: string; name: string; color: string; description: string | null }; autoTagging: boolean }) {
   const updateTagMutation = useUpdateTag();
   const deleteTagMutation = useDeleteTag();
 
@@ -195,6 +205,16 @@ function TagRow({ tag }: { tag: { id: string; name: string; color: string; descr
           <p className="text-muted-foreground truncate text-xs">{tag.description}</p>
         )}
       </div>
+      {autoTagging && !tag.description && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <AlertTriangleIcon className="text-muted-foreground/60 size-3.5 shrink-0" />
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p className="text-xs">Add a description so auto-tagging can apply this tag.</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
       <div className={`
         flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity
         group-hover/tag:opacity-100
@@ -248,7 +268,117 @@ function TagRow({ tag }: { tag: { id: string; name: string; color: string; descr
   );
 }
 
-export function TagsPage() {
+function formatPrice(costPerToken: number | null | undefined): string | null {
+  if (costPerToken == null)
+    return null;
+  const perMillion = costPerToken * 1_000_000;
+  if (perMillion < 0.01)
+    return "< $0.01/M";
+  return `$${perMillion.toFixed(2)}/M`;
+}
+
+function AutoTaggingSection({ settings }: { settings: UserSettingsData }) {
+  const updatePreferences = useUpdatePreferences();
+  const clientKeys = useChatUIStore(s => s.clientKeys);
+
+  const { data: pricing = {} } = useQuery({
+    queryKey: ["toolModelPricing"],
+    queryFn: () => getToolModelPricing(),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const availableProviders = useMemo(() => {
+    const providers = new Set<string>();
+
+    if (settings.configuredApiKeys?.openrouter || clientKeys.openrouter) {
+      providers.add("openrouter");
+    }
+    if (settings.configuredApiKeys?.openai || clientKeys.openai) {
+      providers.add("openai");
+    }
+    if (settings.configuredApiKeys?.anthropic || clientKeys.anthropic) {
+      providers.add("anthropic");
+    }
+
+    if (providers.size === 0) {
+      providers.add("openrouter");
+      providers.add("openai");
+      providers.add("anthropic");
+    }
+
+    return providers;
+  }, [settings.configuredApiKeys, clientKeys]);
+
+  const filteredOptions = useMemo(
+    () => TOOL_MODEL_OPTIONS.filter(o => o.providers.some(p => availableProviders.has(p))),
+    [availableProviders],
+  );
+
+  const optionMap = Object.fromEntries(TOOL_MODEL_OPTIONS.map(o => [o.id, o]));
+
+  const effectiveValue = filteredOptions.some(o => o.id === settings.toolTagModel)
+    ? settings.toolTagModel
+    : filteredOptions[0]?.id ?? settings.toolTagModel;
+
+  const save = async (patch: PreferencesUpdate) => {
+    try {
+      await updatePreferences.mutateAsync(patch);
+    }
+    catch (error) {
+      console.error("Failed to save preferences:", error);
+      const message = error instanceof Error ? error.message : "Failed to save preferences";
+      toast.error(message);
+    }
+  };
+
+  return (
+    <SettingsSection
+      title="Auto-Tagging"
+      description="Automatically apply tags to new threads based on their content."
+    >
+      <ToggleItem
+        label="Enable Auto-Tagging"
+        description="Automatically tag threads when a message is sent. Only tags with a description are considered."
+        enabled={settings.autoTagging}
+        onToggle={enabled => save({ autoTagging: enabled })}
+      />
+
+      {settings.autoTagging && (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label>Auto-Tagging Model</Label>
+            <p className="text-muted-foreground text-xs">Model used for automatic tag selection.</p>
+          </div>
+          <Select
+            value={effectiveValue}
+            onValueChange={v => save({ toolTagModel: v as ToolModelId })}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {filteredOptions.map((option) => {
+                const price = formatPrice(pricing[option.id]);
+                return (
+                  <SelectItem key={option.id} value={option.id}>
+                    <span className="flex w-full items-center justify-between gap-4">
+                      <span>{optionMap[option.id]?.label ?? option.id}</span>
+                      {price && (
+                        <span className="text-muted-foreground text-xs">{price}</span>
+                      )}
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </SettingsSection>
+  );
+}
+
+export function TagsPage({ settings }: { settings?: UserSettingsData }) {
   const { data: tags } = useTags();
   const createTagMutation = useCreateTag();
 
@@ -279,6 +409,8 @@ export function TagsPage() {
       toast.error("Failed to create tag");
     }
   };
+
+  const autoTagging = settings?.autoTagging ?? false;
 
   return (
     <div className="flex h-full flex-col">
@@ -379,7 +511,7 @@ export function TagsPage() {
                   <Separator />
                   <div className="space-y-0.5">
                     {tags.map(tag => (
-                      <TagRow key={tag.id} tag={tag} />
+                      <TagRow key={tag.id} tag={tag} autoTagging={autoTagging} />
                     ))}
                   </div>
                 </>
@@ -394,6 +526,8 @@ export function TagsPage() {
                 </div>
               )}
         </SettingsSection>
+
+        {settings && <AutoTaggingSection settings={settings} />}
       </div>
     </div>
   );

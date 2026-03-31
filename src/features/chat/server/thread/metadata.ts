@@ -154,3 +154,55 @@ ${iconList}`,
     return { title: "New Thread", icon: "message-circle" };
   }
 }
+
+const threadTagsSchema = z.object({
+  tagIds: z.array(z.string()),
+});
+
+/**
+ * Selects relevant tags for a thread based on the first user message.
+ * Returns an array of tag IDs that are strictly relevant to the conversation.
+ *
+ * @param message The first message from the user.
+ * @param tags The available tags to choose from.
+ * @param utilityProvider The resolved utility provider to use.
+ * @returns {Promise<string[]>} The IDs of the selected tags.
+ */
+export async function generateThreadTags(
+  message: string,
+  tags: { id: string; name: string; description: string }[],
+  utilityProvider: ResolvedProvider,
+): Promise<string[]> {
+  if (!message || message.trim().length === 0 || tags.length === 0) {
+    return [];
+  }
+
+  try {
+    const model = createProvider(utilityProvider);
+
+    const tagList = tags.map(tag => `- ${tag.id}: ${tag.name} — ${tag.description}`).join("\n");
+
+    const { output } = await generateText({
+      model,
+      output: Output.object({ schema: threadTagsSchema }),
+      system: `Based on the user's message, select which tags are relevant to the conversation.
+Be conservative — only apply tags that clearly match the topic. Never fabricate tag IDs.
+Return ONLY tag IDs from the list below.
+
+Available tags:
+${tagList}`,
+      messages: [{ role: "user", content: message }],
+    });
+
+    if (!output) {
+      return [];
+    }
+
+    const validIds = new Set(tags.map(tag => tag.id));
+    return output.tagIds.filter(id => validIds.has(id));
+  }
+  catch (error) {
+    console.error("Failed to generate thread tags:", error);
+    return [];
+  }
+}

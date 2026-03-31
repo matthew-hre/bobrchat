@@ -4,11 +4,11 @@ import type { ResolvedProvider } from "~/features/chat/server/providers";
 import type { ChatUIMessage } from "~/features/chat/types";
 import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
-import { ensureThreadExistsWithLimitCheck, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
+import { addTagToThread, ensureThreadExistsWithLimitCheck, listTagsByUserId, renameThreadById, saveMessage, updateThreadIcon } from "~/features/chat/queries";
 import { formatProviderError } from "~/features/chat/server/error";
 import { resolveProvider, resolveToolProvider } from "~/features/chat/server/providers";
 import { streamChatResponse } from "~/features/chat/server/service";
-import { generateThreadMetadata } from "~/features/chat/server/thread";
+import { generateThreadMetadata, generateThreadTags } from "~/features/chat/server/thread";
 import { getUserSettingsAndKeys } from "~/features/settings/queries";
 import { getUserTier } from "~/features/subscriptions/queries";
 
@@ -149,6 +149,34 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
             console.error("Failed to generate thread metadata", error);
           });
       }
+    }
+  }
+
+  if (threadId && settings.autoTagging) {
+    const tagProvider = resolveToolProvider(settings.toolTagModel, resolvedKeys, tier);
+
+    if (tagProvider) {
+      const firstMessage = messages[messages.length - 1];
+      const userContent = firstMessage?.parts
+        ? firstMessage.parts
+            .filter(p => p.type === "text")
+            .map(p => (p as { text: string }).text)
+            .join("")
+        : "";
+
+      listTagsByUserId(userId)
+        .then(allTags => allTags.filter(t => t.description !== null && t.description.trim().length > 0))
+        .then(tagsWithDesc => generateThreadTags(
+          userContent,
+          tagsWithDesc as { id: string; name: string; description: string }[],
+          tagProvider,
+        ))
+        .then(async (tagIds) => {
+          await Promise.all(tagIds.map(tagId => addTagToThread(userId, threadId, tagId)));
+        })
+        .catch((error) => {
+          console.error("Failed to auto-tag thread", error);
+        });
     }
   }
 

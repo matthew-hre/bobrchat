@@ -40,6 +40,7 @@ export const preferencesSchema = z.object({
   landingPageContent: z.enum(["suggestions", "greeting", "blank"]),
   sendMessageKeyboardShortcut: z.enum(["enter", "ctrlEnter", "shiftEnter"]).default("enter"),
   autoThreadNaming: z.boolean().default(false),
+  autoTagging: z.boolean().default(false),
   autoThreadIcon: z.boolean().default(false),
   showSidebarIcons: z.boolean().default(false),
   useOcrForPdfs: z.boolean().default(false),
@@ -49,6 +50,7 @@ export const preferencesSchema = z.object({
   profileCardWidget: z.enum(["apiKeyStatus", "openrouterCredits", "storageQuota"]).default("apiKeyStatus"),
   autoArchiveAfterDays: z.union([z.literal(0), z.literal(1), z.literal(3), z.literal(7), z.literal(14), z.literal(30), z.literal(90)]).default(0),
   toolTitleModel: z.enum(toolModelIds).default("gemini-flash-lite"),
+  toolTagModel: z.enum(toolModelIds).default("gemini-flash-lite"),
   toolIconModel: z.enum(toolModelIds).default("gemini-flash-lite"),
   handoffEnabled: z.boolean().default(false),
   toolHandoffModel: z.enum(toolModelIds).default("gemini-flash-lite"),
@@ -69,6 +71,7 @@ export const preferencesUpdateSchema = z.object({
   landingPageContent: z.enum(["suggestions", "greeting", "blank"]).optional(),
   sendMessageKeyboardShortcut: z.enum(["enter", "ctrlEnter", "shiftEnter"]).optional(),
   autoThreadNaming: z.boolean().optional(),
+  autoTagging: z.boolean().optional(),
   autoThreadIcon: z.boolean().optional(),
   showSidebarIcons: z.boolean().optional(),
   useOcrForPdfs: z.boolean().optional(),
@@ -78,6 +81,7 @@ export const preferencesUpdateSchema = z.object({
   profileCardWidget: z.enum(["apiKeyStatus", "openrouterCredits", "storageQuota"]).optional(),
   autoArchiveAfterDays: z.union([z.literal(0), z.literal(1), z.literal(3), z.literal(7), z.literal(14), z.literal(30), z.literal(90)]).optional(),
   toolTitleModel: z.enum(toolModelIds).optional(),
+  toolTagModel: z.enum(toolModelIds).optional(),
   toolIconModel: z.enum(toolModelIds).optional(),
   handoffEnabled: z.boolean().optional(),
   toolHandoffModel: z.enum(toolModelIds).optional(),
@@ -152,6 +156,7 @@ export type UserSettingsData = {
   landingPageContent: LandingPageContentType;
   sendMessageKeyboardShortcut: "enter" | "ctrlEnter" | "shiftEnter";
   autoThreadNaming: boolean;
+  autoTagging: boolean;
   autoThreadIcon: boolean;
   showSidebarIcons: boolean;
   useOcrForPdfs: boolean;
@@ -161,6 +166,7 @@ export type UserSettingsData = {
   profileCardWidget: ProfileCardWidget;
   autoArchiveAfterDays: AutoArchiveAfterDays;
   toolTitleModel: ToolModelId;
+  toolTagModel: ToolModelId;
   toolIconModel: ToolModelId;
   handoffEnabled: boolean;
   toolHandoffModel: ToolModelId;
