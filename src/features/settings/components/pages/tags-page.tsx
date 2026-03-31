@@ -196,7 +196,7 @@ function TagRow({ tag, autoTagging }: { tag: { id: string; name: string; color: 
   return (
     <div className="group/tag flex items-center gap-2 rounded-md py-1">
       <span
-        className="size-3 shrink-0 self-start mt-1.5 rounded-full"
+        className="mt-1.5 size-3 shrink-0 self-start rounded-full"
         style={{ backgroundColor: tag.color }}
       />
       <div className="min-w-0 flex-1">
@@ -208,7 +208,10 @@ function TagRow({ tag, autoTagging }: { tag: { id: string; name: string; color: 
       {autoTagging && !tag.description && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <AlertTriangleIcon className="text-muted-foreground/60 size-3.5 shrink-0" />
+            <AlertTriangleIcon className={`
+              text-muted-foreground/60 size-3.5 shrink-0
+            `}
+            />
           </TooltipTrigger>
           <TooltipContent side="left">
             <p className="text-xs">Add a description so auto-tagging can apply this tag.</p>
@@ -361,7 +364,10 @@ function AutoTaggingSection({ settings }: { settings: UserSettingsData }) {
                 const price = formatPrice(pricing[option.id]);
                 return (
                   <SelectItem key={option.id} value={option.id}>
-                    <span className="flex w-full items-center justify-between gap-4">
+                    <span className={`
+                      flex w-full items-center justify-between gap-4
+                    `}
+                    >
                       <span>{optionMap[option.id]?.label ?? option.id}</span>
                       {price && (
                         <span className="text-muted-foreground text-xs">{price}</span>
@@ -489,7 +495,7 @@ export function TagsPage({ settings }: { settings?: UserSettingsData }) {
                 ease-out
               `,
               newTagName.trim()
-                ? "grid-rows-[1fr] opacity-100 pt-2"
+                ? "grid-rows-[1fr] pt-2 opacity-100"
                 : "grid-rows-[0fr] opacity-0",
             )}
             >
