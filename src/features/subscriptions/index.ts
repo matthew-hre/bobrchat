@@ -2,7 +2,7 @@ export { createCheckoutSession, createCustomerPortalSession, getPolarProductId, 
 export { UpgradeDialog } from "./components/upgrade-dialog";
 export { UpgradePromptDialog } from "./components/upgrade-prompt-dialog";
 export { UsageMeter } from "./components/usage-meter";
-export { useSubscription } from "./hooks/use-subscription";
+export { useSubscription, useSubscriptionWithCheckout } from "./hooks/use-subscription";
 export { checkThreadLimit, getStorageQuota, getTierStorageQuota, getTierThreadLimit } from "./limits";
 export {
   createUserSubscription,

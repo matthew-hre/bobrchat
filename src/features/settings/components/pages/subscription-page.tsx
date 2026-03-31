@@ -1,7 +1,21 @@
 "use client";
 
+import { Suspense } from "react";
+
+import { Skeleton } from "~/components/ui/skeleton";
+
 import { SettingsSection } from "../ui/settings-section";
 import { SubscriptionCard } from "../ui/subscription-card";
+
+function SubscriptionCardFallback() {
+  return (
+    <div className="bg-card space-y-3 rounded-lg p-4">
+      <Skeleton className="h-6 w-24" />
+      <Skeleton className="h-8 w-full" />
+      <Skeleton className="h-8 w-full" />
+    </div>
+  );
+}
 
 export function SubscriptionPage() {
   return (
@@ -11,7 +25,9 @@ export function SubscriptionPage() {
           title="Subscription"
           description="View your current plan and usage."
         >
-          <SubscriptionCard />
+          <Suspense fallback={<SubscriptionCardFallback />}>
+            <SubscriptionCard />
+          </Suspense>
         </SettingsSection>
       </div>
     </div>
