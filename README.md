@@ -29,7 +29,6 @@ no lock-in.
 
 ![A video of BobrChat answering a request](https://github.com/user-attachments/assets/2a2afae0-55ff-435a-b744-64ed05aa780e)
 
-
 ## Why BobrChat?
 
 - **Pay only for what you use**: Real-time cost breakdown per message. No $20/mo plans you forget about.

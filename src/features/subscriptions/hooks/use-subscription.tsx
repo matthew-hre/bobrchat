@@ -13,6 +13,16 @@ export const SUBSCRIPTION_KEY = ["subscription"] as const;
 const POLL_TIMEOUT_MS = 30_000;
 
 export function useSubscription() {
+  const query = useQuery({
+    queryKey: SUBSCRIPTION_KEY,
+    queryFn: () => getSubscriptionStatus(),
+    staleTime: 60 * 1000,
+  });
+
+  return { ...query, awaitingUpgrade: false };
+}
+
+export function useSubscriptionWithCheckout() {
   const searchParams = useSearchParams();
   const hasCheckoutToken = searchParams.has("customer_session_token");
   const [awaitingUpgrade, setAwaitingUpgrade] = useState(hasCheckoutToken);

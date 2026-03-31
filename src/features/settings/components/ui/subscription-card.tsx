@@ -8,7 +8,7 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { createCustomerPortalSession } from "~/features/subscriptions/actions";
 import { UpgradeDialog } from "~/features/subscriptions/components/upgrade-dialog";
 import { UsageMeter } from "~/features/subscriptions/components/usage-meter";
-import { useSubscription } from "~/features/subscriptions/hooks/use-subscription";
+import { useSubscriptionWithCheckout } from "~/features/subscriptions/hooks/use-subscription";
 import { cn } from "~/lib/utils";
 
 const TIER_LABELS: Record<string, { label: string; color: string }> = {
@@ -28,7 +28,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function SubscriptionCard() {
-  const { data: subscription, isLoading, awaitingUpgrade } = useSubscription();
+  const { data: subscription, isLoading, awaitingUpgrade } = useSubscriptionWithCheckout();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
 
