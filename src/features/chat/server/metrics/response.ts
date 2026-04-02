@@ -9,6 +9,7 @@ type MetadataOptions = {
   firstTokenTime: number | null;
   startTime: number;
   modelId: string;
+  provider: string;
   inputCostPerToken: number;
   outputCostPerToken: number;
   searchCalls?: SearchToolCall[];
@@ -30,6 +31,7 @@ export function calculateResponseMetadata(options: MetadataOptions) {
     firstTokenTime,
     startTime,
     modelId,
+    provider,
     inputCostPerToken,
     outputCostPerToken,
     searchCalls,
@@ -63,6 +65,7 @@ export function calculateResponseMetadata(options: MetadataOptions) {
       total: totalCost,
     },
     model: modelId,
+    provider,
     tokensPerSecond: outputTokens > 0 ? outputTokens / (totalTime / 1000) : 0,
     timeToFirstTokenMs: firstTokenTime ? firstTokenTime - startTime : 0,
   };

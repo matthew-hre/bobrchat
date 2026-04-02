@@ -209,7 +209,7 @@ export async function regenerateThreadName(threadId: string, clientKeys?: Partia
       : "";
   }
 
-  const newTitle = await generateThreadTitle(userContent, utilityProvider);
+  const newTitle = await generateThreadTitle(userContent, utilityProvider, userId);
 
   const renamed = await renameThreadById(threadId, userId, newTitle);
   if (!renamed) {
@@ -259,7 +259,7 @@ export async function regenerateThreadIcon(threadId: string, clientKeys?: Partia
         .join("")
     : "";
 
-  const newIcon = await generateThreadIcon(userContent, utilityProvider);
+  const newIcon = await generateThreadIcon(userContent, utilityProvider, userId);
 
   const updated = await updateThreadIcon(threadId, userId, newIcon);
   if (!updated) {

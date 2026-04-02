@@ -6,6 +6,7 @@ import type { ResolvedProvider } from "~/features/chat/server/providers";
 
 import { createAnthropicProvider, createOpenAIProvider, createOpenRouterProvider } from "~/features/chat/server/providers";
 import { db } from "~/lib/db";
+import { logUtilityUsage } from "~/lib/db/queries/utility-usage";
 import { threads } from "~/lib/db/schema/chat";
 
 const HANDOFF_SYSTEM_PROMPT = `You are a context summarizer. Your job is to read a thread and the user's handoff request, then generate a focused prompt for a new thread.
@@ -56,6 +57,7 @@ export async function generateHandoffPrompt(
   messages: UIMessage[],
   objective: string,
   utilityProvider: ResolvedProvider,
+  userId: string,
 ): Promise<string> {
   const factory = utilityProvider.providerType === "openai"
     ? createOpenAIProvider(utilityProvider.apiKey)
@@ -83,6 +85,8 @@ Generate a focused prompt for the new thread that captures the essential context
       },
     ],
   });
+
+  logUtilityUsage(userId, "handoff", utilityProvider.providerModelId, result.usage).catch(err => console.error("Failed to log utility usage:", err));
 
   return result.text;
 }

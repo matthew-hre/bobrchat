@@ -6,9 +6,12 @@ import type {
 
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  ActivityIcon,
   ArrowLeftIcon,
+  BarChart3Icon,
   BoltIcon,
   BrainIcon,
+  CpuIcon,
   CreditCardIcon,
   DatabaseIcon,
   KeyboardIcon,
@@ -56,6 +59,9 @@ import { TagsPage } from "./pages/tags-page";
 import { ThemePage } from "./pages/theme-page";
 import { ThreadAutomationPage } from "./pages/thread-automation-page";
 import { ToolsPage } from "./pages/tools-page";
+import { UsageModelsPage } from "./pages/usage-models-page";
+import { UsageOverviewPage } from "./pages/usage-overview-page";
+import { UsageToolsPage } from "./pages/usage-tools-page";
 import { AttachmentsTab } from "./tabs/attachments-tab";
 import { IntegrationsTab } from "./tabs/integrations-tab";
 import { ModelsTab } from "./tabs/models-tab";
@@ -63,6 +69,9 @@ import { UserAvatar } from "./ui/user-avatar";
 
 type SectionId
   = | "subscription"
+    | "usage-overview"
+    | "usage-models"
+    | "usage-tools"
     | "theme"
     | "sidebar"
     | "input"
@@ -120,8 +129,11 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Account",
+    label: "Usage",
     items: [
+      { id: "usage-overview", label: "Overview", icon: BarChart3Icon },
+      { id: "usage-models", label: "Models", icon: CpuIcon },
+      { id: "usage-tools", label: "Tools", icon: ActivityIcon },
       { id: "attachments", label: "Attachments", icon: DatabaseIcon },
     ],
   },
@@ -146,6 +158,8 @@ const sectionAliases: Record<string, SectionId> = {
   "auth": "profile",
   "security": "profile",
   "billing": "subscription",
+  "usage": "usage-overview",
+  "metrics": "usage-overview",
 };
 
 type SettingsPageProps = {
@@ -483,6 +497,9 @@ export function SettingsPage({ initialTab = "theme", isModal = false, onClose }:
         )}
         >
           {activeSection === "subscription" && <SubscriptionPage />}
+          {activeSection === "usage-overview" && <UsageOverviewPage />}
+          {activeSection === "usage-models" && <UsageModelsPage />}
+          {activeSection === "usage-tools" && <UsageToolsPage />}
           {activeSection === "theme" && <ThemePage />}
           {activeSection === "sidebar" && <SidebarPage />}
           {activeSection === "input" && <InputPage />}

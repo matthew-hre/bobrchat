@@ -3,6 +3,7 @@ import * as z from "zod";
 
 import type { ThreadIcon } from "~/lib/db/schema/chat";
 
+import { logUtilityUsage } from "~/lib/db/queries/utility-usage";
 import { THREAD_ICONS } from "~/lib/db/schema/chat";
 
 import type { ResolvedProvider } from "../providers";
@@ -45,7 +46,7 @@ function createProvider(resolved: ResolvedProvider) {
  * Generates a short title for a thread based on the first user message.
  * Used for user-triggered title regeneration.
  */
-export async function generateThreadTitle(message: string, utilityProvider: ResolvedProvider): Promise<string> {
+export async function generateThreadTitle(message: string, utilityProvider: ResolvedProvider, userId: string): Promise<string> {
   if (!message || message.trim().length === 0) {
     return "New Thread";
   }
@@ -53,11 +54,13 @@ export async function generateThreadTitle(message: string, utilityProvider: Reso
   try {
     const model = createProvider(utilityProvider);
 
-    const { text } = await generateText({
+    const { text, usage } = await generateText({
       model,
       system: "Generate a short, concise title (max 6 words) for the thread based on the user's message. Do not include quotes or special characters. Do not respond to the message or respond with a question. Return ONLY the title.",
       messages: [{ role: "user", content: message }],
     });
+
+    logUtilityUsage(userId, "title", utilityProvider.providerModelId, usage).catch(err => console.error("Failed to log utility usage:", err));
 
     const title = text.trim().replace(/^["']|["']$/g, "").split("\n")[0];
     return title || "New Thread";
@@ -72,7 +75,7 @@ export async function generateThreadTitle(message: string, utilityProvider: Reso
  * Generates an appropriate icon for a thread based on the first user message.
  * Used for user-triggered icon regeneration.
  */
-export async function generateThreadIcon(message: string, utilityProvider: ResolvedProvider): Promise<ThreadIcon> {
+export async function generateThreadIcon(message: string, utilityProvider: ResolvedProvider, userId: string): Promise<ThreadIcon> {
   if (!message || message.trim().length === 0) {
     return "message-circle";
   }
@@ -82,7 +85,7 @@ export async function generateThreadIcon(message: string, utilityProvider: Resol
 
     const iconList = THREAD_ICONS.map(icon => `- ${icon}: ${ICON_DESCRIPTIONS[icon]}`).join("\n");
 
-    const { text } = await generateText({
+    const { text, usage } = await generateText({
       model,
       system: `Select the most appropriate icon for a thread based on the user's message.
 
@@ -92,6 +95,8 @@ ${iconList}
 Return ONLY the icon name. No explanation, no quotes, just the icon name.`,
       messages: [{ role: "user", content: message }],
     });
+
+    logUtilityUsage(userId, "icon", utilityProvider.providerModelId, usage).catch(err => console.error("Failed to log utility usage:", err));
 
     const iconName = text.trim().toLowerCase() as ThreadIcon;
 
@@ -116,7 +121,7 @@ Return ONLY the icon name. No explanation, no quotes, just the icon name.`,
  * @param utilityProvider The resolved utility provider to use.
  * @returns {Promise<ThreadMetadata>} The generated title and icon.
  */
-export async function generateThreadMetadata(message: string, utilityProvider: ResolvedProvider): Promise<ThreadMetadata> {
+export async function generateThreadMetadata(message: string, utilityProvider: ResolvedProvider, userId: string): Promise<ThreadMetadata> {
   if (!message || message.trim().length === 0) {
     return { title: "New Thread", icon: "message-circle" };
   }
@@ -126,7 +131,7 @@ export async function generateThreadMetadata(message: string, utilityProvider: R
 
     const iconList = THREAD_ICONS.map(icon => `- ${icon}: ${ICON_DESCRIPTIONS[icon]}`).join("\n");
 
-    const { output } = await generateText({
+    const { output, usage } = await generateText({
       model,
       output: Output.object({ schema: threadMetadataSchema }),
       system: `Based on the user's message, generate:
@@ -137,6 +142,8 @@ Available icons:
 ${iconList}`,
       messages: [{ role: "user", content: message }],
     });
+
+    logUtilityUsage(userId, "metadata", utilityProvider.providerModelId, usage).catch(err => console.error("Failed to log utility usage:", err));
 
     if (!output) {
       return { title: "New Thread", icon: "message-circle" };
@@ -172,6 +179,7 @@ export async function generateThreadTags(
   message: string,
   tags: { id: string; name: string; description: string }[],
   utilityProvider: ResolvedProvider,
+  userId: string,
 ): Promise<string[]> {
   if (!message || message.trim().length === 0 || tags.length === 0) {
     return [];
@@ -182,7 +190,7 @@ export async function generateThreadTags(
 
     const tagList = tags.map(tag => `- ${tag.id}: ${tag.name} — ${tag.description}`).join("\n");
 
-    const { output } = await generateText({
+    const { output, usage } = await generateText({
       model,
       output: Output.object({ schema: threadTagsSchema }),
       system: `Based on the user's message, select which tags are relevant to the conversation.
@@ -193,6 +201,8 @@ Available tags:
 ${tagList}`,
       messages: [{ role: "user", content: message }],
     });
+
+    logUtilityUsage(userId, "tags", utilityProvider.providerModelId, usage).catch(err => console.error("Failed to log utility usage:", err));
 
     if (!output) {
       return [];

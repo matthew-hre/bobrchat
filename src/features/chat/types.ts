@@ -235,6 +235,7 @@ export type MessageMetadata = {
   outputTokens: number;
   costUSD: CostBreakdown;
   model: string;
+  provider?: string;
   tokensPerSecond: number;
   timeToFirstTokenMs: number;
 };

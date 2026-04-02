@@ -256,6 +256,7 @@ export async function streamChatResponse(
           firstTokenTime,
           startTime,
           modelId,
+          provider: resolvedProvider.providerType,
           inputCostPerToken,
           outputCostPerToken,
           searchCalls,

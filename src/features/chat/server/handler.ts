@@ -138,7 +138,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
         // Use the title provider if available, else icon provider
         const metadataProvider = (titleProvider ?? iconProvider)!;
 
-        generateThreadMetadata(userMessage, metadataProvider)
+        generateThreadMetadata(userMessage, metadataProvider, userId)
           .then(async (metadata) => {
             await Promise.all([
               wantsTitle ? renameThreadById(threadId, userId, metadata.title) : Promise.resolve(),
@@ -170,6 +170,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
           userContent,
           tagsWithDesc as { id: string; name: string; description: string }[],
           tagProvider,
+          userId,
         ))
         .then(async (tagIds) => {
           await Promise.all(tagIds.map(tagId => addTagToThread(userId, threadId, tagId)));

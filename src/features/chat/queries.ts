@@ -233,6 +233,7 @@ export async function saveMessage(
       await tx.insert(messageMetadata).values({
         messageId,
         model: meta.model,
+        provider: meta.provider,
         inputTokens: meta.inputTokens,
         outputTokens: meta.outputTokens,
         costTotalUsd: meta.costUSD?.total?.toString(),

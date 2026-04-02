@@ -35,6 +35,7 @@ export function createHandoffTool(
             messages,
             objective,
             utilityProvider,
+            userId,
           );
 
           const newThreadId = await createHandoffThread(

@@ -70,6 +70,7 @@ export const messageMetadata = pgTable(
     inputTokens: integer("input_tokens"),
     outputTokens: integer("output_tokens"),
     costTotalUsd: text("cost_total_usd"), // stored as string for precision, parsed to number
+    provider: text("provider"),
     costBreakdown: jsonb("cost_breakdown").$type<{
       promptCost: number;
       completionCost: number;
