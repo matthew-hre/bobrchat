@@ -51,8 +51,6 @@ export function calculateResponseMetadata(options: MetadataOptions) {
 
   const totalCost = promptCost + completionCost + searchCost + extractCost + ocrCost;
 
-  console.warn(`[Metrics] ${modelId}: ${inputTokens} input tokens ($${promptCost.toFixed(6)}), ${outputTokens} output tokens ($${completionCost.toFixed(6)})`);
-
   return {
     inputTokens,
     outputTokens,

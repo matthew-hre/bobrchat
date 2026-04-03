@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   },
   description:
     "BobrChat is a fast, minimal AI chat interface with support for multiple models. Bring your own API key and pay only what you use. Chat with Claude, GPT, Gemini, and more.",
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
   keywords: ["AI chat", "chatbot", "Claude", "GPT", "Gemini", "AI assistant", "bobrchat", "chat interface", "bring your own key", "OpenRouter"],
   authors: [{ name: "BobrChat" }],
   creator: "BobrChat",
