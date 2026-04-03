@@ -20,11 +20,7 @@ import {
   updateUserSettings,
   updateUserSettingsPartial,
 } from "./queries";
-import {
-  apiKeyUpdateSchema,
-  favoriteModelsUpdateSchema,
-  preferencesUpdateSchema,
-} from "./types";
+import { apiKeyUpdateSchema, favoriteModelsUpdateSchema, preferencesUpdateSchema, STARTER_FAVORITE_MODELS } from "./types";
 
 /**
  * Update user preferences (theme, custom instructions, default thread name, landing page content)
@@ -121,6 +117,7 @@ export async function createDefaultUserSettings(userId: string): Promise<UserSet
     handoffEnabled: false,
     toolHandoffModel: "gemini-flash-lite",
     desktopNotifications: false,
+    favoriteModels: STARTER_FAVORITE_MODELS,
   };
 
   await updateUserSettings(userId, defaultSettings);

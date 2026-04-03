@@ -4,6 +4,14 @@ import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
 import { THREAD_ICONS } from "~/lib/db/schema/chat";
 
+export const STARTER_FAVORITE_MODELS = [
+  "google/gemini-3-flash-preview",
+  "moonshotai/kimi-k2.5",
+  "anthropic/claude-sonnet-4.6",
+  "z-ai/glm-5",
+  "anthropic/claude-opus-4.6",
+];
+
 export type LandingPageContentType = "suggestions" | "greeting" | "blank";
 
 export type ProfileCardWidget = "apiKeyStatus" | "openrouterCredits" | "storageQuota";

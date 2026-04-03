@@ -5,6 +5,7 @@ import type { PendingFile } from "~/features/chat/components/messages/file-previ
 import type { FileUIPart } from "~/features/chat/types";
 import type { ApiKeyProvider } from "~/lib/api-keys/types";
 
+import { STARTER_FAVORITE_MODELS } from "~/features/settings/types";
 import { getClientKey, removeClientKey, setClientKey } from "~/lib/api-keys/client";
 
 type ChatUIStore = {
@@ -73,7 +74,7 @@ export const useChatUIStore = create<ChatUIStore>()(
       clearInput: () => set({ input: "" }),
 
       // Model selection
-      selectedModelId: null,
+      selectedModelId: STARTER_FAVORITE_MODELS[0],
       setSelectedModelId: id => set({ selectedModelId: id }),
 
       // Search toggle

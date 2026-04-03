@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import type { EncryptedApiKeysData, UserSettingsData } from "~/features/settings/types";
 import type { ApiKeyProvider } from "~/lib/api-keys";
 
+import { STARTER_FAVORITE_MODELS } from "~/features/settings/types";
 import { decryptValue, encryptValue } from "~/lib/api-keys/encryption";
 import { db } from "~/lib/db";
 import { userSettings } from "~/lib/db/schema/settings";
@@ -31,6 +32,7 @@ const DEFAULT_SETTINGS: UserSettingsData = {
   handoffEnabled: false,
   toolHandoffModel: "gemini-flash-lite",
   desktopNotifications: false,
+  favoriteModels: STARTER_FAVORITE_MODELS,
 };
 
 export type ResolvedUserData = {
