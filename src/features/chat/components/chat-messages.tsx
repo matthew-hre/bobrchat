@@ -7,6 +7,7 @@ import type { ChatUIMessage } from "~/features/chat/types";
 
 import { useFilteredMessages } from "~/features/chat/hooks/use-filtered-messages";
 import { useChatUIStore } from "~/features/chat/store";
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
 import type { ChatScrollContext } from "./chat-view";
 import type { EditedMessagePayload } from "./messages/inline-message-editor";
@@ -52,6 +53,8 @@ export const ChatMessages = memo(({
   scrollContext: ChatScrollContext;
 }) => {
   const stoppedAssistantMessageInfoById = useChatUIStore(state => state.stoppedAssistantMessageInfoById);
+  const { data: userSettings } = useUserSettings();
+  const autoScrollEnabled = userSettings?.autoScrollDuringGeneration ?? true;
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
   const canEditMessages = !isLoading && !isRegenerating && !isEditSubmitting;
@@ -92,6 +95,8 @@ export const ChatMessages = memo(({
   // cascading scroll calls from rapid measurement corrections.
   const onChangeRafRef = useRef(0);
   const batchedScrollToBottom = useCallback(() => {
+    if (!autoScrollEnabled)
+      return;
     if (onChangeRafRef.current)
       return;
     onChangeRafRef.current = requestAnimationFrame(() => {
@@ -100,7 +105,7 @@ export const ChatMessages = memo(({
         scrollToBottom();
       }
     });
-  }, [isUserNearBottomRef, scrollToBottom]);
+  }, [autoScrollEnabled, isUserNearBottomRef, scrollToBottom]);
 
   useEffect(() => {
     return () => {

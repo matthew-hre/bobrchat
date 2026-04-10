@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
+
 let hasAppLoaded = false;
 
 const SCROLL_THRESHOLD = 50;
@@ -21,6 +23,8 @@ export function useChatScroll(
   options: ScrollOptions = {},
 ) {
   const { shouldScroll = true, threadId } = options;
+  const { data: settings } = useUserSettings();
+  const autoScrollEnabled = settings?.autoScrollDuringGeneration ?? true;
   const scrollRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   // Store the viewport element in state so that consumers (e.g. the
@@ -111,7 +115,7 @@ export function useChatScroll(
       return;
     }
 
-    if (!shouldScroll)
+    if (!shouldScroll || !autoScrollEnabled)
       return;
 
     if (!isUserNearBottomRef.current)
@@ -124,7 +128,7 @@ export function useChatScroll(
       autoScrollRafRef.current = 0;
       scrollToBottom();
     });
-  }, [messages, shouldScroll, scrollToBottom]);
+  }, [messages, shouldScroll, autoScrollEnabled, scrollToBottom]);
 
   useEffect(() => {
     return () => {

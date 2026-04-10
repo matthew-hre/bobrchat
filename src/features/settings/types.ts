@@ -63,6 +63,7 @@ export const preferencesSchema = z.object({
   handoffEnabled: z.boolean().default(false),
   toolHandoffModel: z.enum(toolModelIds).default("gemini-flash-lite"),
   desktopNotifications: z.boolean().default(false),
+  autoScrollDuringGeneration: z.boolean().default(true),
 });
 
 /**
@@ -94,6 +95,7 @@ export const preferencesUpdateSchema = z.object({
   handoffEnabled: z.boolean().optional(),
   toolHandoffModel: z.enum(toolModelIds).optional(),
   desktopNotifications: z.boolean().optional(),
+  autoScrollDuringGeneration: z.boolean().optional(),
 });
 
 export type PreferencesInput = z.infer<typeof preferencesSchema>;
@@ -179,6 +181,7 @@ export type UserSettingsData = {
   handoffEnabled: boolean;
   toolHandoffModel: ToolModelId;
   desktopNotifications: boolean;
+  autoScrollDuringGeneration: boolean;
   // List of favorite model IDs from OpenRouter (max 10)
   favoriteModels?: string[];
   // Derived: which providers have a key configured (server can verify server-stored keys,

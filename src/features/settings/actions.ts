@@ -117,6 +117,7 @@ export async function createDefaultUserSettings(userId: string): Promise<UserSet
     handoffEnabled: false,
     toolHandoffModel: "gemini-flash-lite",
     desktopNotifications: false,
+    autoScrollDuringGeneration: true,
     favoriteModels: STARTER_FAVORITE_MODELS,
   };
 

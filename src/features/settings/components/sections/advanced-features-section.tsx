@@ -45,6 +45,12 @@ export function AdvancedFeaturesSection({ settings }: AdvancedFeaturesSectionPro
         onToggle={enabled => save({ autoCreateFilesFromPaste: enabled })}
       />
       <ToggleItem
+        label="Auto-Scroll During Generation"
+        description="Automatically scroll to the bottom as new content is generated. Disable to prevent scroll hijacking."
+        enabled={settings.autoScrollDuringGeneration}
+        onToggle={enabled => save({ autoScrollDuringGeneration: enabled })}
+      />
+      <ToggleItem
         label="Desktop Notifications"
         description="Notify me when a response finishes while I'm in another tab."
         enabled={settings.desktopNotifications}
