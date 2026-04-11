@@ -100,7 +100,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Subscription",
     items: [
-      { id: "subscription", label: "Plan & Usage", icon: CreditCardIcon },
+      { id: "subscription", label: "Plan & Billing", icon: CreditCardIcon },
     ],
   },
   {
