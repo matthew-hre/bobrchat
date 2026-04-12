@@ -28,6 +28,7 @@ const PLUS_FEATURES = {
     "Unlimited threads",
     "100 MB storage",
     "Free thread titling",
+    "Incognito chats",
     "Priority support",
   ],
 };

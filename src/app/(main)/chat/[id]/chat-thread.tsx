@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
+import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ type ChatThreadProps = {
 
 function ChatThread({ params, initialMessages, initialPendingMessage, parentThread, lastUsedModelId, initialThread }: ChatThreadProps): React.ReactNode {
   const { id } = use(params);
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   const {
@@ -116,6 +118,7 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
         }),
         // Mark as regeneration if triggered by regenerate function
         isRegeneration: trigger === "regenerate-message",
+        ...(state.isIncognito && { incognito: true }),
         // Merge any additional body properties from the request
         ...requestBody,
       };
@@ -221,6 +224,30 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
     }
   }, [threadTitle]);
 
+  // Track which thread ID started the incognito session
+  const incognitoThreadIdRef = useRef(
+    useChatUIStore.getState().isIncognito ? id : null,
+  );
+
+  // Reset incognito when navigating to a different thread
+  useEffect(() => {
+    if (incognitoThreadIdRef.current && incognitoThreadIdRef.current !== id) {
+      useChatUIStore.getState().setIncognito(false);
+      incognitoThreadIdRef.current = null;
+    }
+  }, [id]);
+
+  // Reset incognito mode when closing/refreshing the tab
+  useEffect(() => {
+    const resetIncognito = () => {
+      useChatUIStore.getState().setIncognito(false);
+    };
+    window.addEventListener("beforeunload", resetIncognito);
+    return () => {
+      window.removeEventListener("beforeunload", resetIncognito);
+    };
+  }, []);
+
   // Wrapper around sendMessage that patches toggle values onto the user message
   // so the edit UI can read them before page refresh (DB has these values after reload)
   const sendMessage: typeof baseSendMessage = useCallback(async (message, options) => {
@@ -300,6 +327,22 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
     // Clean up sessionStorage
     sessionStorage.removeItem(`initial_${id}`);
   }, [id, initialPendingMessage, sendMessage, clearInput]);
+
+  // Redirect away from phantom threads (e.g. incognito reload):
+  // no DB thread, no pending message, no sessionStorage entry → nothing to show.
+  // Also skip if the initial-message effect already consumed the sessionStorage entry.
+  useEffect(() => {
+    if (initialThread || initialPendingMessage || initialMessages.length > 0)
+      return;
+    if (hasSentInitialRef.current)
+      return;
+
+    const stored = sessionStorage.getItem(`initial_${id}`);
+    if (stored)
+      return;
+
+    router.replace("/");
+  }, [id, initialThread, initialPendingMessage, initialMessages.length, router]);
 
   const {
     handleStop,

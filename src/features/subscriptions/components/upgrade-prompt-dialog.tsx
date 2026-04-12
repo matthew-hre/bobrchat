@@ -26,7 +26,7 @@ type UpgradePromptDialogProps = {
 const PLUS_FEATURES = {
   name: "Plus",
   price: "$2.99/mo",
-  features: ["Unlimited threads", "100 MB storage", "Free titling", "Priority support"],
+  features: ["Unlimited threads", "100 MB storage", "Free titling", "Incognito chats", "Priority support"],
 };
 
 export function UpgradePromptDialog({

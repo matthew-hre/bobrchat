@@ -34,6 +34,7 @@ const PLAN_INFO: Record<string, { label: string; description: string; features: 
       "Unlimited threads",
       "100 MB storage",
       "Free thread titling",
+      "Incognito chats",
       "Priority support",
     ],
   },

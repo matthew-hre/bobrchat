@@ -286,6 +286,7 @@ function ThreadItemComponent({
             <Link
               href={`/chat/${id}`}
               prefetch={false}
+              onClick={() => useChatUIStore.getState().setIncognito(false)}
               className={cn(
                 `
                   flex items-center gap-2 rounded-md px-2 py-1.5 text-sm

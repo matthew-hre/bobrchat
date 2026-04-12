@@ -1,8 +1,7 @@
 "use client";
 
-import { ArchiveIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, SearchIcon, XIcon } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
 
 import type { Session } from "~/features/auth/lib/auth";
@@ -19,11 +18,13 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useTags } from "~/features/chat/hooks/use-tags";
 import { useThreads } from "~/features/chat/hooks/use-threads";
+import { useChatUIStore } from "~/features/chat/store";
 import { useDebouncedValue } from "~/lib/hooks";
 
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
+import { NewThreadButton } from "./new-thread-button";
 import { TagsFilterPopover } from "./tags-filter-popover";
 import { ThreadList } from "./thread-list";
 import { UpgradeBanner } from "./upgrade-banner";
@@ -41,7 +42,7 @@ function ThreadListSkeleton() {
 
 type ViewMode = "recents" | "tags";
 
-function ThreadListContent({ searchQuery, showArchived, selectedTagIds, viewMode }: { searchQuery: string; showArchived: boolean; selectedTagIds: string[]; viewMode: ViewMode }) {
+function ThreadListContent({ searchQuery, showArchived, selectedTagIds, viewMode, isIncognito }: { searchQuery: string; showArchived: boolean; selectedTagIds: string[]; viewMode: ViewMode; isIncognito: boolean }) {
   const debouncedSearch = useDebouncedValue(searchQuery.trim(), 300);
   const isSearching = debouncedSearch.length > 0;
 
@@ -99,6 +100,7 @@ function ThreadListContent({ searchQuery, showArchived, selectedTagIds, viewMode
       <ThreadList
         groupedThreads={groupedThreads}
         isArchived={showArchived}
+        isIncognito={isIncognito}
         hasNextPage={hasNextPage}
         fetchNextPage={fetchNextPage}
         isFetchingNextPage={isFetchingNextPage}
@@ -120,6 +122,7 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("recents");
   const { searchInputRef } = useKeyboardShortcutsContext();
   const { data: tags } = useTags();
+  const isIncognito = useChatUIStore(state => state.isIncognito);
 
   const hasTags = tags && tags.length > 0;
 
@@ -142,17 +145,7 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="size-7"
-              title="new thread"
-              asChild
-            >
-              <Link href="/">
-                <PlusIcon className="size-4" />
-              </Link>
-            </Button>
+            <NewThreadButton />
             <SidebarTrigger />
           </div>
         </div>
@@ -230,6 +223,7 @@ export function ChatSidebar({ session }: ChatSidebarProps) {
             showArchived={showArchived}
             selectedTagIds={selectedTagIds}
             viewMode={hasTags ? viewMode : "recents"}
+            isIncognito={isIncognito}
           />
         </SidebarGroup>
       </SidebarContent>

@@ -2,7 +2,7 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 
-import { AlertCircle, SendIcon, SquareIcon, Upload } from "lucide-react";
+import { AlertCircle, EyeOffIcon, SendIcon, SquareIcon, Upload } from "lucide-react";
 import Link from "next/link";
 
 import type { ChatUIMessage } from "~/features/chat/types";
@@ -15,6 +15,7 @@ import {
   getAcceptedFileTypesDescription,
   useChatInputController,
 } from "~/features/chat/hooks/use-chat-input-controller";
+import { useChatUIStore } from "~/features/chat/store";
 import { cn } from "~/lib/utils";
 
 import { ChatInputCapabilities } from "./chat-input-capabilities";
@@ -38,6 +39,7 @@ export function ChatInput({
     isLoading,
     onStop,
   });
+  const isIncognito = useChatUIStore(state => state.isIncognito);
 
   return (
     <div className={cn(`bg-background p-4 pt-0`, className)}>
@@ -53,9 +55,20 @@ export function ChatInput({
           onDrop={attachments.handleDrop}
           className={cn(
             `border-border bg-background relative flex flex-col border`,
+            isIncognito && "border-dashed",
             attachments.isDragging && "ring-primary ring-2",
           )}
         >
+          {isIncognito && (
+            <div className={`
+              text-muted-foreground flex items-center gap-2 border-b
+              border-dashed px-3 py-2 text-xs
+            `}
+            >
+              <EyeOffIcon className="size-3.5 shrink-0" />
+              <span>Incognito — this chat won&apos;t be saved</span>
+            </div>
+          )}
           {/* Drop overlay */}
           <div
             className={cn(

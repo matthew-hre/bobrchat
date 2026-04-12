@@ -373,6 +373,7 @@ export function LandingPage() {
                     {" "}
                     titling
                   </li>
+                  <li>Incognito chats</li>
                   <li>Priority support</li>
                 </ul>
                 <Link href="/signup" className="mt-auto pt-6">

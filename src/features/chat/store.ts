@@ -63,6 +63,10 @@ type ChatUIStore = {
   // Ephemeral retry payload for failed sends (not persisted)
   lastSendPayload: { text: string; files?: Array<FileUIPart & { id?: string; storagePath?: string }> } | null;
   setLastSendPayload: (payload: { text: string; files?: Array<FileUIPart & { id?: string; storagePath?: string }> } | null) => void;
+
+  // Incognito mode (not persisted — ephemeral session only)
+  isIncognito: boolean;
+  setIncognito: (enabled: boolean) => void;
 };
 
 export const useChatUIStore = create<ChatUIStore>()(
@@ -158,6 +162,9 @@ export const useChatUIStore = create<ChatUIStore>()(
 
       lastSendPayload: null,
       setLastSendPayload: payload => set({ lastSendPayload: payload }),
+
+      isIncognito: false,
+      setIncognito: enabled => set({ isIncognito: enabled }),
     }),
     {
       name: "bobrchat-ui",
