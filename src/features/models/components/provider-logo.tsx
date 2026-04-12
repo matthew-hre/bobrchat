@@ -22,15 +22,15 @@ export const ProviderLogo = memo(({
   size = "md",
   className,
 }: ProviderLogoProps) => {
-  const logoPath = getProviderLogo(provider);
+  const logo = getProviderLogo(provider);
 
-  if (!logoPath) {
+  if (!logo) {
     return null;
   }
 
   return (
     <Image
-      src={logoPath}
+      src={logo}
       alt={`${provider} logo`}
       width={24}
       height={24}
