@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
+import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ type ChatThreadProps = {
 
 function ChatThread({ params, initialMessages, initialPendingMessage, parentThread, lastUsedModelId, initialThread }: ChatThreadProps): React.ReactNode {
   const { id } = use(params);
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   const {
@@ -325,6 +327,22 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
     // Clean up sessionStorage
     sessionStorage.removeItem(`initial_${id}`);
   }, [id, initialPendingMessage, sendMessage, clearInput]);
+
+  // Redirect away from phantom threads (e.g. incognito reload):
+  // no DB thread, no pending message, no sessionStorage entry → nothing to show.
+  // Also skip if the initial-message effect already consumed the sessionStorage entry.
+  useEffect(() => {
+    if (initialThread || initialPendingMessage || initialMessages.length > 0)
+      return;
+    if (hasSentInitialRef.current)
+      return;
+
+    const stored = sessionStorage.getItem(`initial_${id}`);
+    if (stored)
+      return;
+
+    router.replace("/");
+  }, [id, initialThread, initialPendingMessage, initialMessages.length, router]);
 
   const {
     handleStop,

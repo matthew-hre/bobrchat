@@ -1,12 +1,13 @@
 "use client";
 
-import { PanelLeftIcon, PlusIcon } from "lucide-react";
-import Link from "next/link";
+import { PanelLeftIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Button } from "~/components/ui/button";
 import { useSidebar } from "~/components/ui/sidebar";
 import { cn } from "~/lib/utils";
+
+import { NewThreadButton } from "./new-thread-button";
 
 export function FloatingSidebarToggle() {
   const { state, toggleSidebar, isMobile } = useSidebar();
@@ -31,24 +32,15 @@ export function FloatingSidebarToggle() {
           : "invisible -translate-x-12 opacity-0",
       )}
     >
-      <Button
-        data-slot="floating-sidebar-toggle"
-        data-sidebar="floating-toggle-button"
-        variant="ghost"
-        size="icon-sm"
+      <NewThreadButton
         className={`
           bg-background pointer-events-auto size-7 border
           hover:bg-muted
           dark:hover:bg-muted
         `}
-        title="new thread"
-        aria-label="new thread"
-        asChild
-      >
-        <Link href="/">
-          <PlusIcon className="size-4" />
-        </Link>
-      </Button>
+        data-slot="floating-sidebar-toggle"
+        data-sidebar="floating-toggle-button"
+      />
       <Button
         data-slot="floating-sidebar-toggle"
         data-sidebar="floating-toggle-button"

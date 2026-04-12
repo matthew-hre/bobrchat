@@ -2,7 +2,7 @@
 
 import type { RefCallback } from "react";
 
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, EyeOffIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
@@ -78,6 +78,7 @@ type ThreadListProps = {
   flatResults?: Array<{ id: string; title: string; icon?: ThreadIcon | null; tags?: Array<{ id: string; name: string; color: string }> }>;
   isSearching?: boolean;
   isArchived?: boolean;
+  isIncognito?: boolean;
   hasNextPage?: boolean;
   fetchNextPage?: () => void;
   isFetchingNextPage?: boolean;
@@ -89,6 +90,7 @@ export const ThreadList = memo(({
   flatResults,
   isSearching,
   isArchived,
+  isIncognito,
   hasNextPage,
   fetchNextPage,
   isFetchingNextPage,
@@ -149,11 +151,25 @@ export const ThreadList = memo(({
     };
   }, [hasNextPage, fetchNextPage, loadMoreEl]);
 
+  const incognitoItem = isIncognito
+    ? (
+        <div className={`
+          bg-sidebar-accent text-sidebar-accent-foreground flex items-center
+          gap-2 rounded-md border border-dashed px-2 py-1.5 text-sm
+        `}
+        >
+          <EyeOffIcon className="size-4 shrink-0" />
+          <span className="truncate">Incognito chat</span>
+        </div>
+      )
+    : null;
+
   const renderGroup = (
     title: string,
     threads: Array<{ id: string; title: string; icon?: ThreadIcon | null; isShared?: boolean; tags?: Array<{ id: string; name: string; color: string }> }>,
+    prepend?: React.ReactNode,
   ) => {
-    if (threads.length === 0)
+    if (threads.length === 0 && !prepend)
       return null;
 
     return (
@@ -166,6 +182,7 @@ export const ThreadList = memo(({
           {title}
         </h3>
         <div className="space-y-0.5">
+          {prepend}
           {threads.map(thread => (
             <ThreadItem
               key={thread.id}
@@ -260,7 +277,7 @@ export const ThreadList = memo(({
             )
           : (
               <div className="space-y-4 py-2">
-                {renderGroup("Today", groupedThreads!.today)}
+                {renderGroup("Today", groupedThreads!.today, incognitoItem)}
                 {renderGroup("Last 7 Days", groupedThreads!.last7Days)}
                 {renderGroup("Last 30 Days", groupedThreads!.last30Days)}
                 {renderGroup("Older", groupedThreads!.older)}
