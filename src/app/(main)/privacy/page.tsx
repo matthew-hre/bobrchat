@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
           <div>
             <h1 className="text-4xl font-bold tracking-tight">Privacy Policy</h1>
             <p className="text-muted-foreground mt-2">
-              Last updated: January 2026
+              Last updated: April 2026
             </p>
           </div>
 
@@ -50,6 +50,7 @@ export default function PrivacyPolicy() {
                 <li>• Threads and messages</li>
                 <li>• Uploaded files and images</li>
                 <li>• Account information</li>
+                <li>• Payment and subscription information</li>
               </ul>
             </section>
 
@@ -88,8 +89,14 @@ export default function PrivacyPolicy() {
                 Your data is subject to the privacy policies of:
               </p>
               <ul className="text-muted-foreground ml-4 space-y-2">
-                <li>• OpenRouter (your API gateway)</li>
-                <li>• The specific model providers you use</li>
+                <li>• OpenRouter (AI model gateway)</li>
+                <li>• The specific AI model providers you use</li>
+                <li>• WorkOS (authentication)</li>
+                <li>• Cloudflare R2 (file storage)</li>
+                <li>• Resend (transactional email)</li>
+                <li>• Upstash (rate limiting)</li>
+                <li>• Polar (payments and subscriptions)</li>
+                <li>• Vercel (hosting and infrastructure)</li>
               </ul>
               <p className="text-muted-foreground">
                 Please review their privacy policies for how they handle your
