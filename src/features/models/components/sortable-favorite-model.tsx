@@ -2,27 +2,13 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  BrainIcon,
-  FileTextIcon,
-  GripVerticalIcon,
-  ImageIcon,
-  SearchIcon,
-} from "lucide-react";
+import { GripVerticalIcon } from "lucide-react";
 
 import { cn } from "~/lib/utils";
 
 import type { ModelListItem } from "../types";
 
-import { getModelListItemCapabilities } from "../utils/model-capabilities";
-
-function formatPrice(price: number | null): string {
-  if (!price)
-    return "Free";
-  if (price < 0.000001)
-    return "$0.000001/1M";
-  return `$${(price * 1000000).toFixed(2)}/1M`;
-}
+import { ModelCardContent } from "./model-card-content";
 
 export function SortableFavoriteModel({
   model,
@@ -46,8 +32,6 @@ export function SortableFavoriteModel({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const capabilities = getModelListItemCapabilities(model);
-
   return (
     <div
       ref={setNodeRef}
@@ -55,107 +39,46 @@ export function SortableFavoriteModel({
       className={cn(
         "rounded-lg border p-4 text-left transition-all",
         isDragging
-          ? "border-primary/50 bg-primary/10 shadow-md"
-          : "border-primary bg-primary/5",
+          ? "border-primary/30 bg-primary/5 shadow-md"
+          : "border-primary/30 bg-primary/3",
       )}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <button
-          {...attributes}
-          {...listeners}
-          className={cn(
-            `
-              flex shrink-0 cursor-grab items-center justify-center rounded p-1
-              transition-colors
-              active:cursor-grabbing
-            `,
-            isDragging
-              ? "bg-primary/20 text-primary"
-              : `
-                text-muted-foreground
-                hover:text-foreground
+      <ModelCardContent
+        model={model}
+        leadingAction={(
+          <button
+            {...attributes}
+            {...listeners}
+            className={cn(
+              `
+                flex shrink-0 cursor-grab items-center justify-center rounded
+                p-1 transition-colors
+                active:cursor-grabbing
               `,
-          )}
-          type="button"
-        >
-          <GripVerticalIcon className="size-4" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm leading-snug font-semibold">
-            {model.name}
-          </h3>
-          <p className="text-muted-foreground truncate text-xs">
-            {model.id}
-          </p>
-        </div>
-        <button
-          onClick={onRemove}
-          className={`
-            border-primary bg-primary mt-0.5 flex size-5 shrink-0 items-center
-            justify-center rounded border transition-all
-          `}
-        >
-          <div className="bg-primary-foreground size-2 rounded-[2px]" />
-        </button>
-      </div>
-
-      <div className="flex gap-4 text-xs">
-        <div>
-          <span className="text-muted-foreground">
-            Input:
-            {" "}
-          </span>
-          <span className="font-mono font-medium">
-            {formatPrice(model.pricing?.prompt ?? null)}
-          </span>
-        </div>
-        <div>
-          <span className="text-muted-foreground">
-            Output:
-            {" "}
-          </span>
-          <span className="font-mono font-medium">
-            {formatPrice(model.pricing?.completion ?? null)}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {capabilities.supportsImages && (
-          <FeatureBadge icon={ImageIcon} label="Image Upload" />
+              isDragging
+                ? "bg-primary/20 text-primary"
+                : `
+                  text-muted-foreground
+                  hover:text-foreground
+                `,
+            )}
+            type="button"
+          >
+            <GripVerticalIcon className="size-4" />
+          </button>
         )}
-        {capabilities.supportsPdf && (
-          <FeatureBadge
-            icon={FileTextIcon}
-            label={capabilities.supportsNativePdf ? "PDF (Native)" : "PDF (OpenRouter)"}
-          />
+        trailingAction={(
+          <button
+            onClick={onRemove}
+            className={`
+              border-primary bg-primary mt-0.5 flex size-5 shrink-0 items-center
+              justify-center rounded border transition-all
+            `}
+          >
+            <div className="bg-primary-foreground size-2 rounded-[2px]" />
+          </button>
         )}
-        {capabilities.supportsSearch && (
-          <FeatureBadge icon={SearchIcon} label="Search" />
-        )}
-        {capabilities.supportsReasoning && (
-          <FeatureBadge icon={BrainIcon} label="Reasoning" />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function FeatureBadge({
-  icon: Icon,
-  label,
-}: {
-  icon: typeof FileTextIcon;
-  label: string;
-}) {
-  return (
-    <div className={`
-      bg-muted mt-3 inline-flex items-center gap-1 rounded-full px-2 py-1
-      text-xs font-medium
-    `}
-    >
-      <Icon className="size-3" />
-      {label}
+      />
     </div>
   );
 }
