@@ -55,8 +55,21 @@ export function useUpdateFavoriteModels() {
 
   return useMutation({
     mutationFn: (favoriteModels: string[]) => updateFavoriteModels({ favoriteModels }),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: USER_SETTINGS_KEY });
+    onMutate: async (favoriteModels) => {
+      await queryClient.cancelQueries({ queryKey: USER_SETTINGS_KEY });
+      const previous = queryClient.getQueryData<UserSettingsData>(USER_SETTINGS_KEY);
+      queryClient.setQueryData<UserSettingsData>(USER_SETTINGS_KEY, old =>
+        old ? { ...old, favoriteModels } : old);
+      return { previous };
+    },
+    onSuccess: (updatedSettings) => {
+      queryClient.setQueryData<UserSettingsData>(USER_SETTINGS_KEY, old =>
+        old ? { ...old, ...updatedSettings } : updatedSettings);
+    },
+    onError: (_err, _updates, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(USER_SETTINGS_KEY, context.previous);
+      }
     },
   });
 }

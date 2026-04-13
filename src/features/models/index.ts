@@ -9,6 +9,7 @@ export {
 // Components
 export { AvailableModelCard } from "./components/available-model-card";
 export { ModelCard } from "./components/model-card";
+export { ModelCardContent } from "./components/model-card-content";
 export { ModelListCard } from "./components/model-list-card";
 export { ProviderLogo } from "./components/provider-logo";
 export { SortableFavoriteModel } from "./components/sortable-favorite-model";

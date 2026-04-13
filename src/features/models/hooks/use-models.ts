@@ -2,7 +2,7 @@
 
 import type { Model } from "@openrouter/sdk/models";
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { useApiKeyStatus } from "~/features/settings/hooks/use-api-status";
@@ -113,6 +113,7 @@ export function useFavoriteModelsForList(): { models: ModelListItem[]; isLoading
     queryKey: [...MODELS_KEY, "favorites-list", favoriteIds],
     queryFn: () => fetchModelsByIdsForList(favoriteIds),
     enabled: hasAnyChatKey && favoriteIds.length > 0,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
