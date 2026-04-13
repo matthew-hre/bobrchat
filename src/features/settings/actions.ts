@@ -178,6 +178,38 @@ export async function updateFavoriteModels(updates: FavoriteModelsInput): Promis
 }
 
 /**
+ * Prune favorite model IDs that no longer exist in the models table.
+ * Returns the list of removed model IDs (empty if nothing changed).
+ */
+export async function pruneStaleModelIds(): Promise<string[]> {
+  const session = await getRequiredSession();
+  const settings = await getUserSettings(session.user.id);
+  const favoriteIds = settings.favoriteModels ?? [];
+
+  if (favoriteIds.length === 0) {
+    return [];
+  }
+
+  // Check which IDs still exist in the models table
+  const existingRows = await db
+    .select({ modelId: models.modelId })
+    .from(models)
+    .where(or(...favoriteIds.map(id => eq(models.modelId, id))));
+
+  const existingSet = new Set(existingRows.map(r => r.modelId));
+  const removedIds = favoriteIds.filter(id => !existingSet.has(id));
+
+  if (removedIds.length === 0) {
+    return [];
+  }
+
+  const validIds = favoriteIds.filter(id => existingSet.has(id));
+  await updateUserSettingsPartial(session.user.id, { favoriteModels: validIds });
+
+  return removedIds;
+}
+
+/**
  * Delete all threads for the authenticated user
  * Messages and attachments are cascade-deleted via foreign key constraints
  * Requires authentication

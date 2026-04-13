@@ -14,6 +14,7 @@ import {
   getModelCapabilities,
   useFavoriteModels,
 } from "~/features/models";
+import { usePruneStaleFavorites } from "~/features/models/hooks/use-prune-stale-favorites";
 import { useApiKeyStatus } from "~/features/settings/hooks/use-api-status";
 import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 
@@ -47,6 +48,8 @@ export function useChatInputController({
 
   const { models: favoriteModels, isLoading: isModelsLoading, unavailableModelIds }
     = useFavoriteModels();
+
+  usePruneStaleFavorites();
 
   const {
     input: value,
