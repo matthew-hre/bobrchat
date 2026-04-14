@@ -63,6 +63,7 @@ export function ChatView({
           sendMessage={sendMessage}
           isLoading={isLoading}
           onStop={onStop}
+          messages={messages}
         />
       </div>
     </div>

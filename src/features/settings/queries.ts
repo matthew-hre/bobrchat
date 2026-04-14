@@ -33,6 +33,7 @@ const DEFAULT_SETTINGS: UserSettingsData = {
   toolHandoffModel: "gemini-flash-lite",
   desktopNotifications: false,
   autoScrollDuringGeneration: true,
+  contextWindowDisplay: "auto",
   favoriteModels: STARTER_FAVORITE_MODELS,
 };
 

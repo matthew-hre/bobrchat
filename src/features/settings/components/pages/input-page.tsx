@@ -22,6 +22,12 @@ const keyboardShortcuts = [
   { label: "Unfocus Input", keys: ["Esc"] },
 ];
 
+const contextWindowDisplayOptions = [
+  { value: "disabled" as const, label: "Disabled" },
+  { value: "auto" as const, label: "Auto (>25%)" },
+  { value: "always" as const, label: "Always" },
+];
+
 const sendMessageKeyboardShortcutOptions = [
   { value: "enter" as const, label: <Kbd>Enter</Kbd> },
   { value: "ctrlEnter" as const, label: (
@@ -90,6 +96,15 @@ export function InputPage() {
             options={sendMessageKeyboardShortcutOptions}
             value={settings.sendMessageKeyboardShortcut}
             onChange={value => save({ sendMessageKeyboardShortcut: value })}
+            layout="flex"
+          />
+
+          <SelectionCardItem
+            label="Context Window Usage"
+            description="Show a bar at the top of the input box indicating how much of the model's context window has been used."
+            options={contextWindowDisplayOptions}
+            value={settings.contextWindowDisplay ?? "auto"}
+            onChange={value => save({ contextWindowDisplay: value })}
             layout="flex"
           />
         </SettingsSection>

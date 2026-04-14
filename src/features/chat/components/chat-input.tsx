@@ -16,9 +16,11 @@ import {
   useChatInputController,
 } from "~/features/chat/hooks/use-chat-input-controller";
 import { useChatUIStore } from "~/features/chat/store";
+import { useUserSettings } from "~/features/settings/hooks/use-user-settings";
 import { cn } from "~/lib/utils";
 
 import { ChatInputCapabilities } from "./chat-input-capabilities";
+import { ContextWindowBar } from "./context-window-bar";
 import { ModelSelector } from "./ui/model-selector";
 
 type ChatInputProps = {
@@ -26,6 +28,7 @@ type ChatInputProps = {
   sendMessage: UseChatHelpers<ChatUIMessage>["sendMessage"];
   isLoading?: boolean;
   onStop?: () => void;
+  messages?: ChatUIMessage[];
 };
 
 export function ChatInput({
@@ -33,6 +36,7 @@ export function ChatInput({
   sendMessage,
   isLoading = false,
   onStop,
+  messages = [],
 }: ChatInputProps) {
   const { input, apiStatus, model, features, attachments, send } = useChatInputController({
     sendMessage,
@@ -40,6 +44,11 @@ export function ChatInput({
     onStop,
   });
   const isIncognito = useChatUIStore(state => state.isIncognito);
+  const { data: settings } = useUserSettings();
+  const contextWindowDisplay = settings?.contextWindowDisplay ?? "auto";
+
+  const selectedModel = model.favorites.find(m => m.id === model.selectedId);
+  const contextLength = selectedModel?.contextLength ?? 0;
 
   return (
     <div className={cn(`bg-background p-4 pt-0`, className)}>
@@ -59,6 +68,11 @@ export function ChatInput({
             attachments.isDragging && "ring-primary ring-2",
           )}
         >
+          <ContextWindowBar
+            messages={messages}
+            contextLength={contextLength}
+            displayMode={contextWindowDisplay}
+          />
           {isIncognito && (
             <div className={`
               text-muted-foreground flex items-center gap-2 border-b
