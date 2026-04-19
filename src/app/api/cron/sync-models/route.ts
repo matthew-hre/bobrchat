@@ -53,6 +53,7 @@ export async function GET(request: Request) {
       success: syntheticResult.success,
       upserted: syntheticResult.upserted,
       removed: syntheticResult.removed,
+      inserted: syntheticResult.inserted,
       durationMs: syntheticResult.durationMs,
       ...(syntheticResult.skipped && { skipped: true }),
       ...(syntheticResult.error && { error: syntheticResult.error }),

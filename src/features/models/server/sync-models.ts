@@ -86,11 +86,12 @@ export async function syncModelsFromOpenRouter(): Promise<{
         });
     }
 
-    // Delete models that no longer exist in OpenRouter
+    // Delete models that no longer exist in OpenRouter.
+    // Skip Synthetic-sourced models — they are managed by syncSyntheticProviderAvailability.
     const currentModelIds = new Set(filteredModels.map((m: Model) => m.id));
-    const existingModels = await db.select({ modelId: models.modelId }).from(models);
+    const existingModels = await db.select({ modelId: models.modelId, provider: models.provider }).from(models);
     for (const existing of existingModels) {
-      if (!currentModelIds.has(existing.modelId)) {
+      if (!currentModelIds.has(existing.modelId) && existing.provider !== "synthetic") {
         await db.delete(models).where(eq(models.modelId, existing.modelId));
       }
     }
@@ -424,14 +425,18 @@ export async function syncAnthropicProviderAvailability(): Promise<{
  * Fetches the Synthetic model list and cross-references with our models table
  * to determine which models can be routed directly through Synthetic.
  *
+ * Models that exist on both OpenRouter and Synthetic get a provider availability
+ * entry. Models that are Synthetic-only (no OpenRouter equivalent) are inserted
+ * directly into the `models` table with provider "synthetic" so they appear in
+ * the model picker.
+ *
  * Synthetic model IDs use the `hf:` prefix (e.g. "hf:zai-org/GLM-4.7").
- * We match them against OpenRouter models by comparing the HuggingFace
- * org/model portion against known provider prefixes in our DB.
  */
 export async function syncSyntheticProviderAvailability(): Promise<{
   success: boolean;
   upserted: number;
   removed: number;
+  inserted: number;
   durationMs: number;
   skipped?: boolean;
   error?: string;
@@ -444,6 +449,7 @@ export async function syncSyntheticProviderAvailability(): Promise<{
       success: true,
       upserted: 0,
       removed: 0,
+      inserted: 0,
       durationMs: Date.now() - startTime,
       skipped: true,
     };
@@ -458,50 +464,55 @@ export async function syncSyntheticProviderAvailability(): Promise<{
       throw new Error(`Synthetic API returned ${response.status}: ${await response.text()}`);
     }
 
-    const data = await response.json() as { data: { id: string }[] };
-    const syntheticModelIds = new Set(data.data.map(m => m.id));
+    const data = await response.json() as { data: { id: string; created?: number }[] };
+    const syntheticModels = data.data;
+    const syntheticModelIds = new Set(syntheticModels.map(m => m.id));
 
-    // Get all models from our DB and try to match against Synthetic's catalogue.
-    // Synthetic uses HuggingFace-style IDs like "hf:org/Model-Name".
-    // We need to check which of our OpenRouter models have a corresponding
-    // Synthetic model available.
-    const allModels = await db
+    // Build a lookup from lowercase slug → Synthetic model for matching
+    const syntheticBySlug = new Map<string, { id: string; created?: number }>();
+    for (const m of syntheticModels) {
+      const slug = m.id.replace(/^hf:/, "");
+      syntheticBySlug.set(slug.toLowerCase(), m);
+    }
+
+    // Get all existing models from our DB
+    const allDbModels = await db
       .select({ modelId: models.modelId })
       .from(models);
+    const dbModelIdSet = new Set(allDbModels.map(m => m.modelId));
 
     let upserted = 0;
     let removed = 0;
+    let inserted = 0;
     const now = new Date();
+    const matchedSyntheticIds = new Set<string>();
 
-    for (const { modelId } of allModels) {
-      // Try to find a matching Synthetic model for this OpenRouter model.
-      // OpenRouter IDs look like "zai-org/glm-4.7" while Synthetic uses "hf:zai-org/GLM-4.7".
+    // Phase 1: Cross-reference existing DB models against Synthetic's catalogue
+    for (const { modelId } of allDbModels) {
       const strippedId = modelId.replace(/^[^/]+\//, "");
 
       if (isOpenRouterOnlyVariant(strippedId)) {
         continue;
       }
 
-      // Check if any Synthetic model ID contains this model's slug (case-insensitive)
-      const matchedSyntheticId = [...syntheticModelIds].find((synId) => {
-        const synSlug = synId.replace(/^hf:/, "");
-        return synSlug.toLowerCase() === modelId.toLowerCase()
-          || synSlug.toLowerCase() === strippedId.toLowerCase();
-      });
+      // Try matching by full modelId or stripped slug (case-insensitive)
+      const matched = syntheticBySlug.get(modelId.toLowerCase())
+        ?? syntheticBySlug.get(strippedId.toLowerCase());
 
-      if (matchedSyntheticId) {
+      if (matched) {
+        matchedSyntheticIds.add(matched.id);
         await db
           .insert(modelProviderAvailability)
           .values({
             modelId,
             provider: "synthetic",
-            providerModelId: matchedSyntheticId,
+            providerModelId: matched.id,
             lastVerifiedAt: now,
           })
           .onConflictDoUpdate({
             target: [modelProviderAvailability.modelId, modelProviderAvailability.provider],
             set: {
-              providerModelId: matchedSyntheticId,
+              providerModelId: matched.id,
               lastVerifiedAt: now,
             },
           });
@@ -520,10 +531,100 @@ export async function syncSyntheticProviderAvailability(): Promise<{
       }
     }
 
+    // Phase 2: Insert Synthetic-only models that have no OpenRouter equivalent.
+    // These use the Synthetic model ID directly as their modelId (e.g. "hf:zai-org/GLM-4.7").
+    for (const synModel of syntheticModels) {
+      if (matchedSyntheticIds.has(synModel.id)) {
+        continue;
+      }
+
+      // Skip embedding models (they don't have chat completions)
+      if (synModel.id.toLowerCase().includes("embed")) {
+        continue;
+      }
+
+      const syntheticModelId = synModel.id;
+
+      // Derive a human-readable name from the HF-style ID: "hf:org/Model-Name" → "Model-Name"
+      const slug = syntheticModelId.replace(/^hf:/, "");
+      const namePart = slug.split("/").pop() ?? slug;
+
+      // Check if this Synthetic model was already inserted in a previous sync
+      if (!dbModelIdSet.has(syntheticModelId)) {
+        await db
+          .insert(models)
+          .values({
+            modelId: syntheticModelId,
+            canonicalSlug: slug,
+            name: namePart,
+            description: null,
+            provider: "synthetic",
+            contextLength: null,
+            created: synModel.created ?? Math.floor(Date.now() / 1000),
+            pricingPrompt: null,
+            pricingCompletion: null,
+            pricingImage: null,
+            pricingRequest: null,
+            inputModalities: ["text"],
+            outputModalities: ["text"],
+            supportedParameters: [],
+            rawData: synModel as unknown as Record<string, unknown>,
+            lastSyncedAt: now,
+          })
+          .onConflictDoUpdate({
+            target: models.modelId,
+            set: {
+              rawData: synModel as unknown as Record<string, unknown>,
+              lastSyncedAt: now,
+            },
+          });
+        inserted++;
+      }
+
+      // Also add provider availability entry for the Synthetic-only model
+      await db
+        .insert(modelProviderAvailability)
+        .values({
+          modelId: syntheticModelId,
+          provider: "synthetic",
+          providerModelId: syntheticModelId,
+          lastVerifiedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: [modelProviderAvailability.modelId, modelProviderAvailability.provider],
+          set: {
+            providerModelId: syntheticModelId,
+            lastVerifiedAt: now,
+          },
+        });
+      upserted++;
+    }
+
+    // Phase 3: Remove Synthetic-only models from the models table if they
+    // no longer appear in Synthetic's catalogue.
+    const syntheticOnlyModels = await db
+      .select({ modelId: models.modelId })
+      .from(models)
+      .where(eq(models.provider, "synthetic"));
+
+    for (const { modelId } of syntheticOnlyModels) {
+      if (!syntheticModelIds.has(modelId)) {
+        await db.delete(modelProviderAvailability).where(
+          and(
+            eq(modelProviderAvailability.modelId, modelId),
+            eq(modelProviderAvailability.provider, "synthetic"),
+          ),
+        );
+        await db.delete(models).where(eq(models.modelId, modelId));
+        removed++;
+      }
+    }
+
     return {
       success: true,
       upserted,
       removed,
+      inserted,
       durationMs: Date.now() - startTime,
     };
   }
@@ -535,6 +636,7 @@ export async function syncSyntheticProviderAvailability(): Promise<{
       success: false,
       upserted: 0,
       removed: 0,
+      inserted: 0,
       durationMs: Date.now() - startTime,
       error: errorMessage,
     };

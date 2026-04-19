@@ -63,6 +63,37 @@ export async function resolveProvider(
     }
   }
 
+  // For models not matched by prefix (e.g. Synthetic-only "hf:org/Model"),
+  // check provider availability directly.
+  if (!directMapping) {
+    const availability = await db
+      .select({
+        provider: modelProviderAvailability.provider,
+        providerModelId: modelProviderAvailability.providerModelId,
+      })
+      .from(modelProviderAvailability)
+      .where(eq(modelProviderAvailability.modelId, modelId))
+      .limit(1);
+
+    if (availability.length > 0) {
+      const entry = availability[0];
+      const mapping = Object.values(DIRECT_PROVIDER_MAP).find(
+        m => m.providerType === entry.provider,
+      );
+
+      if (mapping) {
+        const key = resolvedKeys[mapping.keyProvider];
+        if (key) {
+          return {
+            providerType: mapping.providerType,
+            providerModelId: entry.providerModelId,
+            apiKey: key,
+          };
+        }
+      }
+    }
+  }
+
   const openrouterKey = resolvedKeys.openrouter;
   if (openrouterKey) {
     return {
