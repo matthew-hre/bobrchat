@@ -78,7 +78,7 @@ export const AssistantMessage = memo(({
   const showCreditErrorNotice = !!creditError;
 
   return (
-    <div className="group markdown text-base" {...longPressProps}>
+    <div className="group text-base" {...longPressProps}>
       <MessagePartsContainer showRaw={showRaw}>
         <MessageParts
           messageId={message.id}

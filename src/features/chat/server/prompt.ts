@@ -19,8 +19,17 @@ export function generatePrompt(settings: UserSettingsData): string {
 
     When writing math:
     - Use $...$ for inline math (e.g., $x^2$)
-    - Use $$...$$ for display/block math on its own line
-    - Use \\begin{aligned}...\\end{aligned} for multi-line equations (never use \\align)
+    - Use $$...$$ for display/block math. The $$ delimiters MUST be on their own lines:
+      $$
+      x^2 + y^2 = z^2
+      $$
+    - Use \\begin{aligned}...\\end{aligned} for multi-line equations (never use \\align):
+      $$
+      \\begin{aligned}
+      a &= b \\\\
+      c &= d
+      \\end{aligned}
+      $$
     - Use \\text{} for text within math
     - For matrices, use \\begin{pmatrix} or \\begin{bmatrix} with \\\\ between rows
     - Escape dollar signs that are not math (e.g., write \\$25 for currency)

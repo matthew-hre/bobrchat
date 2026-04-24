@@ -117,7 +117,7 @@ export function SharedChatMessages({ messages, showAttachments }: SharedChatMess
         const modelName = message.metadata?.model;
 
         return (
-          <div key={message.id} className="group markdown text-base">
+          <div key={message.id} className="group text-base">
             <MessageParts
               messageId={message.id}
               parts={message.parts}

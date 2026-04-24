@@ -1,4 +1,5 @@
 import "katex/dist/katex.min.css";
+import "streamdown/styles.css";
 
 export default function ShareLayout({
   children,

@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 
 @source "../";
+@source "../../node_modules/streamdown/dist/*.js";
+@source "../../node_modules/@streamdown/math/dist/*.js";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -202,54 +204,6 @@ html.accent-gray.dark {
 /* cmdk spacing */
 div[data-slot="command-group"] > div {
   @apply space-y-1;
-}
-
-.markdown h1 {
-  @apply mt-6 mb-4 text-2xl font-semibold first:mt-0;
-}
-
-.markdown h2 {
-  @apply mt-5 mb-3 text-xl font-semibold first:mt-0;
-}
-
-.markdown h3 {
-  @apply mt-4 mb-2 text-lg font-semibold first:mt-0;
-}
-
-.markdown p {
-  @apply mb-3 leading-relaxed last:mb-0;
-}
-
-.markdown ul {
-  @apply mb-3 list-disc space-y-1 pl-4;
-}
-
-.markdown ol {
-  @apply mb-3 list-decimal space-y-1 pl-4;
-}
-
-.markdown li {
-  @apply leading-relaxed;
-}
-
-.markdown em {
-  @apply italic;
-}
-
-.markdown blockquote {
-  @apply border-primary text-muted-foreground border-l-2 pl-4 italic mb-3;
-}
-
-.markdown hr {
-  @apply my-4 border-t;
-}
-
-.markdown th {
-  @apply border-border bg-muted border px-3 py-2 text-left font-semibold;
-}
-
-.markdown td {
-  @apply border-border border px-3 py-2;
 }
 
 mjx-container[jax="SVG"] > svg {
