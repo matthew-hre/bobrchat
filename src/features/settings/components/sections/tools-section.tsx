@@ -1,13 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import type { PreferencesUpdate, ToolModelId, UserSettingsData } from "~/features/settings/types";
 
 import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Slider } from "~/components/ui/slider";
 import { TOOL_MODEL_OPTIONS } from "~/features/chat/server/providers/types";
 import { useChatUIStore } from "~/features/chat/store";
 import { getToolModelPricing } from "~/features/settings/actions";
@@ -173,6 +174,35 @@ export function ToolsSection({ settings }: ToolsSectionProps) {
           pricing={pricing}
         />
       )}
+
+      <MaxToolStepsSlider settings={settings} save={save} />
     </SettingsSection>
+  );
+}
+
+function MaxToolStepsSlider({ settings, save }: { settings: UserSettingsData; save: (patch: PreferencesUpdate) => Promise<void> }) {
+  const [localValue, setLocalValue] = useState(settings.maxToolSteps);
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="maxToolSteps">Max Tool Steps: {localValue}</Label>
+      <p className="text-muted-foreground text-xs">
+        Maximum number of tool-call steps the AI can take per response. Higher values allow longer multi-step workflows but may increase costs.
+      </p>
+      <Slider
+        id="maxToolSteps"
+        type="range"
+        min="1"
+        max="20"
+        step="1"
+        value={localValue}
+        onChange={(e) => {
+          setLocalValue(Number.parseInt(e.target.value, 10));
+        }}
+        onMouseUp={() => save({ maxToolSteps: localValue })}
+        onTouchEnd={() => save({ maxToolSteps: localValue })}
+        labels={["1", "20"]}
+      />
+    </div>
   );
 }

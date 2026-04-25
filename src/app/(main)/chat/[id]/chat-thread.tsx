@@ -104,6 +104,7 @@ function ChatThread({ params, initialMessages, initialPendingMessage, parentThre
         messages: allMessages,
         threadId: id,
         searchEnabled: state.searchEnabled && capabilities.supportsSearch,
+        searchMode: state.searchMode,
         reasoningLevel: capabilities.supportsReasoning ? state.reasoningLevel : undefined,
         ...(Object.keys(state.clientKeys).length > 0 && { clientKeys: state.clientKeys }),
         ...(state.selectedModelId && { modelId: state.selectedModelId }),

@@ -1,7 +1,6 @@
 import * as z from "zod";
 
 export const PARALLEL_API_BASE = "https://api.parallel.ai";
-export const PARALLEL_BETA_HEADER = "search-extract-2025-10-10";
 
 export const searchInputSchema = z.object({
   objective: z
@@ -13,38 +12,13 @@ export const searchInputSchema = z.object({
   search_queries: z
     .array(z.string().max(200))
     .max(5)
-    .optional()
-    .describe("Optional keyword queries (1-6 words each) to guide the search. Usually 1-3 queries."),
+    .describe("Keyword queries (1-6 words each) to guide the search. Usually 1-3 queries."),
   mode: z
-    .enum(["agentic", "one-shot"])
-    .default("agentic")
+    .enum(["basic", "advanced"])
+    .default("advanced")
     .describe(
-      "\"agentic\" returns concise, token-efficient results for chat loops. \"one-shot\" returns comprehensive results for single queries.",
+      "\"basic\" offers lowest latency for interactive use. \"advanced\" provides higher quality with deeper retrieval. Defaults to \"advanced\".",
     ),
-  max_results: z
-    .number()
-    .int()
-    .min(1)
-    .max(20)
-    .default(10)
-    .describe("Maximum number of results to return."),
-  max_chars_per_result: z
-    .number()
-    .int()
-    .min(500)
-    .max(30000)
-    .default(5000)
-    .describe("Maximum characters per result excerpt."),
-  include_domains: z
-    .array(z.string())
-    .max(10)
-    .optional()
-    .describe("Restrict results to these domains only (e.g., ['wikipedia.org', 'github.com'])."),
-  exclude_domains: z
-    .array(z.string())
-    .max(10)
-    .optional()
-    .describe("Exclude results from these domains."),
 });
 
 export type SearchInput = z.infer<typeof searchInputSchema>;
@@ -57,7 +31,7 @@ export const extractInputSchema = z.object({
   urls: z
     .array(z.url())
     .min(1)
-    .max(10)
+    .max(20)
     .describe("URLs to extract content from."),
   search_queries: z
     .array(z.string().max(200))

@@ -13,9 +13,7 @@ const SEARCH_DESCRIPTION = `Search the web for information. Use this tool to fin
 Guidelines:
 - Keep the objective concise but descriptive (what you want to learn)
 - Use search_queries for specific keyword searches (1-6 words each)
-- Use "agentic" mode for conversational follow-ups, "one-shot" for comprehensive single queries
-- Use include_domains to restrict to trusted sources (e.g., official docs, Wikipedia)
-- Use exclude_domains to filter out unreliable or irrelevant sites`;
+- Use "basic" mode for quick, targeted searches, "advanced" for deeper retrieval and better quality`;
 
 const EXTRACT_DESCRIPTION = `Read and extract content from a webpage URL. Use this when:
 - The user shares a link and asks about it
@@ -31,13 +29,13 @@ Guidelines:
  * Creates search tools with the given API key.
  * Returns a strongly-typed tool set that can be used with InferUITools.
  */
-export function createSearchTools(apiKey: string) {
+export function createSearchTools(apiKey: string, searchMode?: "basic" | "advanced") {
   return {
     search: tool({
       description: SEARCH_DESCRIPTION,
       inputSchema: searchInputSchema,
       execute: async (input, { abortSignal }) => {
-        return parallelSearch(apiKey, input, abortSignal);
+        return parallelSearch(apiKey, { ...input, mode: searchMode ?? input.mode }, abortSignal);
       },
     }),
     extract: tool({

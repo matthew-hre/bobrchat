@@ -21,6 +21,8 @@ type ChatUIStore = {
   // Search toggle
   searchEnabled: boolean;
   setSearchEnabled: (enabled: boolean) => void;
+  searchMode: "basic" | "advanced";
+  setSearchMode: (mode: "basic" | "advanced") => void;
 
   reasoningLevel: string;
   setReasoningLevel: (level: string) => void;
@@ -84,6 +86,8 @@ export const useChatUIStore = create<ChatUIStore>()(
       // Search toggle
       searchEnabled: false,
       setSearchEnabled: enabled => set({ searchEnabled: enabled }),
+      searchMode: "advanced",
+      setSearchMode: mode => set({ searchMode: mode }),
 
       reasoningLevel: "none",
       setReasoningLevel: level => set({ reasoningLevel: level }),
@@ -171,6 +175,7 @@ export const useChatUIStore = create<ChatUIStore>()(
       partialize: state => ({
         selectedModelId: state.selectedModelId,
         searchEnabled: state.searchEnabled,
+        searchMode: state.searchMode,
         reasoningLevel: state.reasoningLevel,
       }),
     },

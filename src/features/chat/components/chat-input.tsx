@@ -184,12 +184,14 @@ export function ChatInput({
                 capabilities={model.capabilities}
                 reasoningLevel={features.reasoningLevel}
                 searchEnabled={features.searchEnabled}
+                searchMode={features.searchMode}
                 pendingFilesCount={attachments.pendingFiles.length}
                 hasOpenRouterKey={apiStatus.hasAnyChatKey}
                 hasParallelApiKey={apiStatus.hasParallelApiKey}
                 isParallelApiLoading={apiStatus.isParallelApiLoading}
                 onReasoningLevelChange={features.setReasoningLevel}
                 onSearchToggle={features.toggleSearch}
+                onSearchModeChange={features.setSearchMode}
                 onAttachClick={attachments.handleAttachClick}
                 acceptedFileTypesDescription={getAcceptedFileTypesDescription(model.capabilities)}
               />

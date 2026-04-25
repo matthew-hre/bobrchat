@@ -48,12 +48,14 @@ type CapabilitiesProps = {
   capabilities: ModelCapabilities;
   reasoningLevel: string;
   searchEnabled: boolean;
+  searchMode: "basic" | "advanced";
   pendingFilesCount: number;
   hasOpenRouterKey: boolean;
   hasParallelApiKey: boolean;
   isParallelApiLoading: boolean;
   onReasoningLevelChange: (level: string) => void;
   onSearchToggle: () => void;
+  onSearchModeChange: (mode: "basic" | "advanced") => void;
   onAttachClick: () => void;
   acceptedFileTypesDescription: string;
 };
@@ -62,12 +64,14 @@ export function ChatInputCapabilities({
   capabilities,
   reasoningLevel,
   searchEnabled,
+  searchMode,
   pendingFilesCount,
   hasOpenRouterKey,
   hasParallelApiKey,
   isParallelApiLoading,
   onReasoningLevelChange,
   onSearchToggle,
+  onSearchModeChange,
   onAttachClick,
   acceptedFileTypesDescription,
 }: CapabilitiesProps) {
@@ -92,9 +96,11 @@ export function ChatInputCapabilities({
         {capabilities.supportsSearch && (
           <SearchButton
             searchEnabled={searchEnabled}
+            searchMode={searchMode}
             hasParallelApiKey={hasParallelApiKey}
             isParallelApiLoading={isParallelApiLoading}
             onToggle={onSearchToggle}
+            onModeChange={onSearchModeChange}
           />
         )}
 
@@ -170,16 +176,34 @@ export function ChatInputCapabilities({
             )}
 
             {capabilities.supportsSearch && (
-              <Button
-                type="button"
-                variant={searchEnabled ? "default" : "outline"}
-                onClick={onSearchToggle}
-                disabled={hasParallelApiKey === false}
-                className="w-full justify-start gap-2"
-              >
-                <SearchIcon size={16} />
-                {searchEnabled ? "Search Enabled" : "Search Disabled"}
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant={searchEnabled ? "default" : "outline"}
+                  onClick={onSearchToggle}
+                  disabled={hasParallelApiKey === false}
+                  className="w-full justify-start gap-2"
+                >
+                  <SearchIcon size={16} />
+                  {searchEnabled ? "Search Enabled" : "Search Disabled"}
+                </Button>
+                {searchEnabled && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["basic", "advanced"] as const).map(mode => (
+                      <Button
+                        key={mode}
+                        type="button"
+                        variant={searchMode === mode ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => onSearchModeChange(mode)}
+                        className="text-xs capitalize"
+                      >
+                        {mode}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
 
             {(capabilities.supportsImages || capabilities.supportsFiles || capabilities.supportsPdf) && (
@@ -264,57 +288,80 @@ function ReasoningButton({
 
 function SearchButton({
   searchEnabled,
+  searchMode,
   hasParallelApiKey,
   isParallelApiLoading,
   onToggle,
+  onModeChange,
 }: {
   searchEnabled: boolean;
+  searchMode: "basic" | "advanced";
   hasParallelApiKey: boolean | null;
   isParallelApiLoading: boolean;
   onToggle: () => void;
+  onModeChange: (mode: "basic" | "advanced") => void;
 }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onToggle}
-            disabled={hasParallelApiKey === false}
-            className={cn(
-              `
-                hover:text-foreground
-                gap-2 transition-colors
-              `,
-              searchEnabled
-                ? `
-                  text-primary
-                  hover:text-primary/80 hover:bg-primary/10
-                  dark:hover:text-primary/80 dark:hover:bg-primary/10
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={hasParallelApiKey === false}
+              className={cn(
                 `
-                : `text-muted-foreground`,
-            )}
-            title={searchEnabled ? "Search enabled" : "Search disabled"}
-          >
-            <SearchIcon size={16} />
-            <span className={`
-              hidden
-              lg:inline
-            `}
+                  hover:text-foreground
+                  gap-2 transition-colors
+                `,
+                searchEnabled
+                  ? `
+                    text-primary
+                    hover:text-primary/80 hover:bg-primary/10
+                    dark:hover:text-primary/80 dark:hover:bg-primary/10
+                  `
+                  : `text-muted-foreground`,
+              )}
+              title={searchEnabled ? `Search: ${searchMode}` : "Search disabled"}
             >
-              Search
-            </span>
-          </Button>
-        </div>
+              <SearchIcon size={16} />
+              <span className={`
+                hidden
+                lg:inline
+              `}
+              >
+                Search
+                {searchEnabled && ` (${searchMode})`}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={onToggle}>
+              {searchEnabled ? "Disable search" : "Enable search"}
+            </DropdownMenuItem>
+            {searchEnabled && (
+              <>
+                <DropdownMenuItem onClick={() => onModeChange("basic")}>
+                  {searchMode === "basic" ? "✓ " : ""}
+                  Basic (faster)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onModeChange("advanced")}>
+                  {searchMode === "advanced" ? "✓ " : ""}
+                  Advanced (deeper)
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </TooltipTrigger>
       <TooltipContent>
         <p>
           {hasParallelApiKey === false && !isParallelApiLoading
             ? "Configure your Parallel API key in settings to use search"
             : searchEnabled
-              ? "Search is enabled for this message"
+              ? `Search: ${searchMode} mode`
               : "Search is disabled for this message"}
         </p>
       </TooltipContent>

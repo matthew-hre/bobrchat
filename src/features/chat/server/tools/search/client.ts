@@ -2,7 +2,6 @@ import type { ExtractInput, ExtractToolOutput, SearchInput, SearchToolOutput } f
 
 import {
   PARALLEL_API_BASE,
-  PARALLEL_BETA_HEADER,
 } from "./types";
 
 type ParallelSearchResponse = {
@@ -69,20 +68,14 @@ export async function parallelSearch(
     objective: input.objective,
     search_queries: input.search_queries,
     mode: input.mode,
-    max_results: input.max_results,
-    excerpts: {
-      max_chars_per_result: input.max_chars_per_result,
-    },
-    source_policy: buildSourcePolicy(input.include_domains, input.exclude_domains),
   };
 
   try {
-    const response = await fetch(`${PARALLEL_API_BASE}/v1beta/search`, {
+    const response = await fetch(`${PARALLEL_API_BASE}/v1/search`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-api-key": apiKey,
-        "parallel-beta": PARALLEL_BETA_HEADER,
       },
       body: JSON.stringify(body),
       signal,
@@ -123,17 +116,14 @@ export async function parallelExtract(
     urls: input.urls,
     objective: input.objective,
     search_queries: input.search_queries,
-    excerpts: true,
-    full_content: false,
   };
 
   try {
-    const response = await fetch(`${PARALLEL_API_BASE}/v1beta/extract`, {
+    const response = await fetch(`${PARALLEL_API_BASE}/v1/extract`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-api-key": apiKey,
-        "parallel-beta": PARALLEL_BETA_HEADER,
       },
       body: JSON.stringify(body),
       signal,
@@ -169,17 +159,4 @@ export async function parallelExtract(
     console.error("[extract] request failed:", err);
     return { error: true, code: "request_failed", message: "Extract request failed. Please try again." };
   }
-}
-
-function buildSourcePolicy(
-  includeDomains?: string[],
-  excludeDomains?: string[],
-): { include_domains?: string[]; exclude_domains?: string[] } | undefined {
-  if (!includeDomains?.length && !excludeDomains?.length) {
-    return undefined;
-  }
-  return {
-    ...(includeDomains?.length && { include_domains: includeDomains }),
-    ...(excludeDomains?.length && { exclude_domains: excludeDomains }),
-  };
 }

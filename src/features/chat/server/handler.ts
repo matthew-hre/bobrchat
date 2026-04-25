@@ -17,6 +17,7 @@ type ChatRequestBody = {
   threadId?: string;
   clientKeys?: Partial<Record<ApiKeyProvider, string>>;
   searchEnabled?: boolean;
+  searchMode?: "basic" | "advanced";
   reasoningLevel?: string;
   modelId?: string;
   supportsNativePdf?: boolean;
@@ -32,6 +33,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     threadId,
     clientKeys,
     searchEnabled,
+    searchMode,
     reasoningLevel,
     modelId,
     supportsNativePdf,
@@ -121,6 +123,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
     supportsTools,
     settings.handoffEnabled,
     handoffProvider,
+    searchMode,
   );
 
   if (threadId && !effectiveIncognito && messages.length === 1 && messages[0].role === "user") {
@@ -257,6 +260,7 @@ export async function handleChatRequest({ req, userId }: { req: Request; userId:
           supportsTools,
           settings.handoffEnabled,
           handoffProvider,
+          searchMode,
         );
 
         writer.merge(toUIStream(fallback.stream, fallback.createMetadata));
