@@ -4,7 +4,7 @@ import type { SubscriptionTier } from "~/lib/db/schema/subscriptions";
 
 import { getRequiredSession } from "~/features/auth/lib/session";
 import { serverEnv } from "~/lib/env";
-import { polarClient } from "~/lib/polar";
+import { getPolarClient } from "~/lib/polar";
 
 import { checkThreadLimit, getStorageQuota, getUserSubscription, POLAR_PRODUCT_IDS } from "./index";
 
@@ -51,6 +51,7 @@ export async function getPolarProductId(tier: "plus"): Promise<string | undefine
 }
 
 export async function createCheckoutSession(productId: string): Promise<{ url: string } | { error: string }> {
+  const polarClient = getPolarClient();
   if (!polarClient) {
     return { error: "Payments are not configured." };
   }
@@ -68,20 +69,27 @@ export async function createCheckoutSession(productId: string): Promise<{ url: s
 }
 
 export async function createCustomerPortalSession(): Promise<{ url: string } | { error: string }> {
+  const polarClient = getPolarClient();
   if (!polarClient) {
     return { error: "Payments are not configured." };
   }
 
-  const session = await getRequiredSession();
-  const subscription = await getUserSubscription(session.user.id);
+  try {
+    const session = await getRequiredSession();
+    const subscription = await getUserSubscription(session.user.id);
 
-  if (!subscription.polarCustomerId) {
-    return { error: "No billing account found." };
+    if (!subscription.polarCustomerId) {
+      return { error: "No billing account found." };
+    }
+
+    const portalSession = await polarClient.customerSessions.create({
+      customerId: subscription.polarCustomerId,
+    });
+
+    return { url: portalSession.customerPortalUrl };
   }
-
-  const portalSession = await polarClient.customerSessions.create({
-    customerId: subscription.polarCustomerId,
-  });
-
-  return { url: portalSession.customerPortalUrl };
+  catch (error) {
+    console.error("[Polar] createCustomerPortalSession failed:", error);
+    return { error: "Failed to create billing portal session." };
+  }
 }

@@ -84,16 +84,16 @@ export function useFileAttachments({
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+          const errorData = await response.json().catch(() => ({})) as { code?: string; error?: string };
           if (errorData.code === "QUOTA_EXCEEDED") {
             throw new Error(errorData.error || "Storage quota exceeded");
           }
           throw new Error("Upload failed");
         }
 
-        const result = await response.json();
+        const result = await response.json() as { files: Array<PendingFile & { clientId?: string }>; errors?: Array<{ filename: string; error: string }> };
 
-        if (result.errors?.length > 0) {
+        if (result.errors?.length && result.errors.length > 0) {
           console.error("[uploadFiles] server returned errors:", result.errors);
           for (const err of result.errors) {
             toast.error(`${err.filename}: ${err.error}`);

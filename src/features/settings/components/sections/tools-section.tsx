@@ -185,7 +185,10 @@ function MaxToolStepsSlider({ settings, save }: { settings: UserSettingsData; sa
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="maxToolSteps">Max Tool Steps: {localValue}</Label>
+      <Label htmlFor="maxToolSteps">
+        Max Tool Steps:
+        {localValue}
+      </Label>
       <p className="text-muted-foreground text-xs">
         Maximum number of tool-call steps the AI can take per response. Higher values allow longer multi-step workflows but may increase costs.
       </p>

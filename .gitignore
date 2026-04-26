@@ -39,6 +39,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# opennext
+.open-next
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -46,3 +49,4 @@ next-env.d.ts
 # uploads
 /uploads
 public/icon.ico
+.env*.local

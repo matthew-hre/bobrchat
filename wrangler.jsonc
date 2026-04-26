@@ -1,0 +1,46 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "bobrchat",
+  "compatibility_date": "2025-04-25",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  // Prevent esbuild's __name helper from leaking into inline scripts (e.g. next-themes)
+  "keep_names": false,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "bobrchat"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "beta.bobrchat.com",
+      "custom_domain": true
+    }
+  ],
+  "observability": {
+    "logs": {
+      "enabled": false,
+      "invocation_logs": true
+    }
+  },
+  "r2_buckets": [
+    {
+      "binding": "R2_BUCKET",
+      "bucket_name": "bobrchat"
+    }
+  ]
+  // Uncomment to enable R2-based ISR/SSG caching:
+  // To use, add another entry to the r2_buckets array above:
+  //   { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "bobrchat-cache" }
+  // Uncomment to enable Cloudflare image optimization:
+  // "images": {
+  //   "binding": "IMAGES"
+  // }
+}

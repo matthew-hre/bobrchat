@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 
-import { Analytics } from "@vercel/analytics/next";
 import { AuthKitProvider } from "@workos-inc/authkit-nextjs/components";
 
 import "./globals.css";
@@ -88,7 +87,6 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen w-full font-sans antialiased">
-        <Analytics />
         <AuthKitProvider>
           <ThemeProvider
             attribute="class"

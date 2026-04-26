@@ -10,6 +10,7 @@
       "~/*": ["./src/*"]
     },
     "resolveJsonModule": true,
+    "types": ["@cloudflare/workers-types"],
     "allowJs": true,
     "strict": true,
     "noEmit": true,

@@ -1,11 +1,6 @@
-import type { Readable } from "node:stream";
-
-import { DeleteObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { Buffer } from "node:buffer";
 import path from "node:path";
-
-import { serverEnv } from "~/lib/env";
 
 /**
  * Build a Content-Disposition header value that is safe for non-ASCII filenames.
@@ -27,15 +22,9 @@ export type UploadedFile = {
   pageCount?: number | null;
 };
 
-function getR2Client() {
-  return new S3Client({
-    region: "auto",
-    endpoint: `https://${serverEnv.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: serverEnv.R2_ACCESS_KEY_ID,
-      secretAccessKey: serverEnv.R2_SECRET_ACCESS_KEY,
-    },
-  });
+function getR2Bucket(): R2Bucket {
+  const { env } = getCloudflareContext();
+  return env.R2_BUCKET;
 }
 
 function generateFileId(): string {
@@ -50,7 +39,7 @@ export async function saveFile(
     contentDisposition?: "inline" | "attachment";
   },
 ): Promise<UploadedFile> {
-  const client = getR2Client();
+  const bucket = getR2Bucket();
 
   const fileId = generateFileId();
   const ext = path.extname(file.name);
@@ -60,113 +49,68 @@ export async function saveFile(
   const contentType = options?.contentTypeOverride ?? file.type;
   const disposition = options?.contentDisposition ?? "inline";
 
-  const upload = new Upload({
-    client,
-    params: {
-      Bucket: serverEnv.R2_BUCKET_NAME,
-      Key: key,
-      Body: buffer,
-      ContentType: contentType,
-      ContentDisposition: contentDisposition(disposition, file.name),
+  await bucket.put(key, buffer, {
+    httpMetadata: {
+      contentType,
+      contentDisposition: contentDisposition(disposition, file.name),
     },
   });
-  await upload.done();
-
-  const publicUrl = `${serverEnv.R2_PUBLIC_URL}/${key}`;
 
   return {
     id: fileId,
     filename: file.name,
     mediaType: contentType,
     size: file.size,
-    url: publicUrl,
+    url: `/api/attachments/file?id=${fileId}`,
     storagePath: key,
   };
 }
 
 export async function deleteFile(storagePath: string): Promise<void> {
-  const client = getR2Client();
-  await client.send(
-    new DeleteObjectCommand({
-      Bucket: serverEnv.R2_BUCKET_NAME,
-      Key: storagePath,
-    }),
-  );
+  const bucket = getR2Bucket();
+  await bucket.delete(storagePath);
 }
 
 export async function getFileContent(storagePath: string): Promise<string> {
-  const client = getR2Client();
-  const response = await client.send(
-    new GetObjectCommand({
-      Bucket: serverEnv.R2_BUCKET_NAME,
-      Key: storagePath,
-    }),
-  );
+  const bucket = getR2Bucket();
+  const object = await bucket.get(storagePath);
 
-  return response.Body?.transformToString() ?? "";
+  if (!object) {
+    throw new Error(`Object not found: ${storagePath}`);
+  }
+
+  return object.text();
 }
 
 export async function saveFileBuffer(storagePath: string, buffer: Buffer): Promise<void> {
-  const client = getR2Client();
-  const upload = new Upload({
-    client,
-    params: {
-      Bucket: serverEnv.R2_BUCKET_NAME,
-      Key: storagePath,
-      Body: buffer,
-      ContentType: "application/octet-stream",
-      ContentDisposition: "attachment",
+  const bucket = getR2Bucket();
+  await bucket.put(storagePath, buffer, {
+    httpMetadata: {
+      contentType: "application/octet-stream",
+      contentDisposition: "attachment",
     },
   });
-  await upload.done();
 }
 
 export async function getFileBuffer(storagePath: string): Promise<Buffer> {
-  const client = getR2Client();
-  const response = await client.send(
-    new GetObjectCommand({
-      Bucket: serverEnv.R2_BUCKET_NAME,
-      Key: storagePath,
-    }),
-  );
+  const bucket = getR2Bucket();
+  const object = await bucket.get(storagePath);
 
-  const bytes = await response.Body?.transformToByteArray();
-  if (!bytes) {
-    throw new Error("Empty response body from storage");
+  if (!object) {
+    throw new Error(`Object not found: ${storagePath}`);
   }
-  return Buffer.from(bytes);
+
+  const arrayBuffer = await object.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
 export async function getFileStream(storagePath: string): Promise<ReadableStream> {
-  const client = getR2Client();
-  const response = await client.send(
-    new GetObjectCommand({
-      Bucket: serverEnv.R2_BUCKET_NAME,
-      Key: storagePath,
-    }),
-  );
+  const bucket = getR2Bucket();
+  const object = await bucket.get(storagePath);
 
-  const body = response.Body;
-  if (!body) {
-    throw new Error("Empty response body from storage");
+  if (!object) {
+    throw new Error(`Object not found: ${storagePath}`);
   }
 
-  if (typeof (body as Readable).pipe === "function") {
-    return readableToWebStream(body as Readable);
-  }
-
-  return body.transformToWebStream();
-}
-
-function readableToWebStream(nodeStream: Readable): ReadableStream<Uint8Array> {
-  return new ReadableStream({
-    start(controller) {
-      nodeStream.on("data", (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)));
-      nodeStream.on("end", () => controller.close());
-      nodeStream.on("error", err => controller.error(err));
-    },
-    cancel() {
-      nodeStream.destroy();
-    },
-  });
+  return object.body;
 }

@@ -3,6 +3,7 @@ import { Pool } from "@neondatabase/serverless";
 import { drizzle as drizzleNeonWs } from "drizzle-orm/neon-serverless";
 import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { cache } from "react";
 
 import { serverEnv } from "~/lib/env";
 
@@ -26,11 +27,17 @@ function isTransientError(error: unknown): boolean {
   return false;
 }
 
-function createDb() {
+/**
+ * Get a database client scoped to the current request.
+ * Uses React.cache() to deduplicate within a single request/render.
+ * On Cloudflare Workers, connection pooling across requests is not allowed,
+ * so each request gets its own pool instance.
+ */
+export const getDb = cache(() => {
   if (process.env.NODE_ENV === "development") {
     const client = postgres(serverEnv.DATABASE_URL, {
       max: 20,
-      idle_timeout: 30, // Reduced from 60 to avoid Neon timeout (which is 5 min)
+      idle_timeout: 30,
       connect_timeout: 10,
     });
     return drizzlePostgres({ client, casing: "snake_case", schema });
@@ -40,12 +47,13 @@ function createDb() {
   const pool = new Pool({
     connectionString: serverEnv.DATABASE_URL,
     max: 10,
-    idleTimeoutMillis: 30000, // Reduced from 60000 to 30s - Neon's auto-suspend is 5 min on free plan
+    idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
+    // Don't reuse connections across requests (required for Cloudflare Workers)
+    maxUses: 1,
   });
 
   // Gracefully handle Neon compute restarts and connection errors
-  // Don't crash on connection errors - let retry logic in app layer handle it
   pool.on("error", (error: Error) => {
     if (isTransientError(error)) {
       console.warn("[DB] Transient connection error (will retry):", error.message);
@@ -56,6 +64,14 @@ function createDb() {
   });
 
   return drizzleNeonWs({ client: pool, casing: "snake_case", schema });
-}
+});
 
-export const db = createDb();
+/**
+ * @deprecated Use `getDb()` instead for Cloudflare Workers compatibility.
+ * This alias exists for backward compatibility during migration.
+ */
+export const db = new Proxy({} as ReturnType<typeof getDb>, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getDb(), prop, receiver);
+  },
+});

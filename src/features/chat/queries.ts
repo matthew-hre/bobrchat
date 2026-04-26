@@ -40,7 +40,7 @@ function extractAttachmentRefs(message: ChatUIMessage): { ids: string[]; storage
       continue;
     }
 
-    if (typeof maybe.url === "string" && maybe.url.length > 0) {
+    if (typeof maybe.url === "string" && maybe.url.length > 0 && serverEnv.R2_PUBLIC_URL) {
       try {
         const parsed = new URL(maybe.url);
         const prefix = `${serverEnv.R2_PUBLIC_URL}/`;
