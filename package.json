@@ -39,7 +39,6 @@
     "@tanstack/react-virtual": "^3.13.21",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.2",
-    "@vercel/analytics": "^1.6.1",
     "@workos-inc/authkit-nextjs": "^2.14.0",
     "@workos-inc/widgets": "^1.8.2",
     "ai": "^6.0.0",

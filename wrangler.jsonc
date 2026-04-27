@@ -20,7 +20,7 @@
   ],
   "routes": [
     {
-      "pattern": "beta.bobrchat.com",
+      "pattern": "bobrchat.com",
       "custom_domain": true
     }
   ],
