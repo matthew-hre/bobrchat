@@ -1,19 +1,12 @@
-/* eslint-disable node/no-process-env */
 import { NextResponse } from "next/server";
 
 import { syncAnthropicProviderAvailability, syncDirectProviderAvailability, syncModelsFromOpenRouter } from "~/features/models/server/sync-models";
-import { serverEnv } from "~/lib/env";
+import { cronRateLimit, rateLimitResponse } from "~/lib/rate-limit";
 
-// Cron endpoint to sync models from OpenRouter
-// Runs every 6 hours via vercel.json crons configuration
-export async function GET(request: Request) {
-  // Verify cron secret to prevent unauthorized access (skip in development)
-  const isDev = process.env.NODE_ENV === "development";
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = serverEnv.CRON_SECRET;
-
-  if (!isDev && cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET() {
+  const { success, reset } = await cronRateLimit.limit("sync-models");
+  if (!success) {
+    return rateLimitResponse(reset);
   }
 
   const result = await syncModelsFromOpenRouter();

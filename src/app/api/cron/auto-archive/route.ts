@@ -1,4 +1,3 @@
-/* eslint-disable node/no-process-env */
 import { and, eq, isNull, lt } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -7,15 +6,12 @@ import type { UserSettingsData } from "~/features/settings/types";
 import { db } from "~/lib/db";
 import { threads } from "~/lib/db/schema/chat";
 import { userSettings } from "~/lib/db/schema/settings";
-import { serverEnv } from "~/lib/env";
+import { cronRateLimit, rateLimitResponse } from "~/lib/rate-limit";
 
-export async function GET(request: Request) {
-  const isDev = process.env.NODE_ENV === "development";
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = serverEnv.CRON_SECRET;
-
-  if (!isDev && cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET() {
+  const { success, reset } = await cronRateLimit.limit("auto-archive");
+  if (!success) {
+    return rateLimitResponse(reset);
   }
 
   const rows = await db

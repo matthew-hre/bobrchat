@@ -36,6 +36,12 @@
       "bucket_name": "bobrchat"
     }
   ],
+  "triggers": {
+    "crons": [
+      "0 0 * * *",
+      "0 */6 * * *"
+    ]
+  },
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",

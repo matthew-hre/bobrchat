@@ -38,6 +38,12 @@ export const rotateKeyRateLimit = new Ratelimit({
   prefix: "ratelimit:rotate-key",
 });
 
+export const cronRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.fixedWindow(1, "1h"),
+  prefix: "ratelimit:cron",
+});
+
 export function rateLimitResponse(reset: number) {
   const retryAfter = Math.ceil((reset - Date.now()) / 1000);
   return new Response(
