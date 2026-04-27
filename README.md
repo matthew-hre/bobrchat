@@ -58,16 +58,16 @@ no lock-in.
 
 ## Tech Stack
 
-| Layer         | Technology                                                                            |
-| :------------ | :------------------------------------------------------------------------------------ |
-| **Framework** | [Next.js 16](https://nextjs.org) (App Router), React 19                               |
+| Layer         | Technology                                                                                              |
+| :------------ | :------------------------------------------------------------------------------------------------------ |
+| **Framework** | [Next.js 16](https://nextjs.org) (App Router), React 19                                                 |
 | **Hosting**   | [Cloudflare Workers](https://workers.cloudflare.com) via [OpenNext](https://opennext.js.org/cloudflare) |
-| **Styling**   | [Tailwind CSS v4](https://tailwindcss.com), [shadcn/ui](https://ui.shadcn.com), Radix |
-| **Database**  | PostgreSQL via [Drizzle ORM](https://orm.drizzle.team)                                |
-| **Auth**      | [WorkOS AuthKit](https://workos.com/docs/auth-kit)                                    |
-| **AI**        | [Vercel AI SDK](https://sdk.vercel.ai) + [OpenRouter](https://openrouter.ai)          |
-| **Storage**   | [Cloudflare R2](https://developers.cloudflare.com/r2/)                                |
-| **OG Images** | Cloudflare Workers ([`og/`](og/))                                                     |
+| **Styling**   | [Tailwind CSS v4](https://tailwindcss.com), [shadcn/ui](https://ui.shadcn.com), Radix                   |
+| **Database**  | PostgreSQL via [Drizzle ORM](https://orm.drizzle.team)                                                  |
+| **Auth**      | [WorkOS AuthKit](https://workos.com/docs/auth-kit)                                                      |
+| **AI**        | [Vercel AI SDK](https://sdk.vercel.ai) + [OpenRouter](https://openrouter.ai)                            |
+| **Storage**   | [Cloudflare R2](https://developers.cloudflare.com/r2/)                                                  |
+| **OG Images** | Cloudflare Workers ([`og/`](og/))                                                                       |
 
 ## Getting Started
 
